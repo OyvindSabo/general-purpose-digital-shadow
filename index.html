@@ -1,0 +1,269 @@
+<!-- Router -->
+<script>
+  class Router {
+    /**
+     * @param {HTMLElement} rootElement
+     */
+    constructor(rootElement) {
+      this.rootElement = rootElement;
+      this.params = {};
+      this.currentRoute = '';
+      this.routes = {};
+      this.observers = [];
+      window.addEventListener('hashchange', () => {
+        this.syncWithHash();
+      });
+    }
+    /**
+     * @param {string} route
+     * One of the registered routes, without hashbang
+     */
+    navigateTo = route => {
+      location.hash = `#!${route}`;
+    };
+
+    refresh = () => this.syncWithHash();
+
+    // @possiblyNumber: string
+    static isNumber(possiblyNumber) {
+      return !isNaN(Number(possiblyNumber));
+    }
+    static isInt(possiblyInt) {
+      return (
+        Router.isNumber(possiblyInt) &&
+        parseInt(possiblyInt) === Number(possiblyInt)
+      );
+    }
+    static getTokens(hash) {
+      return hash
+        .split('/')
+        .filter(Boolean)
+        .filter(element => element !== '#')
+        .filter(element => element !== '#!');
+    }
+
+    /**
+     * @param {string} token
+     * @returns {boolean}
+     */
+    static isParameterRouteToken(token) {
+      if (
+        token.indexOf('<') !== 0 ||
+        !token.slice(2, -4).includes(':') ||
+        token.indexOf('>') !== token.length - 1
+      ) {
+        return false;
+      }
+      const [parameter, type] = token
+        .slice(token.indexOf('<') + 1, token.indexOf('>'))
+        .split(':');
+
+      if (!['int', 'string', 'number'].includes(type)) {
+        return false;
+      }
+      return true;
+    }
+    static parseParameterRouteToken(token) {
+      const [parameter, type] = token
+        .slice(token.indexOf('<') + 1, token.indexOf('>'))
+        .split(':');
+      return {
+        parameter,
+        type,
+      };
+    }
+    static appendTokenToHash(hash, token) {
+      return `${hash}/${token}`;
+    }
+    // (hash: string, route: string) => false | { [key: string]: number | string }
+    static getMatch(hash, route) {
+      const hashTokens = Router.getTokens(hash);
+      const routeTokens = Router.getTokens(route);
+      const params = {};
+      let reconstructedHash = '#!';
+      if (hashTokens.length !== routeTokens.length) return false;
+      for (let i of Object.keys(hashTokens)) {
+        const hashToken = hashTokens[i];
+        const routeToken = routeTokens[i];
+        if (Router.isParameterRouteToken(routeToken)) {
+          const { parameter, type } = Router.parseParameterRouteToken(
+            routeToken
+          );
+          if (type === 'int') {
+            if (!Router.isInt(hashToken)) return false;
+            params[parameter] = parseInt(hashToken);
+            reconstructedHash = Router.appendTokenToHash(
+              reconstructedHash,
+              hashToken
+            );
+          } else if (type === 'number' && !Router.isNumber(hasToken)) {
+            if (!Router.isNumber(hashToken)) return false;
+            params[parameter] = Number(hashToken);
+            reconstructedHash = Router.appendTokenToHash(
+              reconstructedHash,
+              hashToken
+            );
+          } else if (type === 'string') {
+            params[parameter] = hashToken;
+            reconstructedHash = Router.appendTokenToHash(
+              reconstructedHash,
+              hashToken
+            );
+          }
+        } else {
+          if (hashToken !== routeToken) return false;
+          reconstructedHash = Router.appendTokenToHash(
+            reconstructedHash,
+            hashToken
+          );
+        }
+      }
+      return { params, reconstructedHash };
+    }
+    static getRouteAndParamsFromHash(hash, routes) {
+      for (let route of Object.keys(routes)) {
+        const match = Router.getMatch(hash, route);
+        if (match) {
+          const { params, reconstructedHash } = match;
+          return { route, params, reconstructedHash };
+        }
+      }
+      return { route: '', params: {}, reconstructedHash: '' };
+    }
+    static removeHash() {
+      return history.replaceState(null, null, ' ');
+    }
+    // @routes: { [route: string]: component: (params: any) => HTMLElement}
+    setRoutes(routes) {
+      Object.entries(routes).forEach(([route, component]) => {
+        this.routes[route] = component;
+        if (route === '/') {
+          this.routes[''] = component;
+        }
+      });
+      this.syncWithHash();
+    }
+    syncWithHash() {
+      const { hash } = location;
+      const {
+        route,
+        params,
+        reconstructedHash,
+      } = Router.getRouteAndParamsFromHash(hash, this.routes);
+      const component = this.routes[route];
+      while (this.rootElement.childNodes.length) {
+        this.rootElement.removeChild(this.rootElement.firstChild);
+      }
+      this.setParams(params);
+      this.setCurrentRoute(route);
+      this.rootElement.appendChild(component({ params, currentRoute: route }));
+      if (reconstructedHash === '#!') {
+        Router.removeHash();
+      } else {
+        location.hash = reconstructedHash;
+      }
+      this.emit();
+    }
+    /**
+     * @param {Object.<string, number | string>} params
+     */
+    setParams(params) {
+      this.params = params;
+      // Todo: Maybe dispatch some kind of event
+    }
+    setCurrentRoute(route) {
+      this.currentRoute = route;
+    }
+    static isProp = propsOrChild =>
+      !(
+        propsOrChild instanceof HTMLElement || typeof propsOrChild === 'string'
+      );
+    // @mapToProps: ({ currentRoute, params })
+    connect(component, mapToProps) {
+      return (propsOrChild, ...maybeAllChildren) => {
+        const hasProps = Router.isProp(propsOrChild);
+        const props = hasProps ? propsOrChild || {} : {};
+        const children = hasProps
+          ? maybeAllChildren
+          : [propsOrChild, ...maybeAllChildren];
+
+        mapToProps = mapToProps || (({ ...params }) => ({ ...params }));
+        const routerState = {
+          currentRoute: this.currentRoute,
+          params: this.params,
+        };
+        const routerProps = mapToProps ? mapToProps(routerState) : routerState;
+        const observer = component({ ...props, ...routerProps }, ...children);
+        this.observers.push({ mapToProps, observer });
+        return observer;
+      };
+    }
+    emit() {
+      // TODO: Rewrite this one to work like the FakeRedux one. I don't think it
+      //       currently works, but it appears to work since the router
+      //       rerenders everything on navigation anyways.
+      this.observers.forEach(({ mapToProps, observer }) => {
+        if (!observer)
+          console.warn('Non-existing element registered as router observer');
+
+        const props = mapToProps({
+          currentRoute: this.currentRoute,
+          params: this.params,
+        });
+        Object.entries(props).forEach(([key, value]) => {
+          observer.setAttribute(key, value);
+        });
+      });
+    }
+  }
+</script>
+
+<!-- Components -->
+<script>
+  const TopNavigator = () => {
+    const navigator = document.createElement('div');
+    Object.assign(navigator.style, {
+      height: '40px',
+    });
+    return navigator;
+  };
+  const MainContainer = () => {
+    const mainContainer = document.createElement('div');
+    Object.assign(mainContainer.style, {
+      height: 'calc(100% - 40px)',
+      borderRadius: '10px 10px 0 0',
+      background: 'white',
+    });
+    return mainContainer;
+  };
+
+  const HomeView = () => {
+    const homeView = document.createElement('div');
+    homeView.appendChild(TopNavigator());
+    homeView.appendChild(MainContainer());
+    return homeView;
+  };
+  const AnalyticView = () => {
+    const div = document.createElement('div');
+    div.innerText = 'AnalyticView';
+    return div;
+  };
+</script>
+
+<script>
+  window.onload = () => {
+    Object.assign(document.body.style, {
+      background: 'black',
+      margin: 0,
+      height: '100%',
+    });
+    const FIREBASE_API_KEY = 'AIzaSyCeGXLqw0MEwiSFHG1Wks1HfQHXRZoOuFY';
+
+    // Create router
+    const router = new Router(document.body);
+    router.setRoutes({
+      '/': HomeView,
+      '/analytics/<analyticId:string>': AnalyticView,
+    });
+  };
+</script>
