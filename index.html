@@ -178,30 +178,29 @@
       !(
         propsOrChild instanceof HTMLElement || typeof propsOrChild === 'string'
       );
-    // @mapToProps: ({ currentRoute, params })
-    connect(component, mapToProps) {
-      return (propsOrChild, ...maybeAllChildren) => {
-        const hasProps = Router.isProp(propsOrChild);
-        const props = hasProps ? propsOrChild || {} : {};
-        const children = hasProps
-          ? maybeAllChildren
-          : [propsOrChild, ...maybeAllChildren];
 
-        mapToProps = mapToProps || (({ ...params }) => ({ ...params }));
-        const routerState = {
-          currentRoute: this.currentRoute,
-          params: this.params,
-        };
-        const routerProps = mapToProps ? mapToProps(routerState) : routerState;
-        const observer = component({ ...props, ...routerProps }, ...children);
-        this.observers.push({ mapToProps, observer });
-        return observer;
-      };
-    }
+    provide = (component, observedAttributes, mapToProps) => {
+      const storeState = { ...this.state, dispatch: this.dispatch };
+      const storeProps = mapToProps ? mapToProps(storeState) : storeState;
+      const element = component(storeProps);
+      this.observers.push({
+        mapToProps,
+        component,
+        element,
+        observedAttributes,
+      });
+      return element;
+    };
+    /*provide = componentInstance => {
+      componentInstance.update({
+        currentRoute: this.currentRoute,
+        params: this.params,
+      });
+      this.observers.push({ componentInstancecomponent, element, observedAttributes });
+      return componentInstance.element;
+    };*/
+
     emit() {
-      // TODO: Rewrite this one to work like the FakeRedux one. I don't think it
-      //       currently works, but it appears to work since the router
-      //       rerenders everything on navigation anyways.
       this.observers.forEach(({ mapToProps, observer }) => {
         if (!observer)
           console.warn('Non-existing element registered as router observer');
@@ -218,35 +217,96 @@
   }
 </script>
 
+<!-- Utils -->
+<script>
+  const div = () => document.createElement('div');
+</script>
+
 <!-- Components -->
 <script>
   const TopNavigator = () => {
-    const navigator = document.createElement('div');
+    const navigator = div();
     Object.assign(navigator.style, {
       height: '40px',
     });
     return navigator;
   };
+  const leftNavigatorButton = ({ name, route, isActive }) => {
+    const leftNavigatorButton = div();
+    Object.assign(leftNavigatorButton.style, {
+      height: '80px',
+      width: '80px',
+      background: isActive ? 'WhiteSmoke' : 'initial',
+      overflow: 'hidden',
+      transition: '0.25s',
+    });
+    leftNavigatorButton.onmouseenter = () => {
+      leftNavigatorButton.style.background = 'WhiteSmoke';
+    };
+    leftNavigatorButton.onmouseleave = () => {
+      leftNavigatorButton.style.background = isActive
+        ? 'WhiteSmoke'
+        : 'initial';
+    };
+    leftNavigatorButton.onclick = () => {
+      location.hash = `#!${route}`;
+    };
+    return leftNavigatorButton;
+  };
+  /**
+   * @param {{ name: string; route: string; isActive: boolean; }[]} buttons
+   */
+  const LeftNavigator = buttons => {
+    const leftNavigator = div();
+    Object.assign(leftNavigator.style, {
+      height: '100%',
+      width: '80px',
+      borderRadius: '10px 0 0 0',
+      borderRight: '2px solid WhiteSmoke',
+      overflow: 'hidden',
+    });
+    buttons.forEach(button => {
+      leftNavigator.appendChild(leftNavigatorButton(button));
+    });
+    return leftNavigator;
+  };
+
   const MainContainer = () => {
-    const mainContainer = document.createElement('div');
+    const mainContainer = div();
     Object.assign(mainContainer.style, {
       height: 'calc(100% - 40px)',
       borderRadius: '10px 10px 0 0',
       background: 'white',
     });
+    mainContainer.appendChild(
+      LeftNavigator([
+        { name: 'Data sources', route: '/data-sources', isActive: true },
+        { name: 'Values', route: '/values', isActive: false },
+      ])
+    );
     return mainContainer;
   };
 
   const HomeView = () => {
-    const homeView = document.createElement('div');
+    const homeView = div();
     homeView.appendChild(TopNavigator());
     homeView.appendChild(MainContainer());
     return homeView;
   };
+  const DataSourcesView = () => {
+    const dataSourcesView = div();
+    dataSourcesView.innerText = 'AnalyticView';
+    return dataSourcesView;
+  };
+  const ValuesView = () => {
+    const valuesView = div();
+    valuesView.innerText = 'AnalyticView';
+    return valuesView;
+  };
   const AnalyticView = () => {
-    const div = document.createElement('div');
-    div.innerText = 'AnalyticView';
-    return div;
+    const analyticsView = div();
+    anayticsView.innerText = 'AnalyticView';
+    return analyticsView;
   };
 </script>
 
@@ -263,6 +323,8 @@
     const router = new Router(document.body);
     router.setRoutes({
       '/': HomeView,
+      '/data-sources': DataSourcesView,
+      '/values': ValuesView,
       '/analytics/<analyticId:string>': AnalyticView,
     });
   };
