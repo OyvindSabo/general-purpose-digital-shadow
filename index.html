@@ -4,8 +4,7 @@
     /**
      * @param {HTMLElement} rootElement
      */
-    constructor(rootElement) {
-      this.rootElement = rootElement;
+    constructor() {
       this.params = {};
       this.currentRoute = '';
       this.routes = {};
@@ -133,12 +132,14 @@
     static removeHash() {
       return history.replaceState(null, null, ' ');
     }
-    // @routes: { [route: string]: component: (params: any) => HTMLElement}
+    /**
+     * @param {string} routes
+     */
     setRoutes(routes) {
-      Object.entries(routes).forEach(([route, component]) => {
-        this.routes[route] = component;
+      routes.forEach(route => {
+        this.routes[route] = route;
         if (route === '/') {
-          this.routes[''] = component;
+          this.routes[''] = route;
         }
       });
       this.syncWithHash();
@@ -150,13 +151,8 @@
         params,
         reconstructedHash,
       } = Router.getRouteAndParamsFromHash(hash, this.routes);
-      const component = this.routes[route];
-      while (this.rootElement.childNodes.length) {
-        this.rootElement.removeChild(this.rootElement.firstChild);
-      }
       this.setParams(params);
-      this.setCurrentRoute(route);
-      this.rootElement.appendChild(component({ params, currentRoute: route }));
+      this.setCurrentRoute(this.routes[route]);
       if (reconstructedHash === '#!') {
         Router.removeHash();
       } else {
@@ -172,6 +168,7 @@
       // Todo: Maybe dispatch some kind of event
     }
     setCurrentRoute(route) {
+      console.log('setCurrentRoute: ', route);
       this.currentRoute = route;
     }
     static isProp = propsOrChild =>
@@ -179,39 +176,24 @@
         propsOrChild instanceof HTMLElement || typeof propsOrChild === 'string'
       );
 
-    provide = (component, observedAttributes, mapToProps) => {
-      const storeState = { ...this.state, dispatch: this.dispatch };
-      const storeProps = mapToProps ? mapToProps(storeState) : storeState;
-      const element = component(storeProps);
-      this.observers.push({
-        mapToProps,
-        component,
-        element,
-        observedAttributes,
-      });
-      return element;
-    };
-    /*provide = componentInstance => {
-      componentInstance.update({
+    /**
+     * @param {function({ params: Object.<string, string | number> }): void} observer
+     */
+    subscribe = observer => {
+      console.log('this.currentRoute: ', this.currentRoute);
+      observer({
         currentRoute: this.currentRoute,
         params: this.params,
       });
-      this.observers.push({ componentInstancecomponent, element, observedAttributes });
-      return componentInstance.element;
-    };*/
+      this.observers.push(observer);
+    };
 
     emit() {
-      this.observers.forEach(({ mapToProps, observer }) => {
+      this.observers.forEach(observer => {
         if (!observer)
           console.warn('Non-existing element registered as router observer');
 
-        const props = mapToProps({
-          currentRoute: this.currentRoute,
-          params: this.params,
-        });
-        Object.entries(props).forEach(([key, value]) => {
-          observer.setAttribute(key, value);
-        });
+        observer({ currentRoute: this.currentRoute, params: this.params });
       });
     }
   }
@@ -219,7 +201,20 @@
 
 <!-- Utils -->
 <script>
-  const div = () => document.createElement('div');
+  const div = (props = {}) => {
+    const element = document.createElement('div');
+    (props.children || []).forEach(child => {
+      element.appendChild(child);
+    });
+    element.update =
+      props.update ||
+      (props =>
+        element.childNodes.forEach(childNode => {
+          if (typeof childNode.update !== 'function') return;
+          childNode.update(childNode, props);
+        }));
+    return element;
+  };
 </script>
 
 <!-- Components -->
@@ -271,19 +266,13 @@
     return leftNavigator;
   };
 
-  const MainContainer = () => {
-    const mainContainer = div();
+  const MainContainer = (...props) => {
+    const mainContainer = div(...props);
     Object.assign(mainContainer.style, {
       height: 'calc(100% - 40px)',
       borderRadius: '10px 10px 0 0',
       background: 'white',
     });
-    mainContainer.appendChild(
-      LeftNavigator([
-        { name: 'Data sources', route: '/data-sources', isActive: true },
-        { name: 'Values', route: '/values', isActive: false },
-      ])
-    );
     return mainContainer;
   };
 
@@ -300,13 +289,51 @@
   };
   const ValuesView = () => {
     const valuesView = div();
-    valuesView.innerText = 'AnalyticView';
+    valuesView.innerText = 'ValuesView';
     return valuesView;
   };
   const AnalyticView = () => {
     const analyticsView = div();
     anayticsView.innerText = 'AnalyticView';
     return analyticsView;
+  };
+  const App = () => {
+    const element = div({
+      children: [
+        TopNavigator(),
+        MainContainer({
+          children: [
+            LeftNavigator([
+              { name: 'Data sources', route: '/data-sources', isActive: true },
+              { name: 'Values', route: '/values', isActive: false },
+            ]),
+            // Not sure I'm happy about this solution
+            div({
+              update: (element, { params, currentRoute }) => {
+                console.log('the current route: ', currentRoute);
+                element.innerHTML = '';
+                if (currentRoute === '/') {
+                  return element.appendChild(HomeView());
+                }
+                if (currentRoute === '/data-sources') {
+                  return element.appendChild(DataSourcesView());
+                }
+                if (currentRoute === '/values') {
+                  return element.appendChild(ValuesView());
+                }
+                if (currentRoute === '/analytics/<analyticId:string>') {
+                  return element.appendChild(AnalyticView());
+                }
+                element.appendChild(
+                  document.createTextNode('Route does not exist')
+                );
+              },
+            }),
+          ],
+        }),
+      ],
+    });
+    return element;
   };
 </script>
 
@@ -317,15 +344,23 @@
       margin: 0,
       height: '100%',
     });
-    const FIREBASE_API_KEY = 'AIzaSyCeGXLqw0MEwiSFHG1Wks1HfQHXRZoOuFY';
+    //const FIREBASE_API_KEY = 'AIzaSyCeGXLqw0MEwiSFHG1Wks1HfQHXRZoOuFY';
+    document.body.appendChild(App());
+    document.body.update = (_, props) =>
+      document.body.childNodes.forEach(childNode => {
+        if (typeof childNode.update === 'function') {
+          childNode.update(childNode, props);
+        }
+      });
 
     // Create router
-    const router = new Router(document.body);
-    router.setRoutes({
-      '/': HomeView,
-      '/data-sources': DataSourcesView,
-      '/values': ValuesView,
-      '/analytics/<analyticId:string>': AnalyticView,
-    });
+    const router = new Router();
+    router.setRoutes([
+      '/',
+      '/data-sources',
+      '/values',
+      '/analytics/<analyticId:string>',
+    ]);
+    router.subscribe(props => document.body.update(document.body, props));
   };
 </script>
