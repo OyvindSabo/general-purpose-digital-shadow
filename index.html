@@ -4,11 +4,13 @@
     /**
      * @param {HTMLElement} rootElement
      */
-    constructor() {
+    constructor(routes) {
       this.params = {};
       this.currentRoute = '';
       this.routes = {};
+      this.titles = {};
       this.observers = [];
+      this.setRoutes(routes);
       window.addEventListener('hashchange', () => {
         this.syncWithHash();
       });
@@ -136,10 +138,12 @@
      * @param {string} routes
      */
     setRoutes(routes) {
-      routes.forEach(route => {
+      Object.entries(routes).forEach(([route, title]) => {
         this.routes[route] = route;
+        this.titles[route] = title;
         if (route === '/') {
           this.routes[''] = route;
+          this.titles[''] = title;
         }
       });
       this.syncWithHash();
@@ -153,11 +157,13 @@
       } = Router.getRouteAndParamsFromHash(hash, this.routes);
       this.setParams(params);
       this.setCurrentRoute(this.routes[route]);
+      this.setCurrentTitle(this.titles[route]);
       if (reconstructedHash === '#!') {
         Router.removeHash();
       } else {
         location.hash = reconstructedHash;
       }
+      document.title = this.currentTitle;
       this.emit();
     }
     /**
@@ -172,6 +178,10 @@
       this.currentRoute = route;
     }
     getCurrentRoute = () => this.currentRoute;
+    setCurrentTitle(title) {
+      this.currentTitle = title;
+    }
+    getCurrentTitle = () => this.currentTitle;
     static isProp = propsOrChild =>
       !(
         propsOrChild instanceof HTMLElement || typeof propsOrChild === 'string'
@@ -266,11 +276,13 @@
       textAlign: 'center',
       marginTop: '15px',
       pointerEvents: 'none',
+      userSelect: 'none',
     });
     const Label = Styled(div, {
       fontSize: '15px',
       textAlign: 'center',
       pointerEvents: 'none',
+      userSelect: 'none',
     });
     const element = Button(Icon(text(icon)), Label(text(label)));
 
@@ -401,15 +413,14 @@
     //const FIREBASE_API_KEY = 'AIzaSyCeGXLqw0MEwiSFHG1Wks1HfQHXRZoOuFY';
 
     // Create router
-    const router = new Router();
-    router.setRoutes([
-      '/',
-      '/data-sources',
-      '/values',
-      '/analytics/<analyticId:string>',
-      '/dashboards',
-      '/alerts',
-    ]);
+    const router = new Router({
+      '/': 'Home',
+      '/data-sources': 'Data sources',
+      '/values': 'Values',
+      '/analytics/<analyticId:string>': 'Analytics',
+      '/dashboards': 'Dashboards',
+      '/alerts': 'Alerts',
+    });
 
     document.body.appendChild(
       App({ params: router.getParams, currentRoute: router.getCurrentRoute })
