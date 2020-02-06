@@ -265,6 +265,7 @@
       fontSize: '30px',
       textAlign: 'center',
       marginTop: '15px',
+      pointerEvents: 'none',
     });
     element.appendChild(iconElement);
 
@@ -272,6 +273,7 @@
     Object.assign(nameElement.style, {
       fontSize: '15px',
       textAlign: 'center',
+      pointerEvents: 'none',
     });
     element.appendChild(nameElement);
 
@@ -321,19 +323,27 @@
     const homeView = div();
     homeView.appendChild(TopNavigator());
     homeView.appendChild(MainContainer());
-    homeView.appendChild(document.createTextNode('HomeView'));
+    homeView.appendChild(text('HomeView'));
     return homeView;
   };
   const DataSourcesView = () => {
-    const element = div(document.createTextNode('DataSourcesView'));
+    const element = div(text('DataSourcesView'));
     return element;
   };
   const ValuesView = () => {
-    const element = div(document.createTextNode('ValuesView'));
+    const element = div(text('ValuesView'));
     return element;
   };
   const AnalyticView = () => {
-    const element = div(document.createTextNode('AnalyticsView'));
+    const element = div(text('AnalyticsView'));
+    return element;
+  };
+  const AlertsView = () => {
+    const element = div(text('AlertsView'));
+    return element;
+  };
+  const DashboardsView = () => {
+    const element = div(text('DashboardsView'));
     return element;
   };
   const App = ({ params, currentRoute }) => {
@@ -342,16 +352,28 @@
       MainContainer(
         LeftNavigator(
           LeftNavigatorButton({
-            icon: '⛁',
+            icon: '🏗',
             name: 'Data sources',
             route: '/data-sources',
             isActive: () => currentRoute() === '/data-sources',
           }),
           LeftNavigatorButton({
-            icon: '𝟙',
+            icon: '🧮',
             name: 'Values',
             route: '/values',
             isActive: () => currentRoute() === '/values',
+          }),
+          LeftNavigatorButton({
+            icon: '📊',
+            name: 'Dashboards',
+            route: '/dashboards',
+            isActive: () => currentRoute() === '/dashboards',
+          }),
+          LeftNavigatorButton({
+            icon: '⏰',
+            name: 'Alerts',
+            route: '/alerts',
+            isActive: () => currentRoute() === '/alerts',
           })
         ),
         // Not sure I'm happy about this solution
@@ -359,6 +381,8 @@
           if (currentRoute() === '/') return HomeView();
           if (currentRoute() === '/data-sources') return DataSourcesView();
           if (currentRoute() === '/values') return ValuesView();
+          if (currentRoute() === '/dashboards') return DashboardsView();
+          if (currentRoute() === '/alerts') return AlertsView();
           if (currentRoute() === '/analytics/<analyticId:string>')
             return AnalyticView();
           return document.createTextNode('Route does not exist');
@@ -386,6 +410,8 @@
       '/data-sources',
       '/values',
       '/analytics/<analyticId:string>',
+      '/dashboards',
+      '/alerts',
     ]);
 
     document.body.appendChild(
