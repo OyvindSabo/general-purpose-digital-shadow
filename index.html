@@ -339,8 +339,100 @@
     const element = div(text('DataSourcesView'));
     return element;
   };
+  // Fake values stream
+  const valuesStream = {
+    observers: [],
+    sourceValues: {
+      valueA: 1000,
+      valueB: 1000,
+      valueC: 1000,
+      valueD: 1000,
+    },
+    setSourceValues: newSourceValues => {
+      Object.assign(valuesStream.sourceValues, newSourceValues);
+      valuesStream.emit();
+    },
+    subscribe: observer => {
+      observer({
+        currentRoute: valuesStream.currentRoute,
+        params: valuesStream.params,
+      });
+      valuesStream.observers.push(observer);
+    },
+    emit: () =>
+      valuesStream.observers.forEach(observer => {
+        observer();
+      }),
+  };
+  // Regularly update dummy data
+  const updateValuesStream = () =>
+    setTimeout(() => {
+      valuesStream.setSourceValues({
+        valueA:
+          Math.floor(Math.random() * 2) == 1
+            ? valuesStream.sourceValues.valueA * 1.01
+            : valuesStream.sourceValues.valueA / 1.01,
+        valueB:
+          Math.floor(Math.random() * 2) == 1
+            ? valuesStream.sourceValues.valueB * 1.01
+            : valuesStream.sourceValues.valueB / 1.01,
+        valueC:
+          Math.floor(Math.random() * 2) == 1
+            ? valuesStream.sourceValues.valueC * 1.01
+            : valuesStream.sourceValues.valueC / 1.01,
+        valueD:
+          Math.floor(Math.random() * 2) == 1
+            ? valuesStream.sourceValues.valueD * 1.01
+            : valuesStream.sourceValues.valueD / 1.01,
+      });
+      updateValuesStream();
+    }, 100);
+  setTimeout(updateValuesStream);
+
+  const ValueBoxBox = Styled(div, {
+    height: '160px',
+    width: '240px',
+    overflow: 'hidden',
+    transition: '0.25s',
+    float: 'left',
+    color: 'Gray',
+    borderRight: '2px solid WhiteSmoke',
+  });
+
+  const ValueBoxLabel = Styled(div, {
+    marginTop: '30px',
+    fontSize: '30px',
+    textAlign: 'center',
+    pointerEvents: 'none',
+    userSelect: 'none',
+  });
+  const ValueBoxValue = ({ value }) => {
+    const element = Styled(div, {
+      fontSize: '60px',
+      textAlign: 'center',
+      pointerEvents: 'none',
+      userSelect: 'none',
+    })(text(value().toFixed(2)));
+    element.update = () => (element.innerText = value().toFixed(2));
+    return element;
+  };
+  const ValueBox = ({ value, label }) => {
+    const element = ValueBoxBox(
+      ValueBoxLabel(text(label())),
+      ValueBoxValue({ value })
+    );
+    return element;
+  };
   const ValuesView = () => {
-    const element = div(text('ValuesView'));
+    const sourceValues = valuesStream.sourceValues;
+    const element = div(
+      text('ValuesView'),
+      ValueBox({ value: () => sourceValues.valueA, label: () => 'valueA' }),
+      ValueBox({ value: () => sourceValues.valueB, label: () => 'valueB' }),
+      ValueBox({ value: () => sourceValues.valueC, label: () => 'valueC' }),
+      ValueBox({ value: () => sourceValues.valueD, label: () => 'valueD' })
+    );
+    valuesStream.subscribe(element.update);
     return element;
   };
   const AnalyticView = () => {
