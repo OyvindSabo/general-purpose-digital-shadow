@@ -217,6 +217,8 @@
     return element;
   };
 
+  const text = value => document.createTextNode(value);
+
   // Might not need this
   const propsHaveChanged = (previousProps, newProps) => {
     for (key of Object.keys(previousProps)) {
@@ -227,37 +229,16 @@
     false;
   };
 
-  const Replaceable = functionalComponent => props => {
-    const element = div(functionalComponent(props));
+  const Replaceable = functionalComponent => {
+    const element = div(functionalComponent());
     element.update = () => {
-      // TODO: SHould only be updated if the props have changed
-      console.log('updating replaceable');
+      // TODO: Somehow make this not have to update if it doesn't have to
+      // TODO: Accept that functionalComponent returns an array of hildren
       element.innerHTML = '';
-      element.appendChild(functionalComponent(props));
-      console.log('Replaceable element after appending child: ', element);
+      element.appendChild(functionalComponent());
     };
     return element;
   };
-
-  Object.assign(div(), {
-    update: function() {
-      this.innerHTML = '';
-      if (currentRoute() === '/') {
-        return this.appendChild(HomeView());
-      }
-      if (currentRoute() === '/data-sources') {
-        return this.appendChild(DataSourcesView());
-      }
-      if (currentRoute() === '/values') {
-        console.log('Showing values view');
-        return this.appendChild(ValuesView());
-      }
-      if (currentRoute() === '/analytics/<analyticId:string>') {
-        return this.appendChild(AnalyticView());
-      }
-      this.appendChild(document.createTextNode('Route does not exist'));
-    },
-  });
 </script>
 
 <!-- Components -->
@@ -269,26 +250,41 @@
     });
     return navigator;
   };
-  const LeftNavigatorButton = ({ name, route, isActive }) => {
+  const LeftNavigatorButton = ({ icon, name, route, isActive }) => {
+    console.log('name: ', name);
     const element = div();
-    element.previousProps = {
-      name,
-      route,
-      isActive,
-    };
     Object.assign(element.style, {
       height: '80px',
       width: '80px',
       overflow: 'hidden',
       transition: '0.25s',
     });
+
+    const iconElement = div(text(icon));
+    Object.assign(iconElement.style, {
+      fontSize: '30px',
+      textAlign: 'center',
+      marginTop: '15px',
+    });
+    element.appendChild(iconElement);
+
+    const nameElement = div(text(name));
+    Object.assign(nameElement.style, {
+      fontSize: '15px',
+      textAlign: 'center',
+    });
+    element.appendChild(nameElement);
+
     element.render = () => {
       element.style.background = isActive() ? 'WhiteSmoke' : 'initial';
+      element.style.color = isActive() ? 'DimGray' : 'Gray';
       element.onmouseenter = () => {
         element.style.background = 'WhiteSmoke';
+        element.style.color = 'DimGray';
       };
       element.onmouseleave = () => {
         element.style.background = isActive() ? 'WhiteSmoke' : 'initial';
+        element.style.color = isActive() ? 'DimGray' : 'Gray';
       };
       element.onclick = () => {
         location.hash = `#!${route}`;
@@ -297,9 +293,7 @@
     element.update = element.render;
     return element;
   };
-  /**
-   * @param {{ name: string; route: string; isActive: boolean; }[]} buttons
-   */
+
   const LeftNavigator = (...children) => {
     const leftNavigator = div(...children);
     Object.assign(leftNavigator.style, {
@@ -336,7 +330,6 @@
   };
   const ValuesView = () => {
     const element = div(document.createTextNode('ValuesView'));
-    console.log('ValuesView: element: ', element);
     return element;
   };
   const AnalyticView = () => {
@@ -349,25 +342,27 @@
       MainContainer(
         LeftNavigator(
           LeftNavigatorButton({
+            icon: '⛁',
             name: 'Data sources',
             route: '/data-sources',
             isActive: () => currentRoute() === '/data-sources',
           }),
           LeftNavigatorButton({
+            icon: '𝟙',
             name: 'Values',
             route: '/values',
             isActive: () => currentRoute() === '/values',
           })
         ),
         // Not sure I'm happy about this solution
-        Replaceable(({ currentRoute, params }) => {
+        Replaceable(() => {
           if (currentRoute() === '/') return HomeView();
           if (currentRoute() === '/data-sources') return DataSourcesView();
           if (currentRoute() === '/values') return ValuesView();
           if (currentRoute() === '/analytics/<analyticId:string>')
             return AnalyticView();
           return document.createTextNode('Route does not exist');
-        })({ currentRoute, params })
+        })
       )
     );
 
