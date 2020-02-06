@@ -217,6 +217,7 @@
     return element;
   };
 
+  // Might not need this
   const propsHaveChanged = (previousProps, newProps) => {
     for (key of Object.keys(previousProps)) {
       if (previousProps[key] !== newProps[key]) {
@@ -225,6 +226,38 @@
     }
     false;
   };
+
+  const Replaceable = functionalComponent => props => {
+    const element = div(functionalComponent(props));
+    element.update = () => {
+      // TODO: SHould only be updated if the props have changed
+      console.log('updating replaceable');
+      element.innerHTML = '';
+      element.appendChild(functionalComponent(props));
+      console.log('Replaceable element after appending child: ', element);
+    };
+    return element;
+  };
+
+  Object.assign(div(), {
+    update: function() {
+      this.innerHTML = '';
+      if (currentRoute() === '/') {
+        return this.appendChild(HomeView());
+      }
+      if (currentRoute() === '/data-sources') {
+        return this.appendChild(DataSourcesView());
+      }
+      if (currentRoute() === '/values') {
+        console.log('Showing values view');
+        return this.appendChild(ValuesView());
+      }
+      if (currentRoute() === '/analytics/<analyticId:string>') {
+        return this.appendChild(AnalyticView());
+      }
+      this.appendChild(document.createTextNode('Route does not exist'));
+    },
+  });
 </script>
 
 <!-- Components -->
@@ -275,12 +308,13 @@
       borderRadius: '10px 0 0 0',
       borderRight: '2px solid WhiteSmoke',
       overflow: 'hidden',
+      float: 'left',
     });
     return leftNavigator;
   };
 
-  const MainContainer = (...props) => {
-    const mainContainer = div(...props);
+  const MainContainer = (...children) => {
+    const mainContainer = div(...children);
     Object.assign(mainContainer.style, {
       height: 'calc(100% - 40px)',
       borderRadius: '10px 10px 0 0',
@@ -293,22 +327,21 @@
     const homeView = div();
     homeView.appendChild(TopNavigator());
     homeView.appendChild(MainContainer());
+    homeView.appendChild(document.createTextNode('HomeView'));
     return homeView;
   };
   const DataSourcesView = () => {
-    const dataSourcesView = div();
-    dataSourcesView.innerText = 'AnalyticView';
-    return dataSourcesView;
+    const element = div(document.createTextNode('DataSourcesView'));
+    return element;
   };
   const ValuesView = () => {
-    const valuesView = div();
-    valuesView.innerText = 'ValuesView';
-    return valuesView;
+    const element = div(document.createTextNode('ValuesView'));
+    console.log('ValuesView: element: ', element);
+    return element;
   };
   const AnalyticView = () => {
-    const analyticsView = div();
-    anayticsView.innerText = 'AnalyticView';
-    return analyticsView;
+    const element = div(document.createTextNode('AnalyticsView'));
+    return element;
   };
   const App = ({ params, currentRoute }) => {
     const element = div(
@@ -325,27 +358,16 @@
             route: '/values',
             isActive: () => currentRoute() === '/values',
           })
-        ) /*,
+        ),
         // Not sure I'm happy about this solution
-        div({
-          update: function({ params, currentRoute }) {
-            console.log('the current route: ', currentRoute);
-            this.innerHTML = '';
-            if (currentRoute === '/') {
-              return this.appendChild(HomeView());
-            }
-            if (currentRoute === '/data-sources') {
-              return this.appendChild(DataSourcesView());
-            }
-            if (currentRoute === '/values') {
-              return this.appendChild(ValuesView());
-            }
-            if (currentRoute === '/analytics/<analyticId:string>') {
-              return this.appendChild(AnalyticView());
-            }
-            this.appendChild(document.createTextNode('Route does not exist'));
-          },
-        })*/
+        Replaceable(({ currentRoute, params }) => {
+          if (currentRoute() === '/') return HomeView();
+          if (currentRoute() === '/data-sources') return DataSourcesView();
+          if (currentRoute() === '/values') return ValuesView();
+          if (currentRoute() === '/analytics/<analyticId:string>')
+            return AnalyticView();
+          return document.createTextNode('Route does not exist');
+        })({ currentRoute, params })
       )
     );
 
