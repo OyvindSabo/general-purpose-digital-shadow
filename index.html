@@ -167,10 +167,12 @@
       this.params = params;
       // Todo: Maybe dispatch some kind of event
     }
+    getParams = () => this.params;
     setCurrentRoute(route) {
       console.log('setCurrentRoute: ', route);
       this.currentRoute = route;
     }
+    getCurrentRoute = () => this.currentRoute;
     static isProp = propsOrChild =>
       !(
         propsOrChild instanceof HTMLElement || typeof propsOrChild === 'string'
@@ -188,6 +190,7 @@
       this.observers.push(observer);
     };
 
+    // Rather than passing data, this one should pass a string saying which attribute has been updated
     emit() {
       this.observers.forEach(observer => {
         if (!observer)
@@ -201,19 +204,26 @@
 
 <!-- Utils -->
 <script>
-  const div = (props = {}) => {
+  const div = (...children) => {
     const element = document.createElement('div');
-    (props.children || []).forEach(child => {
+    children.forEach(child => {
       element.appendChild(child);
     });
-    element.update =
-      props.update ||
-      (props =>
-        element.childNodes.forEach(childNode => {
-          if (typeof childNode.update !== 'function') return;
-          childNode.update(childNode, props);
-        }));
+    element.update = props =>
+      element.childNodes.forEach(childNode => {
+        if (typeof childNode.update !== 'function') return;
+        childNode.update(props);
+      });
     return element;
+  };
+
+  const propsHaveChanged = (previousProps, newProps) => {
+    for (key of Object.keys(previousProps)) {
+      if (previousProps[key] !== newProps[key]) {
+        return true;
+      }
+    }
+    false;
   };
 </script>
 
@@ -226,42 +236,45 @@
     });
     return navigator;
   };
-  const leftNavigatorButton = ({ name, route, isActive }) => {
-    const leftNavigatorButton = div();
-    Object.assign(leftNavigatorButton.style, {
+  const LeftNavigatorButton = ({ name, route, isActive }) => {
+    const element = div();
+    element.previousProps = {
+      name,
+      route,
+      isActive,
+    };
+    Object.assign(element.style, {
       height: '80px',
       width: '80px',
-      background: isActive ? 'WhiteSmoke' : 'initial',
       overflow: 'hidden',
       transition: '0.25s',
     });
-    leftNavigatorButton.onmouseenter = () => {
-      leftNavigatorButton.style.background = 'WhiteSmoke';
+    element.render = () => {
+      element.style.background = isActive() ? 'WhiteSmoke' : 'initial';
+      element.onmouseenter = () => {
+        element.style.background = 'WhiteSmoke';
+      };
+      element.onmouseleave = () => {
+        element.style.background = isActive() ? 'WhiteSmoke' : 'initial';
+      };
+      element.onclick = () => {
+        location.hash = `#!${route}`;
+      };
     };
-    leftNavigatorButton.onmouseleave = () => {
-      leftNavigatorButton.style.background = isActive
-        ? 'WhiteSmoke'
-        : 'initial';
-    };
-    leftNavigatorButton.onclick = () => {
-      location.hash = `#!${route}`;
-    };
-    return leftNavigatorButton;
+    element.update = element.render;
+    return element;
   };
   /**
    * @param {{ name: string; route: string; isActive: boolean; }[]} buttons
    */
-  const LeftNavigator = buttons => {
-    const leftNavigator = div();
+  const LeftNavigator = (...children) => {
+    const leftNavigator = div(...children);
     Object.assign(leftNavigator.style, {
       height: '100%',
       width: '80px',
       borderRadius: '10px 0 0 0',
       borderRight: '2px solid WhiteSmoke',
       overflow: 'hidden',
-    });
-    buttons.forEach(button => {
-      leftNavigator.appendChild(leftNavigatorButton(button));
     });
     return leftNavigator;
   };
@@ -297,42 +310,45 @@
     anayticsView.innerText = 'AnalyticView';
     return analyticsView;
   };
-  const App = () => {
-    const element = div({
-      children: [
-        TopNavigator(),
-        MainContainer({
-          children: [
-            LeftNavigator([
-              { name: 'Data sources', route: '/data-sources', isActive: true },
-              { name: 'Values', route: '/values', isActive: false },
-            ]),
-            // Not sure I'm happy about this solution
-            div({
-              update: (element, { params, currentRoute }) => {
-                console.log('the current route: ', currentRoute);
-                element.innerHTML = '';
-                if (currentRoute === '/') {
-                  return element.appendChild(HomeView());
-                }
-                if (currentRoute === '/data-sources') {
-                  return element.appendChild(DataSourcesView());
-                }
-                if (currentRoute === '/values') {
-                  return element.appendChild(ValuesView());
-                }
-                if (currentRoute === '/analytics/<analyticId:string>') {
-                  return element.appendChild(AnalyticView());
-                }
-                element.appendChild(
-                  document.createTextNode('Route does not exist')
-                );
-              },
-            }),
-          ],
-        }),
-      ],
-    });
+  const App = ({ params, currentRoute }) => {
+    const element = div(
+      TopNavigator(),
+      MainContainer(
+        LeftNavigator(
+          LeftNavigatorButton({
+            name: 'Data sources',
+            route: '/data-sources',
+            isActive: () => currentRoute() === '/data-sources',
+          }),
+          LeftNavigatorButton({
+            name: 'Values',
+            route: '/values',
+            isActive: () => currentRoute() === '/values',
+          })
+        ) /*,
+        // Not sure I'm happy about this solution
+        div({
+          update: function({ params, currentRoute }) {
+            console.log('the current route: ', currentRoute);
+            this.innerHTML = '';
+            if (currentRoute === '/') {
+              return this.appendChild(HomeView());
+            }
+            if (currentRoute === '/data-sources') {
+              return this.appendChild(DataSourcesView());
+            }
+            if (currentRoute === '/values') {
+              return this.appendChild(ValuesView());
+            }
+            if (currentRoute === '/analytics/<analyticId:string>') {
+              return this.appendChild(AnalyticView());
+            }
+            this.appendChild(document.createTextNode('Route does not exist'));
+          },
+        })*/
+      )
+    );
+
     return element;
   };
 </script>
@@ -345,13 +361,6 @@
       height: '100%',
     });
     //const FIREBASE_API_KEY = 'AIzaSyCeGXLqw0MEwiSFHG1Wks1HfQHXRZoOuFY';
-    document.body.appendChild(App());
-    document.body.update = (_, props) =>
-      document.body.childNodes.forEach(childNode => {
-        if (typeof childNode.update === 'function') {
-          childNode.update(childNode, props);
-        }
-      });
 
     // Create router
     const router = new Router();
@@ -361,6 +370,17 @@
       '/values',
       '/analytics/<analyticId:string>',
     ]);
-    router.subscribe(props => document.body.update(document.body, props));
+
+    document.body.appendChild(
+      App({ params: router.getParams, currentRoute: router.getCurrentRoute })
+    );
+    document.body.update = props =>
+      document.body.childNodes.forEach(childNode => {
+        if (typeof childNode.update === 'function') {
+          childNode.update(props);
+        }
+      });
+
+    router.subscribe(() => document.body.update());
   };
 </script>
