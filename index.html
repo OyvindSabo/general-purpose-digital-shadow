@@ -169,7 +169,6 @@
     }
     getParams = () => this.params;
     setCurrentRoute(route) {
-      console.log('setCurrentRoute: ', route);
       this.currentRoute = route;
     }
     getCurrentRoute = () => this.currentRoute;
@@ -182,7 +181,6 @@
      * @param {function({ params: Object.<string, string | number> }): void} observer
      */
     subscribe = observer => {
-      console.log('this.currentRoute: ', this.currentRoute);
       observer({
         currentRoute: this.currentRoute,
         params: this.params,
@@ -251,7 +249,6 @@
     return navigator;
   };
   const LeftNavigatorButton = ({ icon, name, route, isActive }) => {
-    console.log('name: ', name);
     const element = div();
     Object.assign(element.style, {
       height: '80px',
