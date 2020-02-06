@@ -237,6 +237,12 @@
     };
     return element;
   };
+
+  const Styled = (component, style) => (...children) => {
+    const element = component(...children);
+    Object.assign(element.style, style);
+    return element;
+  };
 </script>
 
 <!-- Components -->
@@ -248,31 +254,25 @@
     });
     return navigator;
   };
-  const LeftNavigatorButton = ({ icon, name, route, isActive }) => {
-    const element = div();
-    Object.assign(element.style, {
+  const LeftNavigatorButton = ({ icon, label, route, isActive }) => {
+    const Button = Styled(div, {
       height: '80px',
       width: '80px',
       overflow: 'hidden',
       transition: '0.25s',
     });
-
-    const iconElement = div(text(icon));
-    Object.assign(iconElement.style, {
+    const Icon = Styled(div, {
       fontSize: '30px',
       textAlign: 'center',
       marginTop: '15px',
       pointerEvents: 'none',
     });
-    element.appendChild(iconElement);
-
-    const nameElement = div(text(name));
-    Object.assign(nameElement.style, {
+    const Label = Styled(div, {
       fontSize: '15px',
       textAlign: 'center',
       pointerEvents: 'none',
     });
-    element.appendChild(nameElement);
+    const element = Button(Icon(text(icon)), Label(text(label)));
 
     element.render = () => {
       element.style.background = isActive() ? 'WhiteSmoke' : 'initial';
@@ -350,25 +350,25 @@
         LeftNavigator(
           LeftNavigatorButton({
             icon: '🏗',
-            name: 'Data sources',
+            label: 'Data sources',
             route: '/data-sources',
             isActive: () => currentRoute() === '/data-sources',
           }),
           LeftNavigatorButton({
             icon: '🧮',
-            name: 'Values',
+            label: 'Values',
             route: '/values',
             isActive: () => currentRoute() === '/values',
           }),
           LeftNavigatorButton({
             icon: '📊',
-            name: 'Dashboards',
+            label: 'Dashboards',
             route: '/dashboards',
             isActive: () => currentRoute() === '/dashboards',
           }),
           LeftNavigatorButton({
             icon: '⏰',
-            name: 'Alerts',
+            label: 'Alerts',
             route: '/alerts',
             isActive: () => currentRoute() === '/alerts',
           })
