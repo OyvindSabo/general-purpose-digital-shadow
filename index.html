@@ -215,17 +215,37 @@
   const div = (...children) => {
     const element = document.createElement('div');
     children.forEach(child => {
-      element.appendChild(child);
+      const childNode =
+        typeof child === 'string' ? document.createTextNode(child) : child;
+      element.appendChild(childNode);
     });
     element.update = props =>
       element.childNodes.forEach(childNode => {
         if (typeof childNode.update !== 'function') return;
         childNode.update(props);
       });
+    element.children;
+    element.state = {};
+    element.initState = initialState => {
+      Object.assign(element.state, initialState);
+      return element;
+    };
+    element.staticChildren = (...staticChildren) => {
+      staticChildren.forEach(staticChild => {
+        const staticChildNode =
+          typeof staticChild === 'string'
+            ? document.createTextNode(staticChild)
+            : staticChild;
+        element.appendChild(staticChild);
+      });
+      return element;
+    };
+    element.setState = newState => {
+      Object.assign(element.state, newState);
+      element.update();
+    };
     return element;
   };
-
-  const text = value => document.createTextNode(value);
 
   // Might not need this
   const propsHaveChanged = (previousProps, newProps) => {
@@ -284,7 +304,7 @@
       pointerEvents: 'none',
       userSelect: 'none',
     });
-    const element = Button(Icon(text(icon)), Label(text(label)));
+    const element = Button(Icon(icon), Label(label));
 
     element.render = () => {
       element.style.background = isActive() ? 'WhiteSmoke' : 'initial';
@@ -332,11 +352,11 @@
     const homeView = div();
     homeView.appendChild(TopNavigator());
     homeView.appendChild(MainContainer());
-    homeView.appendChild(text('HomeView'));
+    homeView.appendChild('HomeView');
     return homeView;
   };
   const DataSourcesView = () => {
-    const element = div(text('DataSourcesView'));
+    const element = div('DataSourcesView');
     return element;
   };
   // Fake values stream
@@ -412,39 +432,96 @@
       textAlign: 'center',
       pointerEvents: 'none',
       userSelect: 'none',
-    })(text(value().toFixed(2)));
+    })(value().toFixed(2));
     element.update = () => (element.innerText = value().toFixed(2));
     return element;
   };
   const ValueBox = ({ value, label }) => {
     const element = ValueBoxBox(
-      ValueBoxLabel(text(label())),
+      ValueBoxLabel(label()),
       ValueBoxValue({ value })
     );
+    return element;
+  };
+
+  const NewValueBoxBox = Styled(div, {
+    height: '160px',
+    width: '240px',
+    overflow: 'hidden',
+    transition: '0.25s',
+    float: 'left',
+    color: 'Gray',
+    borderRight: '2px solid WhiteSmoke',
+    cursor: 'pointer',
+  });
+
+  const NewValueBoxValue = ({ isHovered }) => {
+    const element = Styled(div, {
+      fontSize: '60px',
+      textAlign: 'center',
+      pointerEvents: 'none',
+      userSelect: 'none',
+      transition: '0.25s',
+    })('+');
+    element.update = () => {
+      element.style.transform = `rotate(${isHovered() ? 90 : 0}deg)`;
+    };
+    return element;
+  };
+  const NewValueBox = ({ value, label }) => {
+    const element = NewValueBoxBox()
+      .initState({ hovered: false })
+      .staticChildren(
+        ValueBoxLabel(label()),
+        NewValueBoxValue({ isHovered: () => element.state.isHovered })
+      );
+    element.onmouseenter = () => {
+      element.style.background = 'WhiteSmoke';
+      element.style.color = 'DimGray';
+      element.setState({ isHovered: true });
+    };
+    element.onmouseleave = () => {
+      element.style.background = 'initial';
+      element.style.color = 'Gray';
+      element.setState({ isHovered: false });
+    };
     return element;
   };
   const ValuesView = () => {
     const sourceValues = valuesStream.sourceValues;
     const element = div(
-      text('ValuesView'),
-      ValueBox({ value: () => sourceValues.valueA, label: () => 'valueA' }),
-      ValueBox({ value: () => sourceValues.valueB, label: () => 'valueB' }),
-      ValueBox({ value: () => sourceValues.valueC, label: () => 'valueC' }),
-      ValueBox({ value: () => sourceValues.valueD, label: () => 'valueD' })
+      'ValuesView',
+      ValueBox({
+        value: () => sourceValues.valueA,
+        label: () => 'valueA',
+      }),
+      ValueBox({
+        value: () => sourceValues.valueB,
+        label: () => 'valueB',
+      }),
+      ValueBox({
+        value: () => sourceValues.valueC,
+        label: () => 'valueC',
+      }),
+      ValueBox({
+        value: () => sourceValues.valueD,
+        label: () => 'valueD',
+      }),
+      NewValueBox({ value: () => '+', label: () => 'New value' })
     );
     valuesStream.subscribe(element.update);
     return element;
   };
   const AnalyticView = () => {
-    const element = div(text('AnalyticsView'));
+    const element = div('AnalyticsView');
     return element;
   };
   const AlertsView = () => {
-    const element = div(text('AlertsView'));
+    const element = div('AlertsView');
     return element;
   };
   const DashboardsView = () => {
-    const element = div(text('DashboardsView'));
+    const element = div('DashboardsView');
     return element;
   };
   const App = ({ params, currentRoute }) => {
