@@ -225,17 +225,22 @@
         childNode.update();
       });
     element.update = element._defaultUpdate;
-    element.initStyle = styleObject => {
+    element.setStyle = styleObject => {
       Object.assign(element.style, styleObject);
       return element;
     };
     element.state = {};
+    // initState is just like setState, except it does not call element.update
     element.initState = initialState => {
       Object.assign(element.state, initialState);
       return element;
     };
     element.initChildren = (...children) => {
-      children.forEach(child => {
+      children.forEach(childOrFunction => {
+        const child =
+          typeof childOrFunction === 'function'
+            ? childOrFunction(element)
+            : childOrFunction;
         const childNode =
           typeof child === 'string' ? document.createTextNode(child) : child;
         element.appendChild(child);
@@ -251,6 +256,14 @@
         updateCallback(element);
         element._defaultUpdate();
       };
+      return element;
+    };
+    element.onMouseEnter = mouseEnterCallback => {
+      element.onmouseenter = () => mouseEnterCallback(element);
+      return element;
+    };
+    element.onMouseLeave = mouseLeaveCallback => {
+      element.onmouseleave = () => mouseLeaveCallback(element);
       return element;
     };
     return element;
@@ -275,12 +288,12 @@
     });
 
   const Styled = (component, style) => (...children) =>
-    component(...children).initStyle(style);
+    component(...children).setStyle(style);
 </script>
 
 <!-- Components -->
 <script>
-  const TopNavigator = () => div().initStyle({ height: '40px' });
+  const TopNavigator = () => div().setStyle({ height: '40px' });
 
   const LeftNavigatorButton = ({ icon, label, route, isActive }) => {
     const Button = Styled(div, {
@@ -321,7 +334,7 @@
   };
 
   const LeftNavigator = (...children) =>
-    div(...children).initStyle({
+    div(...children).setStyle({
       height: '100%',
       width: '80px',
       borderRadius: '10px 0 0 0',
@@ -331,7 +344,7 @@
     });
 
   const MainContainer = (...children) =>
-    div(...children).initStyle({
+    div(...children).setStyle({
       height: 'calc(100% - 40px)',
       borderRadius: '10px 10px 0 0',
       background: 'white',
@@ -408,16 +421,18 @@
     pointerEvents: 'none',
     userSelect: 'none',
   });
-  const ValueBoxValue = ({ value }) => {
-    const element = div(value().toFixed(2)).initStyle({
-      fontSize: '60px',
-      textAlign: 'center',
-      pointerEvents: 'none',
-      userSelect: 'none',
-    });
-    element.update = () => (element.innerText = value().toFixed(2));
-    return element;
-  };
+  const ValueBoxValue = ({ value }) =>
+    div(value().toFixed(2))
+      .setStyle({
+        fontSize: '60px',
+        textAlign: 'center',
+        pointerEvents: 'none',
+        userSelect: 'none',
+      })
+      .onUpdate(element => {
+        element.innerText = value().toFixed(2);
+      });
+
   const ValueBox = ({ value, label }) =>
     ValueBoxBox(ValueBoxLabel(label()), ValueBoxValue({ value }));
 
@@ -445,26 +460,24 @@
     };
     return element;
   };
-  const NewValueBox = ({ value, label }) => {
-    // See if I can find a way to not have to define element here
-    const element = NewValueBoxBox()
+  const NewValueBox = ({ value, label }) =>
+    NewValueBoxBox()
       .initState({ hovered: false })
-      .initChildren(
-        ValueBoxLabel(label()),
-        NewValueBoxValue({ isHovered: () => element.state.isHovered })
-      );
-    element.onmouseenter = () => {
-      element.style.background = 'WhiteSmoke';
-      element.style.color = 'DimGray';
-      element.setState({ isHovered: true });
-    };
-    element.onmouseleave = () => {
-      element.style.background = 'initial';
-      element.style.color = 'Gray';
-      element.setState({ isHovered: false });
-    };
-    return element;
-  };
+      .initChildren(ValueBoxLabel(label()), element =>
+        NewValueBoxValue({
+          isHovered: () => element.state.isHovered,
+        })
+      )
+      .onMouseEnter(element => {
+        element
+          .setStyle({ background: 'WhiteSmoke', color: 'DimGray' })
+          .setState({ isHovered: true });
+      })
+      .onMouseLeave(element => {
+        element
+          .setStyle({ background: 'initial', color: 'Gray' })
+          .setState({ isHovered: false });
+      });
   const ValuesView = () => {
     const sourceValues = valuesStream.sourceValues;
     const element = div(
