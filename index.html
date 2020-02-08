@@ -219,30 +219,39 @@
         typeof child === 'string' ? document.createTextNode(child) : child;
       element.appendChild(childNode);
     });
-    element.update = props =>
+    element._defaultUpdate = () =>
       element.childNodes.forEach(childNode => {
         if (typeof childNode.update !== 'function') return;
-        childNode.update(props);
+        childNode.update();
       });
-    element.children;
+    element.update = element._defaultUpdate;
+    element.initStyle = styleObject => {
+      Object.assign(element.style, styleObject);
+      return element;
+    };
     element.state = {};
     element.initState = initialState => {
       Object.assign(element.state, initialState);
       return element;
     };
-    element.staticChildren = (...staticChildren) => {
-      staticChildren.forEach(staticChild => {
-        const staticChildNode =
-          typeof staticChild === 'string'
-            ? document.createTextNode(staticChild)
-            : staticChild;
-        element.appendChild(staticChild);
+    element.initChildren = (...children) => {
+      children.forEach(child => {
+        const childNode =
+          typeof child === 'string' ? document.createTextNode(child) : child;
+        element.appendChild(child);
       });
       return element;
     };
     element.setState = newState => {
       Object.assign(element.state, newState);
       element.update();
+    };
+    element.onUpdate = updateCallback => {
+      element.update = () => {
+        updateCallback(element);
+        element._defaultUpdate();
+      };
+      return element;
     };
     return element;
   };
@@ -257,33 +266,22 @@
     false;
   };
 
-  const Replaceable = functionalComponent => {
-    const element = div(functionalComponent());
-    element.update = () => {
+  const Replaceable = functionalComponent =>
+    div(functionalComponent()).onUpdate(element => {
       // TODO: Somehow make this not have to update if it doesn't have to
       // TODO: Accept that functionalComponent returns an array of hildren
       element.innerHTML = '';
       element.appendChild(functionalComponent());
-    };
-    return element;
-  };
+    });
 
-  const Styled = (component, style) => (...children) => {
-    const element = component(...children);
-    Object.assign(element.style, style);
-    return element;
-  };
+  const Styled = (component, style) => (...children) =>
+    component(...children).initStyle(style);
 </script>
 
 <!-- Components -->
 <script>
-  const TopNavigator = () => {
-    const navigator = div();
-    Object.assign(navigator.style, {
-      height: '40px',
-    });
-    return navigator;
-  };
+  const TopNavigator = () => div().initStyle({ height: '40px' });
+
   const LeftNavigatorButton = ({ icon, label, route, isActive }) => {
     const Button = Styled(div, {
       height: '80px',
@@ -304,9 +302,7 @@
       pointerEvents: 'none',
       userSelect: 'none',
     });
-    const element = Button(Icon(icon), Label(label));
-
-    element.render = () => {
+    return Button(Icon(icon), Label(label)).onUpdate(element => {
       element.style.background = isActive() ? 'WhiteSmoke' : 'initial';
       element.style.color = isActive() ? 'DimGray' : 'Gray';
       element.onmouseenter = () => {
@@ -320,14 +316,11 @@
       element.onclick = () => {
         location.hash = `#!${route}`;
       };
-    };
-    element.update = element.render;
-    return element;
+    });
   };
 
-  const LeftNavigator = (...children) => {
-    const leftNavigator = div(...children);
-    Object.assign(leftNavigator.style, {
+  const LeftNavigator = (...children) =>
+    div(...children).initStyle({
       height: '100%',
       width: '80px',
       borderRadius: '10px 0 0 0',
@@ -335,30 +328,18 @@
       overflow: 'hidden',
       float: 'left',
     });
-    return leftNavigator;
-  };
 
-  const MainContainer = (...children) => {
-    const mainContainer = div(...children);
-    Object.assign(mainContainer.style, {
+  const MainContainer = (...children) =>
+    div(...children).initStyle({
       height: 'calc(100% - 40px)',
       borderRadius: '10px 10px 0 0',
       background: 'white',
     });
-    return mainContainer;
-  };
 
-  const HomeView = () => {
-    const homeView = div();
-    homeView.appendChild(TopNavigator());
-    homeView.appendChild(MainContainer());
-    homeView.appendChild('HomeView');
-    return homeView;
-  };
-  const DataSourcesView = () => {
-    const element = div('DataSourcesView');
-    return element;
-  };
+  const HomeView = () => div('HomeView');
+
+  const DataSourcesView = () => div('DataSourcesView');
+
   // Fake values stream
   const valuesStream = {
     observers: [],
@@ -427,22 +408,17 @@
     userSelect: 'none',
   });
   const ValueBoxValue = ({ value }) => {
-    const element = Styled(div, {
+    const element = div(value().toFixed(2)).initStyle({
       fontSize: '60px',
       textAlign: 'center',
       pointerEvents: 'none',
       userSelect: 'none',
-    })(value().toFixed(2));
+    });
     element.update = () => (element.innerText = value().toFixed(2));
     return element;
   };
-  const ValueBox = ({ value, label }) => {
-    const element = ValueBoxBox(
-      ValueBoxLabel(label()),
-      ValueBoxValue({ value })
-    );
-    return element;
-  };
+  const ValueBox = ({ value, label }) =>
+    ValueBoxBox(ValueBoxLabel(label()), ValueBoxValue({ value }));
 
   const NewValueBoxBox = Styled(div, {
     height: '160px',
@@ -469,9 +445,10 @@
     return element;
   };
   const NewValueBox = ({ value, label }) => {
+    // See if I can find a way to not have to define element here
     const element = NewValueBoxBox()
       .initState({ hovered: false })
-      .staticChildren(
+      .initChildren(
         ValueBoxLabel(label()),
         NewValueBoxValue({ isHovered: () => element.state.isHovered })
       );
@@ -529,6 +506,7 @@
       TopNavigator(),
       MainContainer(
         LeftNavigator(
+          // Add something for home as well
           LeftNavigatorButton({
             icon: '🏗',
             label: 'Data sources',
@@ -563,7 +541,7 @@
           if (currentRoute() === '/alerts') return AlertsView();
           if (currentRoute() === '/analytics/<analyticId:string>')
             return AnalyticView();
-          return document.createTextNode('Route does not exist');
+          return 'Route does not exist';
         })
       )
     );
