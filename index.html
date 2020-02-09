@@ -363,6 +363,12 @@
       valueC: 1000,
       valueD: 1000,
     },
+    derivedValues: {
+      'valueA + valueB': {
+        dependsOn: { sourceValues: ['valueA', 'valueB'], derivedValues: [] },
+        calculation: '({ valueA, valueB }) => valueA + valueB',
+      },
+    },
     setSourceValues: newSourceValues => {
       Object.assign(valuesStream.sourceValues, newSourceValues);
       valuesStream.emit();
@@ -478,8 +484,24 @@
           .setStyle({ background: 'initial', color: 'Gray' })
           .setState({ isHovered: false });
       });
+
+  const calculateDerivedValue = (valuesStream, valueName) => {
+    const { dependsOn, calculation } = valuesStream.derivedValues[valueName];
+    return eval(
+      `${
+        Object.entries(valuesStream.sourceValues)
+          .map(([name, value]) => `${name} = ${value};`)
+          .join('') /* 'valueA = 4; valueB = 5;'*/
+      }
+          (${calculation})({${[
+        ...dependsOn.sourceValues,
+        ...dependsOn.derivedValues,
+      ].join(', ')}})`
+    );
+  };
+
   const ValuesView = () => {
-    const sourceValues = valuesStream.sourceValues;
+    const { sourceValues, derivedValues } = valuesStream;
     const element = div(
       'ValuesView',
       ValueBox({
@@ -498,7 +520,16 @@
         value: () => sourceValues.valueD,
         label: () => 'valueD',
       }),
-      NewValueBox({ value: () => '+', label: () => 'New value' })
+      ...Object.keys(derivedValues).map(key =>
+        ValueBox({
+          value: () => calculateDerivedValue(valuesStream, key),
+          label: () => key,
+        })
+      ),
+      NewValueBox({
+        value: () => '+',
+        label: () => 'New value',
+      })
     );
     valuesStream.subscribe(element.update);
     return element;
