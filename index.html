@@ -217,11 +217,16 @@
       ? document.createTextNode(textOrNode)
       : textOrNode;
 
+  const appendChild = (element, child) => {
+    if (!child) return;
+    element.appendChild(child);
+  };
+
   const div = (...children) => {
     const element = document.createElement('div');
     children.forEach(child => {
       const childNode = handleText(child);
-      element.appendChild(childNode);
+      appendChild(element, childNode);
     });
     element._defaultUpdate = () =>
       element.childNodes.forEach(childNode => {
@@ -240,13 +245,13 @@
       return element;
     };
     element.initChildren = (...children) => {
-      children.forEach(childOrFunction => {
+      children.filter(Boolean).forEach(childOrFunction => {
         const child =
           typeof childOrFunction === 'function'
             ? childOrFunction(element)
             : childOrFunction;
         const childNode = handleText(child);
-        element.appendChild(childNode);
+        appendChild(element, childNode);
       });
       return element;
     };
@@ -291,7 +296,7 @@
       // TODO: Somehow make this not have to update if it doesn't have to
       // TODO: Accept that functionalComponent returns an array of hildren
       element.innerHTML = '';
-      element.appendChild(functionalComponent());
+      appendChild(element, functionalComponent());
     });
 
   const If = (fnCondition, fnThenComponent, fnElseComponent = () => null) =>
@@ -300,7 +305,8 @@
         // TODO: Somehow make this not have to update if it doesn't have to
         // TODO: Accept that functionalComponent returns an array of hildren
         element.innerHTML = '';
-        element.appendChild(
+        appendChild(
+          element,
           fnCondition()
             ? handleText(fnThenComponent())
             : handleText(fnElseComponent())
@@ -453,6 +459,7 @@
       .onUpdate(element => {
         element.innerText = fnLabel();
       });
+
   const ValueBoxValue = ({ value }) =>
     div(value().toFixed(2))
       .setStyle({
@@ -564,8 +571,7 @@
         element =>
           If(
             () => element.state.isEditingValue,
-            () => 'Is editing value',
-            () => 'Is not editing value'
+            () => 'Is editing value'
           )
       );
     valuesStream.subscribe(element.update);
