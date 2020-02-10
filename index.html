@@ -266,6 +266,10 @@
       };
       return element;
     };
+    element.onInput = inputCallback => {
+      element.oninput = event => inputCallback(element, event);
+      return element;
+    };
     element.onMouseEnter = mouseEnterCallback => {
       element.onmouseenter = () => mouseEnterCallback(element);
       return element;
@@ -408,6 +412,11 @@
       Object.assign(valuesStream.sourceValues, newSourceValues);
       valuesStream.emit();
     },
+    setDerivedValues: newDerivedValues => {
+      Object.assign(valuesStream.derivedValues, newDerivedValues);
+      console.log('valuesStream.derivedValues: ', valuesStream.derivedValues);
+      valuesStream.emit();
+    },
     subscribe: observer => {
       observer({
         currentRoute: valuesStream.currentRoute,
@@ -535,31 +544,53 @@
           .join('') /* 'valueA = 4; valueB = 5;'*/
       }
           (${calculation})({${[
-        ...dependsOn.sourceValues,
-        ...dependsOn.derivedValues,
+        ...Object.keys(
+          valuesStream.sourceValues
+        ) /* Here we should maybe for simplicity pass all arguments which are not the one we are calculating? */ /*,
+        ...dependsOn.derivedValues,*/,
       ].join(', ')}})`
     );
   };
 
-  const CodeEditor = () =>
-    div(
-      div(
-        input().setStyle({ width: '720px', height: '40px', fontSize: '20px' }),
-        button('Save').setStyle({
-          background: 'CornflowerBlue',
-          color: 'white',
-          width: '240px',
-          height: '40px',
-          fontSize: '20px',
-        })
-      ),
-      div(
-        textArea().setStyle({
-          width: '960px',
-          height: '240px',
-        })
-      )
-    );
+  const CodeEditor = ({ onSave }) =>
+    div()
+      .initState({ name: '', calculation: '' })
+      .initChildren(
+        element =>
+          div(
+            input()
+              .setStyle({ width: '720px', height: '40px', fontSize: '20px' })
+              .onInput((_, event) =>
+                element.setState({ name: event.target.value })
+              ),
+            button('Save')
+              .setStyle({
+                background: 'CornflowerBlue',
+                color: 'white',
+                width: '240px',
+                height: '40px',
+                fontSize: '20px',
+              })
+              .onClick(() =>
+                onSave({
+                  [element.state.name]: {
+                    calculation: element.state.calculation,
+                  },
+                })
+              )
+          ),
+        element =>
+          div(
+            textArea()
+              .setStyle({
+                width: '960px',
+                height: '240px',
+              })
+              .onInput((_, event) =>
+                element.setState({ calculation: event.target.value })
+              )
+          )
+      );
 
   const ValuesView = () => {
     const { sourceValues, derivedValues } = valuesStream;
@@ -584,11 +615,15 @@
               value: () => sourceValues.valueD,
               label: () => 'valueD',
             }),
-            ...Object.keys(derivedValues).map(key =>
-              ValueBox({
-                value: () => calculateDerivedValue(valuesStream, key),
-                label: () => key,
-              })
+            Replaceable(() =>
+              div(
+                ...Object.keys(derivedValues).map(key =>
+                  ValueBox({
+                    value: () => calculateDerivedValue(valuesStream, key),
+                    label: () => key,
+                  })
+                )
+              )
             ),
             NewValueBox({
               label: () =>
@@ -603,7 +638,13 @@
           div(
             If(
               () => element.state.isEditingValue,
-              () => CodeEditor()
+              () =>
+                CodeEditor({
+                  onSave: derivedValue => {
+                    valuesStream.setDerivedValues(derivedValue);
+                    element.setState({ isEditingValue: false });
+                  },
+                })
             )
           )
       );
