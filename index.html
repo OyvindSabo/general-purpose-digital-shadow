@@ -243,7 +243,7 @@
             : childOrFunction;
         const childNode =
           typeof child === 'string' ? document.createTextNode(child) : child;
-        element.appendChild(child);
+        element.appendChild(childNode);
       });
       return element;
     };
@@ -502,7 +502,7 @@
 
   const ValuesView = () => {
     const { sourceValues, derivedValues } = valuesStream;
-    const element = div(
+    const element = div().initChildren(
       'ValuesView',
       ValueBox({
         value: () => sourceValues.valueA,
