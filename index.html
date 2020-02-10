@@ -212,11 +212,15 @@
 
 <!-- Utils -->
 <script>
+  const handleText = textOrNode =>
+    typeof textOrNode === 'string'
+      ? document.createTextNode(textOrNode)
+      : textOrNode;
+
   const div = (...children) => {
     const element = document.createElement('div');
     children.forEach(child => {
-      const childNode =
-        typeof child === 'string' ? document.createTextNode(child) : child;
+      const childNode = handleText(child);
       element.appendChild(childNode);
     });
     element._defaultUpdate = () =>
@@ -241,8 +245,7 @@
           typeof childOrFunction === 'function'
             ? childOrFunction(element)
             : childOrFunction;
-        const childNode =
-          typeof child === 'string' ? document.createTextNode(child) : child;
+        const childNode = handleText(child);
         element.appendChild(childNode);
       });
       return element;
@@ -266,6 +269,10 @@
       element.onmouseleave = () => mouseLeaveCallback(element);
       return element;
     };
+    element.onClick = clickCallback => {
+      element.onclick = () => clickCallback(element);
+      return element;
+    };
     return element;
   };
 
@@ -286,6 +293,20 @@
       element.innerHTML = '';
       element.appendChild(functionalComponent());
     });
+
+  const If = (fnCondition, fnThenComponent, fnElseComponent = () => null) =>
+    div(fnCondition() ? fnThenComponent() : fnElseComponent()).onUpdate(
+      element => {
+        // TODO: Somehow make this not have to update if it doesn't have to
+        // TODO: Accept that functionalComponent returns an array of hildren
+        element.innerHTML = '';
+        element.appendChild(
+          fnCondition()
+            ? handleText(fnThenComponent())
+            : handleText(fnElseComponent())
+        );
+      }
+    );
 
   const Styled = (component, style) => (...children) =>
     component(...children).setStyle(style);
@@ -420,13 +441,18 @@
     borderRight: '2px solid WhiteSmoke',
   });
 
-  const ValueBoxLabel = Styled(div, {
-    marginTop: '30px',
-    fontSize: '30px',
-    textAlign: 'center',
-    pointerEvents: 'none',
-    userSelect: 'none',
-  });
+  const ValueBoxLabel = fnLabel =>
+    div(fnLabel())
+      .setStyle({
+        marginTop: '30px',
+        fontSize: '30px',
+        textAlign: 'center',
+        pointerEvents: 'none',
+        userSelect: 'none',
+      })
+      .onUpdate(element => {
+        element.innerText = fnLabel();
+      });
   const ValueBoxValue = ({ value }) =>
     div(value().toFixed(2))
       .setStyle({
@@ -440,7 +466,7 @@
       });
 
   const ValueBox = ({ value, label }) =>
-    ValueBoxBox(ValueBoxLabel(label()), ValueBoxValue({ value }));
+    ValueBoxBox(ValueBoxLabel(label), ValueBoxValue({ value }));
 
   const NewValueBoxBox = Styled(div, {
     height: '160px',
@@ -466,10 +492,10 @@
     };
     return element;
   };
-  const NewValueBox = ({ value, label }) =>
+  const NewValueBox = ({ label }) =>
     NewValueBoxBox()
       .initState({ hovered: false })
-      .initChildren(ValueBoxLabel(label()), element =>
+      .initChildren(ValueBoxLabel(label), element =>
         NewValueBoxValue({
           isHovered: () => element.state.isHovered,
         })
@@ -502,35 +528,46 @@
 
   const ValuesView = () => {
     const { sourceValues, derivedValues } = valuesStream;
-    const element = div().initChildren(
-      'ValuesView',
-      ValueBox({
-        value: () => sourceValues.valueA,
-        label: () => 'valueA',
-      }),
-      ValueBox({
-        value: () => sourceValues.valueB,
-        label: () => 'valueB',
-      }),
-      ValueBox({
-        value: () => sourceValues.valueC,
-        label: () => 'valueC',
-      }),
-      ValueBox({
-        value: () => sourceValues.valueD,
-        label: () => 'valueD',
-      }),
-      ...Object.keys(derivedValues).map(key =>
+    const element = div()
+      .initState({ isEditingValue: false })
+      .initChildren(
+        'ValuesView',
         ValueBox({
-          value: () => calculateDerivedValue(valuesStream, key),
-          label: () => key,
-        })
-      ),
-      NewValueBox({
-        value: () => '+',
-        label: () => 'New value',
-      })
-    );
+          value: () => sourceValues.valueA,
+          label: () => 'valueA',
+        }),
+        ValueBox({
+          value: () => sourceValues.valueB,
+          label: () => 'valueB',
+        }),
+        ValueBox({
+          value: () => sourceValues.valueC,
+          label: () => 'valueC',
+        }),
+        ValueBox({
+          value: () => sourceValues.valueD,
+          label: () => 'valueD',
+        }),
+        ...Object.keys(derivedValues).map(key =>
+          ValueBox({
+            value: () => calculateDerivedValue(valuesStream, key),
+            label: () => key,
+          })
+        ),
+        element =>
+          NewValueBox({
+            label: () =>
+              element.state.isEditingValue ? 'Cancel' : 'New value',
+          }).onClick(() =>
+            element.setState({ isEditingValue: !element.state.isEditingValue })
+          ),
+        element =>
+          If(
+            () => element.state.isEditingValue,
+            () => 'Is editing value',
+            () => 'Is not editing value'
+          )
+      );
     valuesStream.subscribe(element.update);
     return element;
   };
