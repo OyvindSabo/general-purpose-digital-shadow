@@ -300,6 +300,7 @@
     false;
   };
 
+  // functionalComponent returns one node
   const Replaceable = functionalComponent =>
     div(functionalComponent()).onUpdate(element => {
       // TODO: Somehow make this not have to update if it doesn't have to
@@ -307,6 +308,17 @@
       element.innerHTML = '';
       appendChild(element, functionalComponent());
     });
+
+  // functionalComponent returns an array of nodes
+  const Replaceables = functionalComponent =>
+    div(...functionalComponent())
+      .setStyle({ display: 'inline-block' })
+      .onUpdate(element => {
+        // TODO: Somehow make this not have to update if it doesn't have to
+        // TODO: Accept that functionalComponent returns an array of hildren
+        element.innerHTML = '';
+        functionalComponent().forEach(child => appendChild(element, child));
+      });
 
   const If = (fnCondition, fnThenComponent, fnElseComponent = () => null) => {
     const condition = fnCondition();
@@ -391,7 +403,57 @@
 
   const HomeView = () => div('HomeView');
 
-  const DataSourcesView = () => div('DataSourcesView');
+  class Observable {
+    constructor(value) {
+      this._id = `${+new Date()}`;
+      this._value = value;
+    }
+    emit() {
+      console.log('event dispatched: ', this._id);
+      window.dispatchEvent(
+        new CustomEvent(this._id, {
+          detail: this._value,
+        })
+      );
+    }
+    get id() {
+      return this._id;
+    }
+    get value() {
+      return this._value;
+    }
+    set value(value) {
+      this._value = value;
+      console.log('set count.value to : ', this._value);
+      this.emit();
+    }
+  }
+
+  const div$ = observable => {
+    const element = div();
+    element.innerText = observable.value;
+    console.log('event listened for: ', observable.id);
+    window.addEventListener(observable.id, ({ detail }) => {
+      console.log('listened to event');
+      element.innerText = detail;
+    });
+    return element;
+  };
+
+  const DataSourcesView = () => {
+    const count$ = new Observable(5);
+    const element = div$(count$);
+    element.onclick = () => (count$.value = count$.value + 1);
+    return element;
+  };
+
+  /*const r = (strings, ...args) => {
+
+  }
+  const DataSourcesView = () => r`
+    (div (h1 'DataSourcesView')
+         (button ))
+  `div('DataSourcesView');*/
 
   // Fake values stream
   const valuesStream = {
@@ -615,14 +677,12 @@
               value: () => sourceValues.valueD,
               label: () => 'valueD',
             }),
-            Replaceable(() =>
-              div(
-                ...Object.keys(derivedValues).map(key =>
-                  ValueBox({
-                    value: () => calculateDerivedValue(valuesStream, key),
-                    label: () => key,
-                  })
-                )
+            Replaceables(() =>
+              Object.keys(derivedValues).map(key =>
+                ValueBox({
+                  value: () => calculateDerivedValue(valuesStream, key),
+                  label: () => key,
+                })
               )
             ),
             NewValueBox({
