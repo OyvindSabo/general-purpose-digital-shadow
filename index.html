@@ -712,20 +712,20 @@
   const h1$ = (...children) => createElement$('h1', ...children);
 
   // Observable utils
-  const sum$ = (...observables) => {
+  const add$ = (...observables) => {
     const sum = observables
       .map(({ value }) => value)
       .reduce((a, b) => a + b, 0);
-    const thisObservable = new Observable(sum);
-    observables.forEach(otherObservable => {
-      window.addEventListener(otherObservable.id, ({ detail }) => {
+    const sum$ = new Observable(sum);
+    observables.forEach(observable => {
+      window.addEventListener(observable.id, ({ detail }) => {
         const sum = observables
           .map(({ value }) => value)
           .reduce((a, b) => a + b, 0);
-        thisObservable.value = sum;
+        sum$.value = sum;
       });
     });
-    return thisObservable;
+    return sum$;
   };
 
   // This is just experimental and does nothing relevant
@@ -733,7 +733,7 @@
     const title$ = new Observable('Dashboards');
     const count1$ = new Observable(1);
     const count2$ = new Observable(2);
-    const count$ = sum$(count1$, count2$);
+    const count$ = add$(count1$, count2$);
     const element = div$(count$);
     element.onclick = () => {
       count1$.value = count1$.value + 1;
