@@ -676,11 +676,10 @@
   class Observable {
     constructor(value) {
       // Maybe this can cause an id collision of two observables created almost at the same time
-      this._id = `${+new Date()}`;
+      this._id = `${Math.random()}${+new Date()}`;
       this._value = value;
     }
     emit() {
-      console.log('event dispatched: ', this._id);
       window.dispatchEvent(
         new CustomEvent(this._id, {
           detail: this._value,
@@ -694,8 +693,9 @@
       return this._value;
     }
     set value(value) {
+      // Maybe this should do a deep compare in case value is an object?
+      if (value === this._value) return;
       this._value = value;
-      console.log('set count.value to : ', this._value);
       this.emit();
     }
   }
@@ -709,14 +709,38 @@
     return element;
   };
   const div$ = (...children) => createElement$('div', ...children);
-  const h1$ = (...children) => createElement$('div', ...children);
+  const h1$ = (...children) => createElement$('h1', ...children);
+
+  // Observable utils
+  const sum$ = (...observables) => {
+    const sum = observables
+      .map(({ value }) => value)
+      .reduce((a, b) => a + b, 0);
+    const thisObservable = new Observable(sum);
+    observables.forEach(otherObservable => {
+      window.addEventListener(otherObservable.id, ({ detail }) => {
+        const sum = observables
+          .map(({ value }) => value)
+          .reduce((a, b) => a + b, 0);
+        thisObservable.value = sum;
+      });
+    });
+    return thisObservable;
+  };
 
   // This is just experimental and does nothing relevant
   const DashboardsView = () => {
-    const count$ = new Observable(5);
+    const title$ = new Observable('Dashboards');
+    const count1$ = new Observable(1);
+    const count2$ = new Observable(2);
+    const count$ = sum$(count1$, count2$);
     const element = div$(count$);
-    element.onclick = () => (count$.value = count$.value + 1);
-    return element;
+    element.onclick = () => {
+      count1$.value = count1$.value + 1;
+      count2$.value = count1$.value + 1;
+      title$.value = title$.value.toLowerCase();
+    };
+    return div(h1$(title$), element);
   };
 
   const App = ({ params, currentRoute }) => {
