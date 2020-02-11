@@ -728,6 +728,22 @@
     return sum$;
   };
 
+  const subtract$ = (...observables) => {
+    const difference = observables
+      .map(({ value }) => value)
+      .reduce((a, b) => a + b, 0);
+    const difference$ = new Observable(difference);
+    observables.forEach(observable => {
+      window.addEventListener(observable.id, ({ detail }) => {
+        const difference = observables
+          .map(({ value }) => value)
+          .reduce((a, b) => a - b, 0);
+        difference$.value = difference;
+      });
+    });
+    return difference$;
+  };
+
   // This is just experimental and does nothing relevant
   const DashboardsView = () => {
     const title$ = new Observable('Dashboards');
