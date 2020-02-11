@@ -403,57 +403,10 @@
 
   const HomeView = () => div('HomeView');
 
-  class Observable {
-    constructor(value) {
-      this._id = `${+new Date()}`;
-      this._value = value;
-    }
-    emit() {
-      console.log('event dispatched: ', this._id);
-      window.dispatchEvent(
-        new CustomEvent(this._id, {
-          detail: this._value,
-        })
-      );
-    }
-    get id() {
-      return this._id;
-    }
-    get value() {
-      return this._value;
-    }
-    set value(value) {
-      this._value = value;
-      console.log('set count.value to : ', this._value);
-      this.emit();
-    }
-  }
-
-  const div$ = observable => {
-    const element = div();
-    element.innerText = observable.value;
-    console.log('event listened for: ', observable.id);
-    window.addEventListener(observable.id, ({ detail }) => {
-      console.log('listened to event');
-      element.innerText = detail;
-    });
-    return element;
-  };
-
   const DataSourcesView = () => {
-    const count$ = new Observable(5);
-    const element = div$(count$);
-    element.onclick = () => (count$.value = count$.value + 1);
+    const element = div('DataSourcesView');
     return element;
   };
-
-  /*const r = (strings, ...args) => {
-
-  }
-  const DataSourcesView = () => r`
-    (div (h1 'DataSourcesView')
-         (button ))
-  `div('DataSourcesView');*/
 
   // Fake values stream
   const valuesStream = {
@@ -719,10 +672,53 @@
     const element = div('AlertsView');
     return element;
   };
-  const DashboardsView = () => {
-    const element = div('DashboardsView');
+
+  class Observable {
+    constructor(value) {
+      // Maybe this can cause an id collision of two observables created almost at the same time
+      this._id = `${+new Date()}`;
+      this._value = value;
+    }
+    emit() {
+      console.log('event dispatched: ', this._id);
+      window.dispatchEvent(
+        new CustomEvent(this._id, {
+          detail: this._value,
+        })
+      );
+    }
+    get id() {
+      return this._id;
+    }
+    get value() {
+      return this._value;
+    }
+    set value(value) {
+      this._value = value;
+      console.log('set count.value to : ', this._value);
+      this.emit();
+    }
+  }
+
+  const createElement$ = (elementType, observable) => {
+    const element = document.createElement(elementType);
+    element.innerText = observable.value;
+    window.addEventListener(observable.id, ({ detail }) => {
+      element.innerText = detail;
+    });
     return element;
   };
+  const div$ = (...children) => createElement$('div', ...children);
+  const h1$ = (...children) => createElement$('div', ...children);
+
+  // This is just experimental and does nothing relevant
+  const DashboardsView = () => {
+    const count$ = new Observable(5);
+    const element = div$(count$);
+    element.onclick = () => (count$.value = count$.value + 1);
+    return element;
+  };
+
   const App = ({ params, currentRoute }) => {
     const element = div(
       TopNavigator(),
