@@ -706,6 +706,19 @@
     window.addEventListener(observable.id, ({ detail }) => {
       element.innerText = detail;
     });
+    // Note that styleObject$ is an observable object, not an object of observable values
+    // TODO: It should also be possible to set the style as a non-observable object
+    element.setStyle = styleObject$ => {
+      if (styleObject$ instanceof Observable) {
+        Object.assign(element.style, styleObject$.value);
+        window.addEventListener(observable.id, ({ detail }) => {
+          Object.assign(element.style, detail);
+        });
+        return element;
+      }
+      Object.assign(element.style, styleObject$);
+      return element;
+    };
     return element;
   };
   const div$ = (...children) => createElement$('div', ...children);
@@ -744,6 +757,17 @@
     return difference$;
   };
 
+  // Just a dummy observable
+  const dashboardValue$ = new Observable(1000);
+  const updateDashboardValue = () =>
+    setTimeout(() => {
+      const value = dashboardValue$.value;
+      dashboardValue$.value =
+        Math.floor(Math.random() * 2) == 1 ? value * 1.01 : value / 1.01;
+      updateDashboardValue();
+    }, 100);
+  updateDashboardValue();
+
   // This is just experimental and does nothing relevant
   const DashboardsView = () => {
     const title$ = new Observable('Dashboards');
@@ -756,7 +780,11 @@
       count2$.value = count1$.value + 1;
       title$.value = title$.value.toLowerCase();
     };
-    return div(h1$(title$), element);
+    return div(
+      h1$(title$),
+      element,
+      div$(dashboardValue$).setStyle({ background: 'WhiteSmoke' })
+    );
   };
 
   const App = ({ params, currentRoute }) => {
