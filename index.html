@@ -700,23 +700,45 @@
     }
   }
 
-  const createElement$ = (elementType, observable) => {
+  const createElement$ = (elementType, ...observables) => {
     const element = document.createElement(elementType);
-    element.innerText = observable.value;
-    window.addEventListener(observable.id, ({ detail }) => {
-      element.innerText = detail;
+    observables.forEach(observable => {
+      if (
+        // If it is observable value
+        observable instanceof Observable &&
+        ['string', 'number'].includes(typeof observable.value)
+      ) {
+        const textNode = document.createTextNode(observable.value);
+        element.appendChild(textNode);
+        window.addEventListener(observable.id, ({ detail }) => {
+          textNode.nodeValue = detail;
+        });
+        return;
+      }
+      if (
+        // If it is non-observable value
+        ['string', 'number'].includes(typeof observable.value)
+      ) {
+        const textNode = document.createTextNode(observable.value);
+        element.appendChild(textNode);
+        return;
+      }
+      // If it is a dom node
+      element.appendChild(observable);
     });
-    // Note that styleObject$ is an observable object, not an object of observable values
+    // Note that styleObject$ is an object with observable values, not an observable object
     // TODO: It should also be possible to set the style as a non-observable object
     element.setStyle = styleObject$ => {
-      if (styleObject$ instanceof Observable) {
-        Object.assign(element.style, styleObject$.value);
-        window.addEventListener(observable.id, ({ detail }) => {
-          Object.assign(element.style, detail);
-        });
-        return element;
-      }
-      Object.assign(element.style, styleObject$);
+      Object.entries(styleObject$).forEach(([styleProperty, styleValue$]) => {
+        if (styleValue$ instanceof Observable) {
+          element.style[styleProperty] = styleValue$.value;
+          window.addEventListener(styleValue$.id, ({ detail }) => {
+            element.style[styleProperty] = detail;
+          });
+          return;
+        }
+        element.style[styleProperty] = styleValue$;
+      });
       return element;
     };
     return element;
@@ -750,25 +772,92 @@
       window.addEventListener(observable.id, ({ detail }) => {
         const difference = observables
           .map(({ value }) => value)
-          .reduce((a, b) => a - b, 0);
+          .reduce((a, b) => a - b);
         difference$.value = difference;
       });
     });
     return difference$;
   };
 
+  const toArray$ = (...observables) => {
+    const observableArray = observables.map(({ value }) => value);
+    const array$ = new Observable(observableArray);
+    observables.forEach((observable, i) => {
+      window.addEventListener(observable.id, ({ detail }) => {
+        // TODO: Make it possible to set a specific child of an observable
+        array$.value = observables.map(({ value }) => value);
+      });
+    });
+    return array$;
+  };
+
   // Just a dummy observable
-  const dashboardValue$ = new Observable(1000);
+  const dashboardValue1$ = new Observable(100);
+  const dashboardValue2$ = new Observable(100);
+  const dashboardValue3$ = new Observable(100);
+  const dashboardValue4$ = new Observable(100);
+  const dashboardValue5$ = new Observable(100);
+  const dashboardValue6$ = new Observable(100);
   const updateDashboardValue = () =>
     setTimeout(() => {
-      const value = dashboardValue$.value;
-      dashboardValue$.value =
-        Math.floor(Math.random() * 2) == 1 ? value * 1.01 : value / 1.01;
+      const value1 = dashboardValue1$.value;
+      const value2 = dashboardValue2$.value;
+      const value3 = dashboardValue3$.value;
+      const value4 = dashboardValue4$.value;
+      const value5 = dashboardValue5$.value;
+      const value6 = dashboardValue6$.value;
+      dashboardValue1$.value =
+        Math.floor(Math.random() * 2) == 1 ? value1 * 1.01 : value1 / 1.01;
+      dashboardValue2$.value =
+        Math.floor(Math.random() * 2) == 1 ? value2 * 1.01 : value2 / 1.01;
+      dashboardValue3$.value =
+        Math.floor(Math.random() * 2) == 1 ? value3 * 1.01 : value3 / 1.01;
+      dashboardValue4$.value =
+        Math.floor(Math.random() * 2) == 1 ? value4 * 1.01 : value4 / 1.01;
+      dashboardValue5$.value =
+        Math.floor(Math.random() * 2) == 1 ? value5 * 1.01 : value5 / 1.01;
+      dashboardValue6$.value =
+        Math.floor(Math.random() * 2) == 1 ? value6 * 1.01 : value6 / 1.01;
       updateDashboardValue();
     }, 100);
   updateDashboardValue();
 
+  const dashboardValues$ = [
+    dashboardValue1$,
+    dashboardValue2$,
+    dashboardValue3$,
+    dashboardValue4$,
+    dashboardValue5$,
+    dashboardValue6$,
+  ];
+
   // This is just experimental and does nothing relevant
+  const Bar = ({ height$ }) =>
+    div$().setStyle({
+      width: '20px',
+      height: height$,
+      background: 'red',
+      flexGrow: '1',
+      marginTop: 'auto',
+    });
+
+  const BarChartWidget = ({ values$ }) =>
+    div$(
+      Bar({ height$: values$[0] }),
+      Bar({ height$: values$[1] }),
+      Bar({ height$: values$[2] }),
+      Bar({ height$: values$[3] }),
+      Bar({ height$: values$[4] }),
+      Bar({ height$: values$[5] })
+    ).setStyle({
+      background: 'WhiteSmoke',
+      padding: '20px',
+      width: '480px',
+      height: '320px',
+      display: 'flex',
+      boxSizing: 'border-box',
+    });
+
   const DashboardsView = () => {
     const title$ = new Observable('Dashboards');
     const count1$ = new Observable(1);
@@ -783,7 +872,7 @@
     return div(
       h1$(title$),
       element,
-      div$(dashboardValue$).setStyle({ background: 'WhiteSmoke' })
+      BarChartWidget({ values$: dashboardValues$ })
     );
   };
 
