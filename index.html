@@ -916,6 +916,7 @@
   const Bar = ({ height$, maxHeight$ }) =>
     div$().setStyle({
       height: add$(multiply$(divide$(height$, maxHeight$), 100), '%'),
+      maxHeight: '100%',
       background: 'LightGreen',
       flexGrow: '1',
       marginTop: 'auto',
