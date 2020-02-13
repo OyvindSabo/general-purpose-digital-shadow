@@ -1,3 +1,5 @@
+<meta charset="utf-8" />
+
 <!-- Router -->
 <script>
   class Router {
@@ -389,7 +391,7 @@
       height: '100%',
       width: '80px',
       borderRadius: '10px 0 0 0',
-      borderRight: '2px solid WhiteSmoke',
+      borderRight: '1px solid LightGray',
       overflow: 'hidden',
       float: 'left',
     });
@@ -398,7 +400,7 @@
     div(...children).setStyle({
       height: 'calc(100% - 40px)',
       borderRadius: '10px 10px 0 0',
-      background: 'white',
+      background: 'White',
     });
 
   const HomeView = () => div('HomeView');
@@ -749,14 +751,18 @@
   // Observable utils
   const add$ = (...observables) => {
     const sum = observables
-      .map(({ value }) => value)
-      .reduce((a, b) => a + b, 0);
+      .map(observable =>
+        observable instanceof Observable ? observable.value : observable
+      )
+      .reduce((a, b) => a + b);
     const sum$ = new Observable(sum);
     observables.forEach(observable => {
       window.addEventListener(observable.id, ({ detail }) => {
         const sum = observables
-          .map(({ value }) => value)
-          .reduce((a, b) => a + b, 0);
+          .map(observable =>
+            observable instanceof Observable ? observable.value : observable
+          )
+          .reduce((a, b) => a + b);
         sum$.value = sum;
       });
     });
@@ -765,13 +771,17 @@
 
   const subtract$ = (...observables) => {
     const difference = observables
-      .map(({ value }) => value)
-      .reduce((a, b) => a + b, 0);
+      .map(observable =>
+        observable instanceof Observable ? observable.value : observable
+      )
+      .reduce((a, b) => a + b);
     const difference$ = new Observable(difference);
     observables.forEach(observable => {
       window.addEventListener(observable.id, ({ detail }) => {
         const difference = observables
-          .map(({ value }) => value)
+          .map(observable =>
+            observable instanceof Observable ? observable.value : observable
+          )
           .reduce((a, b) => a - b);
         difference$.value = difference;
       });
@@ -779,6 +789,47 @@
     return difference$;
   };
 
+  const multiply$ = (...observables) => {
+    const product = observables
+      .map(observable =>
+        observable instanceof Observable ? observable.value : observable
+      )
+      .reduce((a, b) => a * b);
+    const product$ = new Observable(product);
+    observables.forEach(observable => {
+      window.addEventListener(observable.id, ({ detail }) => {
+        const product = observables
+          .map(observable =>
+            observable instanceof Observable ? observable.value : observable
+          )
+          .reduce((a, b) => a * b);
+        product$.value = product;
+      });
+    });
+    return product$;
+  };
+
+  const divide$ = (...observables) => {
+    const quotient = observables
+      .map(observable =>
+        observable instanceof Observable ? observable.value : observable
+      )
+      .reduce((a, b) => a / b);
+    const quotient$ = new Observable(quotient);
+    observables.forEach(observable => {
+      window.addEventListener(observable.id, ({ detail }) => {
+        const quotient = observables
+          .map(observable =>
+            observable instanceof Observable ? observable.value : observable
+          )
+          .reduce((a, b) => a / b);
+        quotient$.value = quotient;
+      });
+    });
+    return quotient$;
+  };
+
+  // This can probably be removed
   const toArray$ = (...observables) => {
     const observableArray = observables.map(({ value }) => value);
     const array$ = new Observable(observableArray);
@@ -831,33 +882,51 @@
     dashboardValue6$,
   ];
 
+  const WidgetBackgroundContainer$ = (...children) =>
+    div$(...children).setStyle({
+      padding: '20px',
+      width: '480px',
+      height: '320px',
+      display: 'inline-block',
+      boxSizing: 'border-box',
+    });
+
+  const WidgetForegroundContainer$ = (...children) =>
+    div$(...children).setStyle({
+      padding: '20px',
+      height: '100%',
+      border: '1px solid LightGray',
+      boxSizing: 'border-box',
+    });
+
+  const WidgetInnerContainer$ = (...children) =>
+    div$(...children).setStyle({
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+    });
+
   // This is just experimental and does nothing relevant
-  const Bar = ({ height$ }) =>
+  const Bar = ({ height$, maxHeight$ }) =>
     div$().setStyle({
-      width: '20px',
-      height: height$,
+      height: add$(multiply$(divide$(height$, maxHeight$), 100), '%'),
       background: 'red',
       flexGrow: '1',
       marginTop: 'auto',
       transition: '0.1s',
+      margin: 'auto 10px 0 10px',
     });
 
-  const BarChartWidget = ({ values$ }) =>
-    div$(
-      Bar({ height$: values$[0] }),
-      Bar({ height$: values$[1] }),
-      Bar({ height$: values$[2] }),
-      Bar({ height$: values$[3] }),
-      Bar({ height$: values$[4] }),
-      Bar({ height$: values$[5] })
-    ).setStyle({
-      background: 'WhiteSmoke',
-      padding: '20px',
-      width: '480px',
-      height: '320px',
-      display: 'flex',
-      boxSizing: 'border-box',
-    });
+  const BarChartWidget = ({ values$, maxValue$ }) =>
+    WidgetBackgroundContainer$(
+      WidgetForegroundContainer$(
+        WidgetInnerContainer$(
+          ...values$.map(value$ =>
+            Bar({ height$: value$, maxHeight$: maxValue$ })
+          )
+        )
+      )
+    );
 
   const DashboardsView = () => {
     const title$ = new Observable('Dashboards');
@@ -871,9 +940,12 @@
       title$.value = title$.value.toLowerCase();
     };
     return div(
-      h1$(title$),
-      element,
-      BarChartWidget({ values$: dashboardValues$ })
+      /*div$(title$),
+      element,*/
+      BarChartWidget({
+        values$: dashboardValues$,
+        maxValue$: new Observable(200),
+      })
     );
   };
 
