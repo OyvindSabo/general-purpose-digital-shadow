@@ -748,6 +748,12 @@
   };
   const div$ = (...children) => createElement$('div', ...children);
   const h1$ = (...children) => createElement$('h1', ...children);
+  const canvas$ = ({ width, height }) => {
+    const element = createElement('canvas');
+    element.width = width;
+    element.height = height;
+    return element;
+  };
 
   // Observable utils
   // Currently needs at least two arguments
@@ -936,9 +942,72 @@
       )
     );
 
+  /* 3D visualization */
+  const Vertex = function(x, y, z) {
+    this.x = parseFloat(x);
+    this.y = parseFloat(y);
+    this.z = parseFloat(z);
+  };
+  const Face = function(vertex1, vertex2, vertex3) {
+    this.vertices = [vertex1, vertex2, vertex3];
+  };
+
+  /* Example structure */
+  const structure = new (function() {
+    this.vertices = [
+      new Vertex(0, 0, 0),
+      new Vertex(0, 0, 100),
+      new Vertex(0, 100, 100),
+      new Vertex(100, 0, 100),
+    ];
+    this.faces = [
+      {
+        color: 'rgba(255, 0, 0, 0.5)',
+        vertices: [this.vertices[0], this.vertices[1], this.vertices[2]],
+      },
+      {
+        color: 'rgba(0, 255, 0, 0.5)',
+        vertices: [this.vertices[0], this.vertices[1], this.vertices[3]],
+      },
+      {
+        color: 'rgba(0, 0, 255, 0.5)',
+        vertices: [this.vertices[1], this.vertices[2], this.vertices[3]],
+      },
+    ];
+  })();
+
+  const render = (structure, ctx, dx, dy) => {
+    structure.faces.forEach(({ color, vertices }) => {
+      // Draw the first vertex
+      ctx.beginPath();
+      ctx.moveTo(vertices.x + dx, -vertices.y + dy);
+
+      // Draw te other vertexes
+      vertices.forEach(vertex => {
+        ctx.lineTo(vertex.x + dx, -vertex.y + dy);
+      });
+
+      // Close the path and draw the face
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.fill();
+    });
+  };
+
+  const ThreeDimVisualization$ = () => {
+    const dx = 0;
+    const dy = 240;
+
+    const canvas = canvas$({ height: 240, width: 400 });
+    const ctx = canvas.getContext('2d');
+    render(structure, ctx, dx, dy);
+    return canvas;
+  };
+
   const CanvasWidget$ = () =>
     WidgetBackgroundContainer$(
-      WidgetForegroundContainer$(WidgetInnerContainer$())
+      WidgetForegroundContainer$(ThreeDimVisualization$())
     );
 
   const DashboardsView = () => {
@@ -953,7 +1022,6 @@
       title$.value = title$.value.toLowerCase();
     };
     return div$(
-      CanvasWidget$(),
       BarChartWidget$({
         values$: dashboardValues$,
         maxValue$: new Observable(200),
