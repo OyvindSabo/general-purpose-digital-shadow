@@ -985,9 +985,9 @@
     ];
   })();
 
-  const toCenterOfWidget = vertex => ({
-    x: vertex.x + 200,
-    y: vertex.y - 120,
+  const toCenterOfWidget = (vertex, ctx) => ({
+    x: vertex.x + ctx.canvas.width / 2,
+    y: vertex.y - ctx.canvas.height / 2,
     z: vertex.z,
   });
 
@@ -1014,8 +1014,8 @@
     // Render the edges
     structure.edges.forEach(({ color, vertices, width }) => {
       // Draw the first vertex
-      const startVertex = toCenterOfWidget(rotate(vertices[0], rx, ry));
-      const endVertex = toCenterOfWidget(rotate(vertices[1], rx, ry));
+      const startVertex = toCenterOfWidget(rotate(vertices[0], rx, ry), ctx);
+      const endVertex = toCenterOfWidget(rotate(vertices[1], rx, ry), ctx);
       ctx.beginPath();
       ctx.moveTo(startVertex.x, -startVertex.y);
       ctx.lineTo(endVertex.x, -endVertex.y);
@@ -1028,7 +1028,7 @@
     structure.faces.forEach(({ color, vertices }) => {
       vertices
         .map(vertex => rotate(vertex, rx, ry))
-        .map(toCenterOfWidget)
+        .map(vertex => toCenterOfWidget(vertex, ctx))
         .forEach((vertex, index) => {
           if (index === 0) {
             ctx.beginPath();
@@ -1047,11 +1047,20 @@
     });
   };
 
+  const xyRotation = new Observable(0);
+  const updateXyRotation = () =>
+    setTimeout(() => {
+      const value = xyRotation.value;
+      xyRotation.value = (value + Math.PI / 100) % (2 * Math.PI);
+      updateDashboardValue();
+    }, 100);
+  updateXyRotation();
+
   const ThreeDimVisualization$ = () => {
     const canvas = canvas$({ height: 240, width: 400 });
     const center = { x: 0, y: 0, z: 0 };
-    const rx = Math.PI / 10;
-    const ry = -Math.PI / 5;
+    const rx = Math.PI / 4;
+    const ry = -Math.PI / 4;
     const ctx = canvas.getContext('2d');
     render(structure, ctx, center, rx, ry);
     return canvas;
