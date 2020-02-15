@@ -834,7 +834,7 @@
     return quotient$;
   };
 
-  // This can probably be removed
+  // This is not used and can probably be removed
   const toArray$ = (...observables) => {
     const observableArray = observables.map(({ value }) => value);
     const array$ = new Observable(observableArray);
@@ -894,6 +894,7 @@
       height: '320px',
       display: 'inline-block',
       boxSizing: 'border-box',
+      verticalAlign: 'top',
     });
 
   const WidgetForegroundContainer$ = (...children) =>
@@ -924,7 +925,7 @@
       margin: 'auto 10px 0 10px',
     });
 
-  const BarChartWidget = ({ values$, maxValue$ }) =>
+  const BarChartWidget$ = ({ values$, maxValue$ }) =>
     WidgetBackgroundContainer$(
       WidgetForegroundContainer$(
         WidgetInnerContainer$(
@@ -933,6 +934,11 @@
           )
         )
       )
+    );
+
+  const CanvasWidget$ = () =>
+    WidgetBackgroundContainer$(
+      WidgetForegroundContainer$(WidgetInnerContainer$())
     );
 
   const DashboardsView = () => {
@@ -946,13 +952,13 @@
       count2$.value = count1$.value + 1;
       title$.value = title$.value.toLowerCase();
     };
-    return div(
-      /*div$(title$),
-      element,*/
-      BarChartWidget({
+    return div$(
+      CanvasWidget$(),
+      BarChartWidget$({
         values$: dashboardValues$,
         maxValue$: new Observable(200),
-      })
+      }),
+      CanvasWidget$()
     );
   };
 
