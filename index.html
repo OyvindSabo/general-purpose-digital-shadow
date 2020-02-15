@@ -993,7 +993,7 @@
 
   const rotate = (vertex, rx, ry) => ({
     x: vertex.x * Math.cos(rx) + vertex.z * Math.sin(rx),
-    y: vertex.y,
+    y: vertex.y * Math.cos(ry) + vertex.z * Math.sin(ry),
     z: vertex.z,
   });
 
@@ -1050,8 +1050,8 @@
   const ThreeDimVisualization$ = () => {
     const canvas = canvas$({ height: 240, width: 400 });
     const center = { x: 0, y: 0, z: 0 };
-    const rx = -Math.PI / 6;
-    const ry = 0;
+    const rx = Math.PI / 10;
+    const ry = -Math.PI / 5;
     const ctx = canvas.getContext('2d');
     render(structure, ctx, center, rx, ry);
     return canvas;
