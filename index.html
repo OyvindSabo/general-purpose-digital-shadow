@@ -960,6 +960,23 @@
       new Vertex(0, 100, 100),
       new Vertex(100, 0, 100),
     ];
+    this.edges = [
+      {
+        color: 'black',
+        vertices: [this.vertices[0], this.vertices[1]],
+        width: 5,
+      },
+      {
+        color: 'black',
+        vertices: [this.vertices[0], this.vertices[2]],
+        width: 5,
+      },
+      {
+        color: 'black',
+        vertices: [this.vertices[1], this.vertices[2]],
+        width: 5,
+      },
+    ];
     this.faces = [
       {
         color: 'rgba(255, 0, 0, 0.5)',
@@ -977,19 +994,32 @@
   })();
 
   const render = (structure, ctx, dx, dy) => {
+    // Render the edges
+    structure.edges.forEach(({ color, vertices, width }) => {
+      // Draw the first vertex
+      ctx.beginPath();
+      ctx.moveTo(vertices[0].x + dx, -vertices[0].y + dy);
+      ctx.lineTo(vertices[1].x + dx, -vertices[1].y + dy);
+      ctx.lineWidth = width;
+      ctx.strokeStyle = color;
+      ctx.stroke();
+    });
+
+    // Render the faces
     structure.faces.forEach(({ color, vertices }) => {
       // Draw the first vertex
       ctx.beginPath();
-      ctx.moveTo(vertices.x + dx, -vertices.y + dy);
+      ctx.moveTo(vertices[0].x + dx, -vertices[0].y + dy);
 
       // Draw te other vertexes
-      vertices.forEach(vertex => {
+      // For 2D visualizations it's okay that a face consists of more than 3
+      // vertices. That's why I loop over them.
+      vertices.slice(1).forEach(vertex => {
         ctx.lineTo(vertex.x + dx, -vertex.y + dy);
       });
 
       // Close the path and draw the face
       ctx.closePath();
-      ctx.stroke();
       ctx.fillStyle = color;
       ctx.fill();
     });
