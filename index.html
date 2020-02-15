@@ -943,22 +943,14 @@
     );
 
   /* 3D visualization */
-  const Vertex = function(x, y, z) {
-    this.x = parseFloat(x);
-    this.y = parseFloat(y);
-    this.z = parseFloat(z);
-  };
-  const Face = function(vertex1, vertex2, vertex3) {
-    this.vertices = [vertex1, vertex2, vertex3];
-  };
 
   /* Example structure */
   const structure = new (function() {
     this.vertices = [
-      new Vertex(0, 0, 0),
-      new Vertex(0, 0, 100),
-      new Vertex(0, 100, 100),
-      new Vertex(100, 0, 100),
+      { x: 0, y: 0, z: 0 },
+      { x: 0, y: 0, z: 100 },
+      { x: 0, y: 100, z: 100 },
+      { x: 100, y: 0, z: 100 },
     ];
     this.edges = [
       {
@@ -993,13 +985,30 @@
     ];
   })();
 
-  const render = (structure, ctx, dx, dy) => {
+  const toCenterOfWidget = vertex => ({ x: vertex.x + 200, y: vertex.y - 120 });
+
+  /**
+   * @param {number} dx
+   * Defines the x coordinate which will be displayed in the center of the
+   * visualization
+   *
+   * @param {number} dy
+   * Defines the y coordinate which will be displayed in the center of the
+   * visualization
+   *
+   * @param {number} dz
+   * Defines the z coordinate which will be displayed in the center of the
+   * visualization
+   */
+  const render = (structure, ctx, center, rx, ry) => {
     // Render the edges
     structure.edges.forEach(({ color, vertices, width }) => {
       // Draw the first vertex
+      const startVertex = toCenterOfWidget(vertices[0]);
+      const endVertex = toCenterOfWidget(vertices[1]);
       ctx.beginPath();
-      ctx.moveTo(vertices[0].x + dx, -vertices[0].y + dy);
-      ctx.lineTo(vertices[1].x + dx, -vertices[1].y + dy);
+      ctx.moveTo(startVertex.x, -startVertex.y);
+      ctx.lineTo(endVertex.x, -endVertex.y);
       ctx.lineWidth = width;
       ctx.strokeStyle = color;
       ctx.stroke();
@@ -1007,17 +1016,17 @@
 
     // Render the faces
     structure.faces.forEach(({ color, vertices }) => {
-      // Draw the first vertex
-      ctx.beginPath();
-      ctx.moveTo(vertices[0].x + dx, -vertices[0].y + dy);
-
-      // Draw te other vertexes
-      // For 2D visualizations it's okay that a face consists of more than 3
-      // vertices. That's why I loop over them.
-      vertices.slice(1).forEach(vertex => {
-        ctx.lineTo(vertex.x + dx, -vertex.y + dy);
+      vertices.map(toCenterOfWidget).forEach((vertex, index) => {
+        if (index === 0) {
+          ctx.beginPath();
+          ctx.moveTo(vertex.x, -vertex.y);
+          return;
+        }
+        if (index < vertices.length) {
+          ctx.lineTo(vertex.x, -vertex.y);
+          return;
+        }
       });
-
       // Close the path and draw the face
       ctx.closePath();
       ctx.fillStyle = color;
@@ -1026,12 +1035,12 @@
   };
 
   const ThreeDimVisualization$ = () => {
-    const dx = 0;
-    const dy = 240;
-
     const canvas = canvas$({ height: 240, width: 400 });
+    const center = { x: 0, y: 0, z: 0 };
+    const rx = Math.PI / 4;
+    const ry = 0;
     const ctx = canvas.getContext('2d');
-    render(structure, ctx, dx, dy);
+    render(structure, ctx, center, rx, ry);
     return canvas;
   };
 
