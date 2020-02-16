@@ -1107,10 +1107,18 @@
     focalLength = 1000,
   }) {
     this.target = target;
-    this.horizontalRotation = horizontalRotation;
-    this.verticalRotation = verticalRotation;
+    this.horizontalRotation = new Observable(horizontalRotation);
+    this.verticalRotation = new Observable(
+      Math.max(Math.min(verticalRotation, Math.PI / 4), -Math.PI / 2)
+    );
     this.distance = distance;
     this.focalLength = focalLength;
+    this.setVerticalRotation = verticalRotation => {
+      this.verticalRotation.value = Math.max(
+        Math.min(verticalRotation, Math.PI / 2),
+        -Math.PI / 2
+      );
+    };
   };
 
   const ThreeDimVisualization$ = ({ structure }) => {
@@ -1118,8 +1126,8 @@
     const canvas = canvas$({ height: 240, width: 400 });
     const camera = new Camera({
       target: { x: 0, y: 0, z: 0 },
-      horizontalRotation: new Observable(0),
-      verticalRotation: new Observable(0),
+      horizontalRotation: 0,
+      verticalRotation: 0,
       distance: new Observable(100),
       focalLength: 1000,
     });
@@ -1154,8 +1162,9 @@
         console.log('event: ', event);
         camera.horizontalRotation.value =
           camera.horizontalRotation.value + event.movementX / 100;
-        camera.verticalRotation.value =
-          camera.verticalRotation.value + event.movementY / 100;
+        camera.setVerticalRotation(
+          camera.verticalRotation.value + event.movementY / 100
+        );
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         rerender();
       }
