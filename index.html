@@ -1159,7 +1159,6 @@
     );
     canvas.onmousemove = event => {
       if (state.mouseDown) {
-        console.log('event: ', event);
         camera.horizontalRotation.value =
           camera.horizontalRotation.value + event.movementX / 100;
         camera.setVerticalRotation(
