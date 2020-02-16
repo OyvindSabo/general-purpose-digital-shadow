@@ -1004,12 +1004,6 @@
     ];
   })();
 
-  const toCenterOfWidget = (vertex, ctx) => ({
-    x: vertex.x + ctx.canvas.width / 2,
-    y: vertex.y - ctx.canvas.height / 2,
-    z: vertex.z,
-  });
-
   const rotate = (vertex, rx, ry) => {
     const theta = rx;
     const phi = ry;
@@ -1031,6 +1025,18 @@
     };
   };
 
+  const toCenterOfWidget = (vertex, ctx) => ({
+    x: vertex.x + ctx.canvas.width / 2,
+    y: vertex.y - ctx.canvas.height / 2,
+    z: vertex.z,
+  });
+
+  const toPerspective = (vertex, d, focalLength) => ({
+    x: vertex.x * (focalLength / (d + focalLength + vertex.z)),
+    y: vertex.y * (focalLength / (d + focalLength + vertex.z)),
+    z: vertex.z,
+  });
+
   /**
    * @param {number} dx
    * Defines the x coordinate which will be displayed in the center of the
@@ -1043,12 +1049,17 @@
    * @param {number} dz
    * Defines the z coordinate which will be displayed in the center of the
    * visualization
+   *
+   * @param {number} d
+   * Defines the distance from the defined center of the structure, to the
+   * camera.
    */
-  const render = (structure, ctx, center, rx, ry) => {
+  const render = (structure, ctx, center, rx, ry, d, focalLength) => {
     // Render the faces
     structure.faces.forEach(({ color, vertices }) => {
       vertices
         .map(vertex => rotate(vertex, rx, ry))
+        .map(vertex => toPerspective(vertex, d, focalLength))
         .map(vertex => toCenterOfWidget(vertex, ctx))
         .forEach((vertex, index) => {
           if (index === 0) {
@@ -1070,8 +1081,14 @@
     // Render the edges
     structure.edges.forEach(({ color, vertices, width }) => {
       // Draw the first vertex
-      const startVertex = toCenterOfWidget(rotate(vertices[0], rx, ry), ctx);
-      const endVertex = toCenterOfWidget(rotate(vertices[1], rx, ry), ctx);
+      const startVertex = toCenterOfWidget(
+        toPerspective(rotate(vertices[0], rx, ry), d, focalLength),
+        ctx
+      );
+      const endVertex = toCenterOfWidget(
+        toPerspective(rotate(vertices[1], rx, ry), d, focalLength),
+        ctx
+      );
       ctx.beginPath();
       ctx.lineCap = 'round';
       ctx.moveTo(startVertex.x, -startVertex.y);
@@ -1088,10 +1105,10 @@
     setTimeout(() => {
       const xValue = xRotation.value;
       const yValue = yRotation.value;
-      xRotation.value = (xValue + Math.PI / 1000) % (2 * Math.PI);
-      yRotation.value = (yValue + Math.PI / 1000) % (2 * Math.PI);
+      xRotation.value = (xValue + Math.PI / 100) % (2 * Math.PI);
+      yRotation.value = (yValue + Math.PI / 100) % (2 * Math.PI);
       updateXyRotation();
-    }, 1);
+    }, 100);
   updateXyRotation();
 
   const ThreeDimVisualization$ = () => {
@@ -1099,15 +1116,17 @@
     const center = { x: 0, y: 0, z: 0 };
     const rx = xRotation;
     const ry = yRotation;
+    const distance = 100;
+    const focalLength = 1000;
     const ctx = canvas.getContext('2d');
-    render(structure, ctx, center, rx.value, ry.value);
+    render(structure, ctx, center, rx.value, ry.value, distance, focalLength);
     window.addEventListener(rx.id, ({ detail }) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      render(structure, ctx, center, detail, ry.value);
+      render(structure, ctx, center, detail, ry.value, distance, focalLength);
     });
     window.addEventListener(ry.id, ({ detail }) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      render(structure, ctx, center, rx.value, detail);
+      render(structure, ctx, center, rx.value, detail, distance, focalLength);
     });
     return canvas;
   };
