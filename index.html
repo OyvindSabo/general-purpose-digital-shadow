@@ -949,8 +949,8 @@
     this.vertices = [
       { x: 0, y: 0, z: 0 },
       { x: 0, y: 0, z: 100 },
-      { x: 0, y: 100, z: 100 },
-      { x: 100, y: 0, z: 100 },
+      { x: 0, y: 100, z: 0 },
+      { x: 100, y: 0, z: 0 },
     ];
     this.edges = [
       {
@@ -965,7 +965,22 @@
       },
       {
         color: 'black',
+        vertices: [this.vertices[0], this.vertices[3]],
+        width: 5,
+      },
+      {
+        color: 'black',
         vertices: [this.vertices[1], this.vertices[2]],
+        width: 5,
+      },
+      {
+        color: 'black',
+        vertices: [this.vertices[1], this.vertices[3]],
+        width: 5,
+      },
+      {
+        color: 'black',
+        vertices: [this.vertices[2], this.vertices[3]],
         width: 5,
       },
     ];
@@ -982,6 +997,10 @@
         color: 'rgba(0, 0, 255, 0.5)',
         vertices: [this.vertices[1], this.vertices[2], this.vertices[3]],
       },
+      {
+        color: 'rgba(255, 255, 0, 0.5)',
+        vertices: [this.vertices[0], this.vertices[2], this.vertices[3]],
+      },
     ];
   })();
 
@@ -991,11 +1010,26 @@
     z: vertex.z,
   });
 
-  const rotate = (vertex, rx, ry) => ({
-    x: vertex.x * Math.cos(rx) + vertex.z * Math.sin(rx),
-    y: vertex.y * Math.cos(ry) + vertex.z * Math.sin(ry),
-    z: vertex.z,
-  });
+  const rotate = (vertex, rx, ry) => {
+    const theta = rx;
+    const phi = ry;
+
+    const horizontallyRotatedVertex = {
+      x: vertex.x * Math.cos(theta) + vertex.z * Math.sin(theta),
+      y: vertex.y,
+      z: vertex.z * Math.cos(theta) - vertex.x * Math.sin(theta),
+    };
+
+    return {
+      x: horizontallyRotatedVertex.x,
+      y:
+        horizontallyRotatedVertex.y * Math.cos(phi) -
+        horizontallyRotatedVertex.z * Math.sin(phi),
+      z:
+        horizontallyRotatedVertex.y * Math.sin(phi) +
+        horizontallyRotatedVertex.z * Math.cos(phi),
+    };
+  };
 
   /**
    * @param {number} dx
@@ -1011,19 +1045,6 @@
    * visualization
    */
   const render = (structure, ctx, center, rx, ry) => {
-    // Render the edges
-    structure.edges.forEach(({ color, vertices, width }) => {
-      // Draw the first vertex
-      const startVertex = toCenterOfWidget(rotate(vertices[0], rx, ry), ctx);
-      const endVertex = toCenterOfWidget(rotate(vertices[1], rx, ry), ctx);
-      ctx.beginPath();
-      ctx.moveTo(startVertex.x, -startVertex.y);
-      ctx.lineTo(endVertex.x, -endVertex.y);
-      ctx.lineWidth = width;
-      ctx.strokeStyle = color;
-      ctx.stroke();
-    });
-
     // Render the faces
     structure.faces.forEach(({ color, vertices }) => {
       vertices
@@ -1045,24 +1066,49 @@
       ctx.fillStyle = color;
       ctx.fill();
     });
+
+    // Render the edges
+    structure.edges.forEach(({ color, vertices, width }) => {
+      // Draw the first vertex
+      const startVertex = toCenterOfWidget(rotate(vertices[0], rx, ry), ctx);
+      const endVertex = toCenterOfWidget(rotate(vertices[1], rx, ry), ctx);
+      ctx.beginPath();
+      ctx.lineCap = 'round';
+      ctx.moveTo(startVertex.x, -startVertex.y);
+      ctx.lineTo(endVertex.x, -endVertex.y);
+      ctx.lineWidth = width;
+      ctx.strokeStyle = color;
+      ctx.stroke();
+    });
   };
 
-  const xyRotation = new Observable(0);
+  const xRotation = new Observable(0);
+  const yRotation = new Observable(0);
   const updateXyRotation = () =>
     setTimeout(() => {
-      const value = xyRotation.value;
-      xyRotation.value = (value + Math.PI / 100) % (2 * Math.PI);
-      updateDashboardValue();
-    }, 100);
+      const xValue = xRotation.value;
+      const yValue = yRotation.value;
+      xRotation.value = (xValue + Math.PI / 1000) % (2 * Math.PI);
+      yRotation.value = (yValue + Math.PI / 1000) % (2 * Math.PI);
+      updateXyRotation();
+    }, 1);
   updateXyRotation();
 
   const ThreeDimVisualization$ = () => {
     const canvas = canvas$({ height: 240, width: 400 });
     const center = { x: 0, y: 0, z: 0 };
-    const rx = Math.PI / 4;
-    const ry = -Math.PI / 4;
+    const rx = xRotation;
+    const ry = yRotation;
     const ctx = canvas.getContext('2d');
-    render(structure, ctx, center, rx, ry);
+    render(structure, ctx, center, rx.value, ry.value);
+    window.addEventListener(rx.id, ({ detail }) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      render(structure, ctx, center, detail, ry.value);
+    });
+    window.addEventListener(ry.id, ({ detail }) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      render(structure, ctx, center, rx.value, detail);
+    });
     return canvas;
   };
 
