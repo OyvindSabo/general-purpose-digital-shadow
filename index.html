@@ -1099,18 +1099,6 @@
     });
   };
 
-  const xRotation = new Observable(0);
-  const yRotation = new Observable(0);
-  const updateXyRotation = () =>
-    setTimeout(() => {
-      const xValue = xRotation.value;
-      const yValue = yRotation.value;
-      xRotation.value = (xValue + Math.PI / 100) % (2 * Math.PI);
-      yRotation.value = (yValue + Math.PI / 100) % (2 * Math.PI);
-      updateXyRotation();
-    }, 100);
-  updateXyRotation();
-
   const Camera = function({
     target = { x: 0, y: 0, z: 0 },
     horizontalRotation = 0,
@@ -1126,11 +1114,12 @@
   };
 
   const ThreeDimVisualization$ = ({ structure }) => {
+    const state = { mouseDown: false };
     const canvas = canvas$({ height: 240, width: 400 });
     const camera = new Camera({
       target: { x: 0, y: 0, z: 0 },
-      horizontalRotation: xRotation,
-      verticalRotation: yRotation,
+      horizontalRotation: new Observable(0),
+      verticalRotation: new Observable(0),
       distance: new Observable(100),
       focalLength: 1000,
     });
@@ -1145,10 +1134,31 @@
         camera.distance.value,
         camera.focalLength
       );
+    rerender();
     canvas.onwheel = event => {
       camera.distance.value = camera.distance.value + event.deltaY;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       rerender();
+    };
+    window.addEventListener('mousedown', event => {
+      state.mouseDown = true;
+    });
+    window.addEventListener(
+      'mouseup',
+      (canvas.onmouseup = event => {
+        state.mouseDown = false;
+      })
+    );
+    canvas.onmousemove = event => {
+      if (state.mouseDown) {
+        console.log('event: ', event);
+        camera.horizontalRotation.value =
+          camera.horizontalRotation.value + event.movementX / 100;
+        camera.verticalRotation.value =
+          camera.verticalRotation.value + event.movementY / 100;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        rerender();
+      }
     };
     window.addEventListener(camera.horizontalRotation.id, () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
