@@ -1112,11 +1112,11 @@
   updateXyRotation();
 
   const Camera = function({
-    target,
-    horizontalRotation,
-    verticalRotation,
-    distance,
-    focalLength,
+    target = { x: 0, y: 0, z: 0 },
+    horizontalRotation = 0,
+    verticalRotation = 0,
+    distance = 100,
+    focalLength = 1000,
   }) {
     this.target = target;
     this.horizontalRotation = horizontalRotation;
@@ -1125,55 +1125,45 @@
     this.focalLength = focalLength;
   };
 
-  const ThreeDimVisualization$ = () => {
+  const ThreeDimVisualization$ = ({ structure }) => {
     const canvas = canvas$({ height: 240, width: 400 });
     const camera = new Camera({
       target: { x: 0, y: 0, z: 0 },
       horizontalRotation: xRotation,
       verticalRotation: yRotation,
-      distance: 100,
+      distance: new Observable(100),
       focalLength: 1000,
     });
     const ctx = canvas.getContext('2d');
-    render(
-      structure,
-      ctx,
-      camera.target,
-      camera.horizontalRotation.value,
-      camera.verticalRotation.value,
-      camera.distance,
-      camera.focalLength
-    );
-    window.addEventListener(camera.horizontalRotation.id, ({ detail }) => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      render(
-        structure,
-        ctx,
-        camera.target,
-        detail,
-        camera.verticalRotation.value,
-        camera.distance,
-        camera.focalLength
-      );
-    });
-    window.addEventListener(camera.verticalRotation.id, ({ detail }) => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const rerender = () =>
       render(
         structure,
         ctx,
         camera.target,
         camera.horizontalRotation.value,
-        detail,
-        camera.distance,
+        camera.verticalRotation.value,
+        camera.distance.value,
         camera.focalLength
       );
+    canvas.onwheel = event => {
+      camera.distance.value = camera.distance.value + event.deltaY;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      rerender();
+    };
+    window.addEventListener(camera.horizontalRotation.id, () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      rerender();
+    });
+    window.addEventListener(camera.verticalRotation.id, ({ detail }) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      rerender();
     });
     return canvas;
   };
 
   const CanvasWidget$ = () =>
     WidgetBackgroundContainer$(
-      WidgetForegroundContainer$(ThreeDimVisualization$())
+      WidgetForegroundContainer$(ThreeDimVisualization$({ structure }))
     );
 
   const DashboardsView = () => {
