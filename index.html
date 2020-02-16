@@ -954,51 +954,51 @@
     ];
     this.edges = [
       {
-        color: 'black',
+        color: 'blue',
         vertices: [this.vertices[0], this.vertices[1]],
-        width: 5,
+        width: 2,
       },
       {
-        color: 'black',
+        color: 'blue',
         vertices: [this.vertices[0], this.vertices[2]],
-        width: 5,
+        width: 2,
       },
       {
-        color: 'black',
+        color: 'blue',
         vertices: [this.vertices[0], this.vertices[3]],
-        width: 5,
+        width: 2,
       },
       {
-        color: 'black',
+        color: 'blue',
         vertices: [this.vertices[1], this.vertices[2]],
-        width: 5,
+        width: 2,
       },
       {
-        color: 'black',
+        color: 'blue',
         vertices: [this.vertices[1], this.vertices[3]],
-        width: 5,
+        width: 2,
       },
       {
-        color: 'black',
+        color: 'blue',
         vertices: [this.vertices[2], this.vertices[3]],
-        width: 5,
+        width: 2,
       },
     ];
     this.faces = [
       {
-        color: 'rgba(255, 0, 0, 0.5)',
+        color: 'rgba(128, 128, 255, 0.5)',
         vertices: [this.vertices[0], this.vertices[1], this.vertices[2]],
       },
       {
-        color: 'rgba(0, 255, 0, 0.5)',
+        color: 'rgba(128, 128, 255, 0.5)',
         vertices: [this.vertices[0], this.vertices[1], this.vertices[3]],
       },
       {
-        color: 'rgba(0, 0, 255, 0.5)',
+        color: 'rgba(128, 128, 255, 0.5)',
         vertices: [this.vertices[1], this.vertices[2], this.vertices[3]],
       },
       {
-        color: 'rgba(255, 255, 0, 0.5)',
+        color: 'rgba(128, 128, 255, 0.5)',
         vertices: [this.vertices[0], this.vertices[2], this.vertices[3]],
       },
     ];
@@ -1111,22 +1111,62 @@
     }, 100);
   updateXyRotation();
 
+  const Camera = function({
+    target,
+    horizontalRotation,
+    verticalRotation,
+    distance,
+    focalLength,
+  }) {
+    this.target = target;
+    this.horizontalRotation = horizontalRotation;
+    this.verticalRotation = verticalRotation;
+    this.distance = distance;
+    this.focalLength = focalLength;
+  };
+
   const ThreeDimVisualization$ = () => {
     const canvas = canvas$({ height: 240, width: 400 });
-    const center = { x: 0, y: 0, z: 0 };
-    const rx = xRotation;
-    const ry = yRotation;
-    const distance = 100;
-    const focalLength = 1000;
-    const ctx = canvas.getContext('2d');
-    render(structure, ctx, center, rx.value, ry.value, distance, focalLength);
-    window.addEventListener(rx.id, ({ detail }) => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      render(structure, ctx, center, detail, ry.value, distance, focalLength);
+    const camera = new Camera({
+      target: { x: 0, y: 0, z: 0 },
+      horizontalRotation: xRotation,
+      verticalRotation: yRotation,
+      distance: 100,
+      focalLength: 1000,
     });
-    window.addEventListener(ry.id, ({ detail }) => {
+    const ctx = canvas.getContext('2d');
+    render(
+      structure,
+      ctx,
+      camera.target,
+      camera.horizontalRotation.value,
+      camera.verticalRotation.value,
+      camera.distance,
+      camera.focalLength
+    );
+    window.addEventListener(camera.horizontalRotation.id, ({ detail }) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      render(structure, ctx, center, rx.value, detail, distance, focalLength);
+      render(
+        structure,
+        ctx,
+        camera.target,
+        detail,
+        camera.verticalRotation.value,
+        camera.distance,
+        camera.focalLength
+      );
+    });
+    window.addEventListener(camera.verticalRotation.id, ({ detail }) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      render(
+        structure,
+        ctx,
+        camera.target,
+        camera.horizontalRotation.value,
+        detail,
+        camera.distance,
+        camera.focalLength
+      );
     });
     return canvas;
   };
