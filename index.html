@@ -946,6 +946,7 @@
   const state = {
     customDashboardWidgets: [
       new (function() {
+        this.id = '0';
         this.vertices = [
           { x: 0, y: 0, z: 0 },
           { x: 0, y: 0, z: 100 },
@@ -999,6 +1000,65 @@
           },
           {
             color: 'rgba(128, 128, 255, 0.5)',
+            vertices: [this.vertices[0], this.vertices[2], this.vertices[3]],
+          },
+        ];
+      })(),
+      new (function() {
+        this.id = '1';
+        this.vertices = [
+          { x: 0, y: 0, z: 0 },
+          { x: 0, y: 0, z: 100 },
+          { x: 0, y: 100, z: 0 },
+          { x: 100, y: 0, z: 0 },
+        ];
+        this.edges = [
+          {
+            color: 'red',
+            vertices: [this.vertices[0], this.vertices[1]],
+            width: 2,
+          },
+          {
+            color: 'red',
+            vertices: [this.vertices[0], this.vertices[2]],
+            width: 2,
+          },
+          {
+            color: 'red',
+            vertices: [this.vertices[0], this.vertices[3]],
+            width: 2,
+          },
+          {
+            color: 'red',
+            vertices: [this.vertices[1], this.vertices[2]],
+            width: 2,
+          },
+          {
+            color: 'red',
+            vertices: [this.vertices[1], this.vertices[3]],
+            width: 2,
+          },
+          {
+            color: 'red',
+            vertices: [this.vertices[2], this.vertices[3]],
+            width: 2,
+          },
+        ];
+        this.faces = [
+          {
+            color: 'rgba(255, 128, 128, 0.5)',
+            vertices: [this.vertices[0], this.vertices[1], this.vertices[2]],
+          },
+          {
+            color: 'rgba(255, 128, 128, 0.5)',
+            vertices: [this.vertices[0], this.vertices[1], this.vertices[3]],
+          },
+          {
+            color: 'rgba(255, 128, 128, 0.5)',
+            vertices: [this.vertices[1], this.vertices[2], this.vertices[3]],
+          },
+          {
+            color: 'rgba(255, 128, 128, 0.5)',
             vertices: [this.vertices[0], this.vertices[2], this.vertices[3]],
           },
         ];
@@ -1184,10 +1244,26 @@
     return canvas;
   };
 
-  const CanvasWidget$ = ({ structure }) =>
-    WidgetBackgroundContainer$(
-      WidgetForegroundContainer$(ThreeDimVisualization$({ structure }))
+  const icon$ = ({ icon, onClick }) => {
+    return div$(icon).setStyle({
+      position: 'relative',
+      bottom: '20px',
+      display: 'inline-block',
+      float: 'right',
+      cursor: 'pointer',
+      marginLeft: '10px',
+    });
+  };
+
+  const CanvasWidget$ = ({ structure }) => {
+    return WidgetBackgroundContainer$(
+      WidgetForegroundContainer$(
+        ThreeDimVisualization$({ structure }),
+        icon$({ icon: new Observable('🗑️') }),
+        icon$({ icon: new Observable('✏️') })
+      )
     );
+  };
 
   const DashboardsView = () => {
     const title$ = new Observable('Dashboards');
@@ -1205,7 +1281,9 @@
         values$: dashboardValues$,
         maxValue$: new Observable(200),
       }),
-      CanvasWidget$({ structure: state.customDashboardWidgets[0] })
+      ...state.customDashboardWidgets.map(structure =>
+        CanvasWidget$({ structure })
+      )
     );
   };
 
