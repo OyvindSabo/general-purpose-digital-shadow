@@ -1111,8 +1111,11 @@
     this.verticalRotation = new Observable(
       Math.max(Math.min(verticalRotation, Math.PI / 4), -Math.PI / 2)
     );
-    this.distance = distance;
+    this.distance = new Observable(Math.max(distance, -focalLength / 2));
     this.focalLength = focalLength;
+    this.setDistance = distance => {
+      this.distance.value = Math.max(distance, -focalLength / 2);
+    };
     this.setVerticalRotation = verticalRotation => {
       this.verticalRotation.value = Math.max(
         Math.min(verticalRotation, Math.PI / 2),
@@ -1128,7 +1131,7 @@
       target: { x: 0, y: 0, z: 0 },
       horizontalRotation: 0,
       verticalRotation: 0,
-      distance: new Observable(100),
+      distance: 100,
       focalLength: 1000,
     });
     const ctx = canvas.getContext('2d');
@@ -1144,7 +1147,7 @@
       );
     rerender();
     canvas.onwheel = event => {
-      camera.distance.value = camera.distance.value + event.deltaY;
+      camera.setDistance(camera.distance.value + event.deltaY);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       rerender();
     };
