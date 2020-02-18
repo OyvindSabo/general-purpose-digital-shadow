@@ -432,7 +432,6 @@
     },
     setDerivedValues: newDerivedValues => {
       Object.assign(valuesStream.derivedValues, newDerivedValues);
-      console.log('valuesStream.derivedValues: ', valuesStream.derivedValues);
       valuesStream.emit();
     },
     subscribe: observer => {
@@ -742,6 +741,10 @@
         }
         element.style[styleProperty] = styleValue$;
       });
+      return element;
+    };
+    element.onClick = clickCallback => {
+      element.onclick = () => clickCallback(element);
       return element;
     };
     element.onMouseEnter = mouseEnterCallback => {
@@ -1283,8 +1286,8 @@
     return canvas;
   };
 
-  const icon$ = ({ icon, onClick, isVisible }) => {
-    return div$(icon).setStyle({
+  const icon$ = ({ icon, onClick, isVisible }) =>
+    div$(icon).setStyle({
       position: 'relative',
       bottom: '20px',
       opacity: choose$(isVisible, '1', '0'),
@@ -1294,7 +1297,6 @@
       userSelect: 'none',
       transition: '0.25s',
     });
-  };
 
   const CanvasWidget$ = ({ structure }) => {
     const isVisible = new Observable(false);
@@ -1302,7 +1304,12 @@
       WidgetForegroundContainer$(
         ThreeDimVisualization$({ structure }),
         icon$({ icon: '🗑️', isVisible }),
-        icon$({ icon: '✏️', isVisible })
+        icon$({
+          icon: '✏️',
+          isVisible,
+        }).onClick(() => {
+          location.hash = `#!/dashboards/${structure.id}/edit`;
+        })
       )
         .onMouseEnter(element => {
           isVisible.value = true;
@@ -1335,7 +1342,17 @@
     );
   };
 
+  const EditWidgetView = ({ widgetId }) =>
+    div$(
+      CanvasWidget$({
+        structure: state.customDashboardWidgets.find(
+          widget => widget.id === widgetId
+        ),
+      })
+    );
+
   const App = ({ params, currentRoute }) => {
+    console.log('currentRoute: ', currentRoute());
     const element = div(
       TopNavigator(),
       MainContainer(
@@ -1357,7 +1374,10 @@
             icon: '📊',
             label: 'Dashboards',
             route: '/dashboards',
-            isActive: () => currentRoute() === '/dashboards',
+            isActive: () =>
+              ['/dashboards', '/dashboards/<widgetId:string>/edit'].includes(
+                currentRoute()
+              ),
           }),
           LeftNavigatorButton({
             icon: '⏰',
@@ -1372,6 +1392,8 @@
           if (currentRoute() === '/data-sources') return DataSourcesView();
           if (currentRoute() === '/values') return ValuesView();
           if (currentRoute() === '/dashboards') return DashboardsView();
+          if (currentRoute() === '/dashboards/<widgetId:string>/edit')
+            return EditWidgetView({ widgetId: params().widgetId });
           if (currentRoute() === '/alerts') return AlertsView();
           if (currentRoute() === '/analytics/<analyticId:string>')
             return AnalyticView();
@@ -1399,7 +1421,9 @@
       '/data-sources': 'Data sources',
       '/values': 'Values',
       '/analytics/<analyticId:string>': 'Analytics',
+      // TODO: It should be possible to have multiple dashboards
       '/dashboards': 'Dashboards',
+      '/dashboards/<widgetId:string>/edit': 'Edit widget',
       '/alerts': 'Alerts',
     });
 
