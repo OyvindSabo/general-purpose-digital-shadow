@@ -942,67 +942,69 @@
       )
     );
 
-  /* 3D visualization */
-
-  /* Example structure */
-  const structure = new (function() {
-    this.vertices = [
-      { x: 0, y: 0, z: 0 },
-      { x: 0, y: 0, z: 100 },
-      { x: 0, y: 100, z: 0 },
-      { x: 100, y: 0, z: 0 },
-    ];
-    this.edges = [
-      {
-        color: 'blue',
-        vertices: [this.vertices[0], this.vertices[1]],
-        width: 2,
-      },
-      {
-        color: 'blue',
-        vertices: [this.vertices[0], this.vertices[2]],
-        width: 2,
-      },
-      {
-        color: 'blue',
-        vertices: [this.vertices[0], this.vertices[3]],
-        width: 2,
-      },
-      {
-        color: 'blue',
-        vertices: [this.vertices[1], this.vertices[2]],
-        width: 2,
-      },
-      {
-        color: 'blue',
-        vertices: [this.vertices[1], this.vertices[3]],
-        width: 2,
-      },
-      {
-        color: 'blue',
-        vertices: [this.vertices[2], this.vertices[3]],
-        width: 2,
-      },
-    ];
-    this.faces = [
-      {
-        color: 'rgba(128, 128, 255, 0.5)',
-        vertices: [this.vertices[0], this.vertices[1], this.vertices[2]],
-      },
-      {
-        color: 'rgba(128, 128, 255, 0.5)',
-        vertices: [this.vertices[0], this.vertices[1], this.vertices[3]],
-      },
-      {
-        color: 'rgba(128, 128, 255, 0.5)',
-        vertices: [this.vertices[1], this.vertices[2], this.vertices[3]],
-      },
-      {
-        color: 'rgba(128, 128, 255, 0.5)',
-        vertices: [this.vertices[0], this.vertices[2], this.vertices[3]],
-      },
-    ];
-  })();
+  /* Global app state */
+  const state = {
+    customDashboardWidgets: [
+      new (function() {
+        this.vertices = [
+          { x: 0, y: 0, z: 0 },
+          { x: 0, y: 0, z: 100 },
+          { x: 0, y: 100, z: 0 },
+          { x: 100, y: 0, z: 0 },
+        ];
+        this.edges = [
+          {
+            color: 'blue',
+            vertices: [this.vertices[0], this.vertices[1]],
+            width: 2,
+          },
+          {
+            color: 'blue',
+            vertices: [this.vertices[0], this.vertices[2]],
+            width: 2,
+          },
+          {
+            color: 'blue',
+            vertices: [this.vertices[0], this.vertices[3]],
+            width: 2,
+          },
+          {
+            color: 'blue',
+            vertices: [this.vertices[1], this.vertices[2]],
+            width: 2,
+          },
+          {
+            color: 'blue',
+            vertices: [this.vertices[1], this.vertices[3]],
+            width: 2,
+          },
+          {
+            color: 'blue',
+            vertices: [this.vertices[2], this.vertices[3]],
+            width: 2,
+          },
+        ];
+        this.faces = [
+          {
+            color: 'rgba(128, 128, 255, 0.5)',
+            vertices: [this.vertices[0], this.vertices[1], this.vertices[2]],
+          },
+          {
+            color: 'rgba(128, 128, 255, 0.5)',
+            vertices: [this.vertices[0], this.vertices[1], this.vertices[3]],
+          },
+          {
+            color: 'rgba(128, 128, 255, 0.5)',
+            vertices: [this.vertices[1], this.vertices[2], this.vertices[3]],
+          },
+          {
+            color: 'rgba(128, 128, 255, 0.5)',
+            vertices: [this.vertices[0], this.vertices[2], this.vertices[3]],
+          },
+        ];
+      })(),
+    ],
+  };
 
   const rotate = (vertex, rx, ry) => {
     const theta = rx;
@@ -1182,7 +1184,7 @@
     return canvas;
   };
 
-  const CanvasWidget$ = () =>
+  const CanvasWidget$ = ({ structure }) =>
     WidgetBackgroundContainer$(
       WidgetForegroundContainer$(ThreeDimVisualization$({ structure }))
     );
@@ -1203,7 +1205,7 @@
         values$: dashboardValues$,
         maxValue$: new Observable(200),
       }),
-      CanvasWidget$()
+      CanvasWidget$({ structure: state.customDashboardWidgets[0] })
     );
   };
 
