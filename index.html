@@ -720,9 +720,9 @@
       }
       if (
         // If it is non-observable value
-        ['string', 'number'].includes(typeof observable.value)
+        ['string', 'number'].includes(typeof observable)
       ) {
-        const textNode = document.createTextNode(observable.value);
+        const textNode = document.createTextNode(observable);
         element.appendChild(textNode);
         return;
       }
@@ -1260,8 +1260,8 @@
     return WidgetBackgroundContainer$(
       WidgetForegroundContainer$(
         ThreeDimVisualization$({ structure }),
-        icon$({ icon: new Observable('🗑️') }),
-        icon$({ icon: new Observable('✏️') })
+        icon$({ icon: '🗑️' }),
+        icon$({ icon: '✏️' })
       )
     );
   };
