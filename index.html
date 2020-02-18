@@ -744,6 +744,14 @@
       });
       return element;
     };
+    element.onMouseEnter = mouseEnterCallback => {
+      element.onmouseenter = () => mouseEnterCallback(element);
+      return element;
+    };
+    element.onMouseLeave = mouseLeaveCallback => {
+      element.onmouseleave = () => mouseLeaveCallback(element);
+      return element;
+    };
     return element;
   };
   const div$ = (...children) => createElement$('div', ...children);
@@ -838,6 +846,37 @@
       });
     });
     return quotient$;
+  };
+
+  const choose$ = (observable, option1, option2) => {
+    const result$ = new Observable(
+      (observable instanceof Observable
+      ? observable.value
+      : observable)
+        ? option1 instanceof Observable
+          ? option1.value
+          : option1
+        : option2 instanceof Observable
+        ? option2.value
+        : option2
+    );
+    [observable, option1, option2]
+      .filter(observable => observable instanceof Observable)
+      .forEach(observable => {
+        window.addEventListener(observable.id, ({ detail }) => {
+          // TODO: Make it possible to set a specific child of an observable
+          result$.value = (observable instanceof Observable
+          ? observable.value
+          : observable)
+            ? option1 instanceof Observable
+              ? option1.value
+              : option1
+            : option2 instanceof Observable
+            ? option2.value
+            : option2;
+        });
+      });
+    return result$;
   };
 
   // This is not used and can probably be removed
@@ -1244,25 +1283,33 @@
     return canvas;
   };
 
-  const icon$ = ({ icon, onClick }) => {
+  const icon$ = ({ icon, onClick, isVisible }) => {
     return div$(icon).setStyle({
       position: 'relative',
       bottom: '20px',
-      display: 'inline-block',
+      opacity: choose$(isVisible, '1', '0'),
       float: 'right',
       cursor: 'pointer',
       marginLeft: '10px',
       userSelect: 'none',
+      transition: '0.25s',
     });
   };
 
   const CanvasWidget$ = ({ structure }) => {
+    const isVisible = new Observable(false);
     return WidgetBackgroundContainer$(
       WidgetForegroundContainer$(
         ThreeDimVisualization$({ structure }),
-        icon$({ icon: '🗑️' }),
-        icon$({ icon: '✏️' })
+        icon$({ icon: '🗑️', isVisible }),
+        icon$({ icon: '✏️', isVisible })
       )
+        .onMouseEnter(element => {
+          isVisible.value = true;
+        })
+        .onMouseLeave(element => {
+          isVisible.value = false;
+        })
     );
   };
 
