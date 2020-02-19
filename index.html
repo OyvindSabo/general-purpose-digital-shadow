@@ -985,8 +985,8 @@
     );
 
   /* Global app state */
-  const state = {
-    customDashboardWidgets: [
+  const state = new (function() {
+    this.customDashboardWidgets = [
       new (function() {
         this.id = '0';
         this.vertices = [
@@ -1105,8 +1105,18 @@
           },
         ];
       })(),
-    ],
-  };
+    ];
+    this.createNewCustomDashboardWidget = () => {
+      const id = `${Math.random()}${+new Date()}`;
+      this.customDashboardWidgets.push({
+        id,
+        vertices: [],
+        edges: [],
+        faces: [],
+      });
+      return id;
+    };
+  })();
 
   const rotate = (vertex, rx, ry) => {
     const theta = rx;
@@ -1171,15 +1181,18 @@
             ctx.moveTo(vertex.x, -vertex.y);
             return;
           }
-          if (index < vertices.length) {
+          if (index < vertices.length - 1) {
             ctx.lineTo(vertex.x, -vertex.y);
             return;
           }
+          if (index === vertices.length - 1) {
+            ctx.lineTo(vertex.x, -vertex.y);
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+            return;
+          }
         });
-      // Close the path and draw the face
-      ctx.closePath();
-      ctx.fillStyle = color;
-      ctx.fill();
     });
 
     // Render the edges
@@ -1366,7 +1379,10 @@
       ...state.customDashboardWidgets.map(structure =>
         CanvasWidget$({ structure })
       ),
-      AddNewWidget()
+      AddNewWidget().onClick(() => {
+        const idOfNewStructure = state.createNewCustomDashboardWidget();
+        location.hash = `#!/dashboards/${idOfNewStructure}/edit`;
+      })
     );
   };
 
@@ -1380,7 +1396,6 @@
     );
 
   const App = ({ params, currentRoute }) => {
-    console.log('currentRoute: ', currentRoute());
     const element = div(
       TopNavigator(),
       MainContainer(
