@@ -1116,6 +1116,11 @@
       });
       return id;
     };
+    this.deleteCustomDashboardWidgetById = id => {
+      this.customDashboardWidgets = this.customDashboardWidgets.filter(
+        structure => structure.id !== id
+      );
+    };
   })();
 
   const rotate = (vertex, rx, ry) => {
@@ -1316,7 +1321,10 @@
     return WidgetBackgroundContainer$(
       WidgetForegroundContainer$(
         ThreeDimVisualization$({ structure }),
-        icon$({ icon: '🗑️', isVisible }),
+        icon$({ icon: '🗑️', isVisible }).onClick(() => {
+          state.deleteCustomDashboardWidgetById(structure.id);
+          location.hash = '#!/dashboards';
+        }),
         icon$({
           icon: '✏️',
           isVisible,
