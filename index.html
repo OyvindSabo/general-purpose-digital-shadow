@@ -1320,6 +1320,33 @@
     );
   };
 
+  const AddNewWidget = () => {
+    const isHovered = new Observable(false);
+    return WidgetBackgroundContainer$(
+      WidgetForegroundContainer$(
+        div$('+').setStyle({
+          fontSize: '60px',
+          textAlign: 'center',
+          lineHeight: '240px',
+          pointerEvents: 'none',
+          userSelect: 'none',
+          color: choose$(isHovered, 'DimGray', 'Gray'),
+          transition: '0.25s',
+          transform: choose$(isHovered, 'rotate(90deg)', 'rotate(0deg)'),
+        })
+      )
+        .setStyle({
+          cursor: 'pointer',
+        })
+        .onMouseEnter(element => {
+          isHovered.value = true;
+        })
+        .onMouseLeave(element => {
+          isHovered.value = false;
+        })
+    );
+  };
+
   const DashboardsView = () => {
     const title$ = new Observable('Dashboards');
     const count1$ = new Observable(1);
@@ -1338,7 +1365,8 @@
       }),
       ...state.customDashboardWidgets.map(structure =>
         CanvasWidget$({ structure })
-      )
+      ),
+      AddNewWidget()
     );
   };
 
