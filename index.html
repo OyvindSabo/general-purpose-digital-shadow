@@ -1394,8 +1394,8 @@
     );
   };
 
-  const RightNavigator = (...children) =>
-    div(...children).setStyle({
+  const RightNavigator$ = (...children) =>
+    div$(...children).setStyle({
       height: '100%',
       width: '480px',
       borderRadius: '0 10px 0 0',
@@ -1405,15 +1405,69 @@
       background: 'White',
     });
 
-  const EditWidgetView = ({ widgetId }) =>
-    div$(
-      RightNavigator(),
+  const RightNavigatorHeader$ = (...children) =>
+    div$(...children).setStyle({
+      height: '80px',
+      borderBottom: '1px solid lightGray',
+    });
+
+  const RightNavigatorButton = ({ icon, label, isActive }) => {
+    const Button = Styled(div, {
+      height: '80px',
+      width: '80px',
+      overflow: 'hidden',
+      transition: '0.25s',
+      cursor: 'pointer',
+    });
+    const Icon = Styled(div, {
+      fontSize: '30px',
+      textAlign: 'center',
+      marginTop: '15px',
+      pointerEvents: 'none',
+      userSelect: 'none',
+    });
+    const Label = Styled(div, {
+      fontSize: '15px',
+      textAlign: 'center',
+      pointerEvents: 'none',
+      userSelect: 'none',
+    });
+    return Button(Icon(icon), Label(label)).onUpdate(element => {
+      element.style.background = isActive() ? 'WhiteSmoke' : 'initial';
+      element.style.color = isActive() ? 'DimGray' : 'Gray';
+      element.onmouseenter = () => {
+        element.style.background = 'WhiteSmoke';
+        element.style.color = 'DimGray';
+      };
+      element.onmouseleave = () => {
+        element.style.background = isActive() ? 'WhiteSmoke' : 'initial';
+        element.style.color = isActive() ? 'DimGray' : 'Gray';
+      };
+      element.onclick = () => {
+        //location.hash = `#!${route}`;
+      };
+    });
+  };
+
+  const EditWidgetView = ({ widgetId }) => {
+    const rightNavigatorTap = new Observable('Edges');
+    return div$(
+      RightNavigator$(
+        RightNavigatorHeader$(
+          RightNavigatorButton({
+            icon: '📏',
+            label: 'Edges',
+            isActive: () => true,
+          })
+        )
+      ),
       CanvasWidget$({
         structure: state.customDashboardWidgets.find(
           widget => widget.id === widgetId
         ),
       })
     );
+  };
 
   const App = ({ params, currentRoute }) => {
     const element = div(
