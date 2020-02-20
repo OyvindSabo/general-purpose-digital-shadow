@@ -902,6 +902,23 @@
     return equality$;
   };
 
+  // Note the capital S. This is kind of a component and makes sure the correct
+  // HTML element is always shown.
+  const Switch$ = (statement$, ...clauses) => {
+    const cases = clauses.filter((_, i) => i % 2 === 0);
+    const elements = clauses.filter((_, i) => i % 2 !== 0);
+    return div$(
+      ...cases.map((theCase, i) => {
+        const element = elements[i];
+        // Warning: Assumes that display is not initially dynamic
+        const display = element.style.display;
+        return element.setStyle({
+          display: choose$(eq$(statement$, theCase), display, 'none'),
+        });
+      })
+    );
+  };
+
   // This is not used and can probably be removed
   const toArray$ = (...observables) => {
     const observableArray = observables.map(({ value }) => value);
@@ -1475,6 +1492,10 @@
       );
   };
 
+  const NodesOverview$ = () => div$('Nodes');
+  const EdgesOverview$ = () => div$('Edges');
+  const FacesOverview$ = () => div$('Faces');
+
   const EditWidgetView = ({ widgetId }) => {
     const rightNavigatorTab$ = new Observable('Edges');
     const setRightNavigationTab = tab => (rightNavigatorTab$.value = tab);
@@ -1497,11 +1518,20 @@
           }),
           RightNavigatorButton({
             icon: '🎨',
-            label: 'Areas',
-            isActive: choose$(eq$(rightNavigatorTab$, 'Areas'), true, false),
+            label: 'Faces',
+            isActive: choose$(eq$(rightNavigatorTab$, 'Faces'), true, false),
           }).onClick(() => {
-            rightNavigatorTab$.value = 'Areas';
+            rightNavigatorTab$.value = 'Faces';
           })
+        ),
+        Switch$(
+          rightNavigatorTab$,
+          'Nodes',
+          NodesOverview$(),
+          'Edges',
+          EdgesOverview$(),
+          'Faces',
+          FacesOverview$()
         )
       ),
       CanvasWidget$({
