@@ -882,6 +882,26 @@
     return result$;
   };
 
+  const eq$ = (...observables) => {
+    const equality = observables
+      .map(observable =>
+        observable instanceof Observable ? observable.value : observable
+      )
+      .every((element, _, array) => element === array[0]);
+    const equality$ = new Observable(equality);
+    observables.forEach(observable => {
+      window.addEventListener(observable.id, ({ detail }) => {
+        const equality = observables
+          .map(observable =>
+            observable instanceof Observable ? observable.value : observable
+          )
+          .every((element, _, array) => element === array[0]);
+        equality$.value = equality;
+      });
+    });
+    return equality$;
+  };
+
   // This is not used and can probably be removed
   const toArray$ = (...observables) => {
     const observableArray = observables.map(({ value }) => value);
@@ -1412,52 +1432,75 @@
     });
 
   const RightNavigatorButton = ({ icon, label, isActive }) => {
-    const Button = Styled(div, {
-      height: '80px',
-      width: '80px',
-      overflow: 'hidden',
-      transition: '0.25s',
-      cursor: 'pointer',
-    });
-    const Icon = Styled(div, {
-      fontSize: '30px',
-      textAlign: 'center',
-      marginTop: '15px',
-      pointerEvents: 'none',
-      userSelect: 'none',
-    });
-    const Label = Styled(div, {
-      fontSize: '15px',
-      textAlign: 'center',
-      pointerEvents: 'none',
-      userSelect: 'none',
-    });
-    return Button(Icon(icon), Label(label)).onUpdate(element => {
-      element.style.background = isActive() ? 'WhiteSmoke' : 'initial';
-      element.style.color = isActive() ? 'DimGray' : 'Gray';
-      element.onmouseenter = () => {
-        element.style.background = 'WhiteSmoke';
-        element.style.color = 'DimGray';
-      };
-      element.onmouseleave = () => {
-        element.style.background = isActive() ? 'WhiteSmoke' : 'initial';
-        element.style.color = isActive() ? 'DimGray' : 'Gray';
-      };
-      element.onclick = () => {
-        //location.hash = `#!${route}`;
-      };
-    });
+    const Button = (...children) =>
+      div$(...children).setStyle({
+        height: '80px',
+        width: '80px',
+        overflow: 'hidden',
+        transition: '0.25s',
+        cursor: 'pointer',
+      });
+    const Icon = (...children) =>
+      div$(...children).setStyle({
+        fontSize: '30px',
+        textAlign: 'center',
+        marginTop: '15px',
+        pointerEvents: 'none',
+        userSelect: 'none',
+      });
+    const Label = (...children) =>
+      div$(...children).setStyle({
+        fontSize: '15px',
+        textAlign: 'center',
+        pointerEvents: 'none',
+        userSelect: 'none',
+      });
+    return Button(Icon(icon), Label(label))
+      .setStyle({
+        background: choose$(isActive, 'WiteSmoke', 'initial'),
+        color: choose$(isActive, 'DimGray', 'Graf'),
+        display: 'inline-block',
+      })
+      .onMouseEnter(element =>
+        element.setStyle({
+          background: 'WhiteSmoke',
+          color: 'DimGray',
+        })
+      )
+      .onMouseLeave(element =>
+        element.setStyle({
+          background: choose$(isActive, 'WhiteSmoke', 'initial'),
+          color: choose$(isActive, 'DimGray', 'Gray'),
+        })
+      );
   };
 
   const EditWidgetView = ({ widgetId }) => {
-    const rightNavigatorTap = new Observable('Edges');
+    const rightNavigatorTab$ = new Observable('Edges');
+    const setRightNavigationTab = tab => (rightNavigatorTab$.value = tab);
     return div$(
       RightNavigator$(
         RightNavigatorHeader$(
           RightNavigatorButton({
+            icon: '🔵',
+            label: 'Nodes',
+            isActive: choose$(eq$(rightNavigatorTab$, 'Nodes'), true, false),
+          }).onClick(() => {
+            rightNavigatorTab$.value = 'Nodes';
+          }),
+          RightNavigatorButton({
             icon: '📏',
             label: 'Edges',
-            isActive: () => true,
+            isActive: choose$(eq$(rightNavigatorTab$, 'Edges'), true, false),
+          }).onClick(() => {
+            rightNavigatorTab$.value = 'Edges';
+          }),
+          RightNavigatorButton({
+            icon: '🎨',
+            label: 'Areas',
+            isActive: choose$(eq$(rightNavigatorTab$, 'Areas'), true, false),
+          }).onClick(() => {
+            rightNavigatorTab$.value = 'Areas';
           })
         )
       ),
