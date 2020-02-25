@@ -775,16 +775,18 @@
       )
       .reduce((a, b) => a + b);
     const sum$ = new Observable(sum);
-    observables.forEach(observable => {
-      window.addEventListener(observable.id, ({ detail }) => {
-        const sum = observables
-          .map(observable =>
-            observable instanceof Observable ? observable.value : observable
-          )
-          .reduce((a, b) => a + b);
-        sum$.value = sum;
+    observables
+      .filter(observable => observable instanceof Observable)
+      .forEach(observable => {
+        window.addEventListener(observable.id, ({ detail }) => {
+          const sum = observables
+            .map(observable =>
+              observable instanceof Observable ? observable.value : observable
+            )
+            .reduce((a, b) => a + b);
+          sum$.value = sum;
+        });
       });
-    });
     return sum$;
   };
 
@@ -1027,10 +1029,10 @@
       new (function() {
         this.id = '0';
         this.vertices = [
-          { x: 0, y: 0, z: 0 },
-          { x: 0, y: 0, z: 100 },
-          { x: 0, y: 100, z: 0 },
-          { x: 100, y: 0, z: 0 },
+          { id: 0, x: 0, y: 0, z: 0 },
+          { id: 1, x: 0, y: 0, z: 100 },
+          { id: 2, x: 0, y: 100, z: 0 },
+          { id: 3, x: 100, y: 0, z: 0 },
         ];
         this.edges = [
           {
@@ -1086,10 +1088,10 @@
       new (function() {
         this.id = '1';
         this.vertices = [
-          { x: 0, y: 0, z: 0 },
-          { x: 0, y: 0, z: 100 },
-          { x: 0, y: 100, z: 0 },
-          { x: 100, y: 0, z: 0 },
+          { id: 0, x: 0, y: 0, z: 0 },
+          { id: 1, x: 0, y: 0, z: 100 },
+          { id: 2, x: 0, y: 100, z: 0 },
+          { id: 3, x: 100, y: 0, z: 0 },
         ];
         this.edges = [
           {
@@ -1493,7 +1495,25 @@
   };
 
   const NodesOverview$ = () => div$('Nodes');
-  const EdgesOverview$ = () => div$('Edges');
+  const EdgeInfoBox$ = ({ color, vertices, width }) =>
+    div$(
+      div$(add$('color: ', color)),
+      div$(add$('source vertex: ', vertices[0].id)),
+      div$(add$('source vertex: ', vertices[1].id)),
+      div$(add$('width: ', width))
+    ).setStyle({
+      margin: '10px',
+      padding: '10px',
+      border: '1px solid LightGray',
+    });
+  const EdgesOverview$ = ({ state, widgetId }) =>
+    div$(
+      div$('Edges'),
+      ...(
+        state.customDashboardWidgets.find(widget => widget.id === widgetId) ||
+        {}
+      ).edges.map(edge => EdgeInfoBox$(edge))
+    );
   const FacesOverview$ = () => div$('Faces');
 
   const EditWidgetView = ({ widgetId }) => {
@@ -1528,11 +1548,11 @@
         Switch$(
           rightNavigatorTab$,
           'Nodes',
-          NodesOverview$(),
+          NodesOverview$({ state, widgetId }),
           'Edges',
-          EdgesOverview$(),
+          EdgesOverview$({ state, widgetId }),
           'Faces',
-          FacesOverview$()
+          FacesOverview$({ state, widgetId })
         )
       ),
       CanvasWidget$({
