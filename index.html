@@ -1474,8 +1474,8 @@
       });
     return Button(Icon(icon), Label(label))
       .setStyle({
-        background: choose$(isActive, 'WiteSmoke', 'initial'),
-        color: choose$(isActive, 'DimGray', 'Graf'),
+        background: choose$(isActive, 'WhiteSmoke', 'initial'),
+        color: choose$(isActive, 'DimGray', 'Gray'),
         display: 'inline-block',
       })
       .onMouseEnter(element =>
@@ -1498,6 +1498,7 @@
 
   const EditWidgetView = ({ widgetId }) => {
     const rightNavigatorTab$ = new Observable('Edges');
+    console.log('rightNavigatorTab$: ', rightNavigatorTab$);
     const setRightNavigationTab = tab => (rightNavigatorTab$.value = tab);
     return div$(
       RightNavigator$(
@@ -1505,21 +1506,21 @@
           RightNavigatorButton({
             icon: '🔵',
             label: 'Nodes',
-            isActive: choose$(eq$(rightNavigatorTab$, 'Nodes'), true, false),
+            isActive: eq$(rightNavigatorTab$, 'Nodes'),
           }).onClick(() => {
             rightNavigatorTab$.value = 'Nodes';
           }),
           RightNavigatorButton({
             icon: '📏',
             label: 'Edges',
-            isActive: choose$(eq$(rightNavigatorTab$, 'Edges'), true, false),
+            isActive: eq$(rightNavigatorTab$, 'Edges'),
           }).onClick(() => {
             rightNavigatorTab$.value = 'Edges';
           }),
           RightNavigatorButton({
             icon: '🎨',
             label: 'Faces',
-            isActive: choose$(eq$(rightNavigatorTab$, 'Faces'), true, false),
+            isActive: eq$(rightNavigatorTab$, 'Faces'),
           }).onClick(() => {
             rightNavigatorTab$.value = 'Faces';
           })
