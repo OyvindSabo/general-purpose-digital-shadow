@@ -1,7 +1,9 @@
-const EdgesOverview$ = ({ state, widgetId }) =>
-  div$(
-    div$('Edges'),
-    ...state.customDashboardWidgets
-      .find(widget => widget.id === widgetId)
-      .edges.map(edge => EdgeInfoBox$(edge))
+const EdgesOverview$ = ({ state, widgetId }) => {
+  const structure = state.customDashboardWidgets.find(
+    widget => widget.id === widgetId
   );
+  return div$(
+    div$('Edges'),
+    ...structure.edges.map(edge => EdgeInfoBox$({ structure, edge }))
+  );
+};

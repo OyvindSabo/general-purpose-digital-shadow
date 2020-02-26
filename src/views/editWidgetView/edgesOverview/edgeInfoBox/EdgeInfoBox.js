@@ -1,5 +1,9 @@
-const EdgeInfoBox$ = ({ color, vertices, width }) =>
-  div$(
+const EdgeInfoBox$ = ({ structure, edge }) => {
+  const { color, vertexIds, width } = edge;
+  const vertices = vertexIds
+    .map(vertexId => structure.vertices.find(vertex => vertex.id === vertexId))
+    .filter(Boolean);
+  return div$(
     div$(add$('color: ', color)),
     br$(),
     div$('Nodes:').setStyle({ fontWeight: 'bold' }),
@@ -12,3 +16,4 @@ const EdgeInfoBox$ = ({ color, vertices, width }) =>
     padding: '10px',
     border: '1px solid LightGray',
   });
+};

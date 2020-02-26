@@ -1,15 +1,15 @@
 /* Global app state */
 const state = new (function() {
   this.customDashboardWidgets = [
-    new (function() {
-      this.id = '0';
-      this.vertices = [
+    {
+      id: '0',
+      vertices: [
         { id: '0', x: 0, y: 0, z: 0 },
         { id: '1', x: 0, y: 0, z: 100 },
         { id: '2', x: 0, y: 100, z: 0 },
         { id: '3', x: 100, y: 0, z: 0 },
-      ];
-      this.edges = [
+      ],
+      edges: [
         {
           color: 'blue',
           vertexIds: ['0', '1'],
@@ -40,8 +40,8 @@ const state = new (function() {
           vertexIds: ['2', '3'],
           width: 2,
         },
-      ];
-      this.faces = [
+      ],
+      faces: [
         {
           color: 'rgba(128, 128, 255, 0.5)',
           vertexIds: ['0', '1', '2'],
@@ -58,17 +58,17 @@ const state = new (function() {
           color: 'rgba(128, 128, 255, 0.5)',
           vertexIds: ['0', '2', '3'],
         },
-      ];
-    })(),
-    new (function() {
-      this.id = '1';
-      this.vertices = [
+      ],
+    },
+    {
+      id: '1',
+      vertices: [
         { id: '0', x: 0, y: 0, z: 0 },
         { id: '1', x: 0, y: 0, z: 100 },
         { id: '2', x: 0, y: 100, z: 0 },
         { id: '3', x: 100, y: 0, z: 0 },
-      ];
-      this.edges = [
+      ],
+      edges: [
         {
           color: 'red',
           vertexIds: ['0', '1'],
@@ -99,8 +99,8 @@ const state = new (function() {
           vertexIds: ['2', '3'],
           width: 2,
         },
-      ];
-      this.faces = [
+      ],
+      faces: [
         {
           color: 'rgba(255, 128, 128, 0.5)',
           vertexIds: ['0', '1', '2'],
@@ -117,8 +117,8 @@ const state = new (function() {
           color: 'rgba(255, 128, 128, 0.5)',
           vertexIds: ['0', '2', '3'],
         },
-      ];
-    })(),
+      ],
+    },
   ];
   this.createNewCustomDashboardWidget = () => {
     const id = `${Math.random()}${+new Date()}`;

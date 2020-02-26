@@ -1,5 +1,9 @@
-const FaceInfoBox$ = ({ color, vertices }) =>
-  div$(
+const FaceInfoBox$ = ({ structure, face }) => {
+  const { color, vertexIds } = face;
+  const vertices = vertexIds
+    .map(vertexId => structure.vertices.find(vertex => vertex.id === vertexId))
+    .filter(Boolean);
+  return div$(
     div$(add$('color: ', color)),
     br$(),
     div$('Nodes:').setStyle({ fontWeight: 'bold' }),
@@ -9,3 +13,4 @@ const FaceInfoBox$ = ({ color, vertices }) =>
     padding: '10px',
     border: '1px solid LightGray',
   });
+};
