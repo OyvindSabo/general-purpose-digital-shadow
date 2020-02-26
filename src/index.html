@@ -1433,175 +1433,18 @@
       })
     );
   };
-
-  const RightNavigator$ = (...children) =>
-    div$(...children).setStyle({
-      height: '100%',
-      width: '480px',
-      borderRadius: '0 10px 0 0',
-      borderLeft: '1px solid LightGray',
-      overflow: 'hidden',
-      float: 'right',
-      background: 'White',
-    });
-
-  const RightNavigatorHeader$ = (...children) =>
-    div$(...children).setStyle({
-      height: '80px',
-      borderBottom: '1px solid lightGray',
-    });
-
-  const RightNavigatorButton = ({ icon, label, isActive }) => {
-    const Button = (...children) =>
-      div$(...children).setStyle({
-        height: '80px',
-        width: '80px',
-        overflow: 'hidden',
-        transition: '0.25s',
-        cursor: 'pointer',
-      });
-    const Icon = (...children) =>
-      div$(...children).setStyle({
-        fontSize: '30px',
-        textAlign: 'center',
-        marginTop: '15px',
-        pointerEvents: 'none',
-        userSelect: 'none',
-      });
-    const Label = (...children) =>
-      div$(...children).setStyle({
-        fontSize: '15px',
-        textAlign: 'center',
-        pointerEvents: 'none',
-        userSelect: 'none',
-      });
-    return Button(Icon(icon), Label(label))
-      .setStyle({
-        background: choose$(isActive, 'WhiteSmoke', 'initial'),
-        color: choose$(isActive, 'DimGray', 'Gray'),
-        display: 'inline-block',
-      })
-      .onMouseEnter(element =>
-        element.setStyle({
-          background: 'WhiteSmoke',
-          color: 'DimGray',
-        })
-      )
-      .onMouseLeave(element =>
-        element.setStyle({
-          background: choose$(isActive, 'WhiteSmoke', 'initial'),
-          color: choose$(isActive, 'DimGray', 'Gray'),
-        })
-      );
-  };
-
-  const NodeInfoBox$ = ({ id, x, y, z }) =>
-    div$(
-      div$(add$('id: ', id)),
-      br$(),
-      div$('Nodes:').setStyle({ fontWeight: 'bold' }),
-      div$(add$('x: ', x)),
-      div$(add$('y: ', y)),
-      div$(add$('z: ', z))
-    ).setStyle({
-      margin: '10px',
-      padding: '10px',
-      border: '1px solid LightGray',
-    });
-  const NodesOverview$ = ({ state, widgetId }) =>
-    div$(
-      div$('Nodes'),
-      ...state.customDashboardWidgets
-        .find(widget => widget.id === widgetId)
-        .vertices.map(node => NodeInfoBox$(node))
-    );
-  const EdgeInfoBox$ = ({ color, vertices, width }) =>
-    div$(
-      div$(add$('color: ', color)),
-      br$(),
-      div$('Nodes:').setStyle({ fontWeight: 'bold' }),
-      div$(add$('Node ', vertices[0].id)),
-      div$(add$('Node ', vertices[1].id)),
-      br$(),
-      div$(add$('width: ', width))
-    ).setStyle({
-      margin: '10px',
-      padding: '10px',
-      border: '1px solid LightGray',
-    });
-  const EdgesOverview$ = ({ state, widgetId }) =>
-    div$(
-      div$('Edges'),
-      ...state.customDashboardWidgets
-        .find(widget => widget.id === widgetId)
-        .edges.map(edge => EdgeInfoBox$(edge))
-    );
-  const FaceInfoBox$ = ({ color, vertices }) =>
-    div$(
-      div$(add$('color: ', color)),
-      br$(),
-      div$('Nodes:').setStyle({ fontWeight: 'bold' }),
-      ...vertices.map((vertex, i) => div$(add$('node ', vertex.id)))
-    ).setStyle({
-      margin: '10px',
-      padding: '10px',
-      border: '1px solid LightGray',
-    });
-  const FacesOverview$ = ({ state, widgetId }) =>
-    div$(
-      div$('Faces'),
-      ...state.customDashboardWidgets
-        .find(widget => widget.id === widgetId)
-        .faces.map(face => FaceInfoBox$(face))
-    );
-
-  const EditWidgetView = ({ widgetId }) => {
-    const rightNavigatorTab$ = new Observable('Edges');
-    console.log('rightNavigatorTab$: ', rightNavigatorTab$);
-    const setRightNavigationTab = tab => (rightNavigatorTab$.value = tab);
-    return div$(
-      RightNavigator$(
-        RightNavigatorHeader$(
-          RightNavigatorButton({
-            icon: '🔵',
-            label: 'Nodes',
-            isActive: eq$(rightNavigatorTab$, 'Nodes'),
-          }).onClick(() => {
-            rightNavigatorTab$.value = 'Nodes';
-          }),
-          RightNavigatorButton({
-            icon: '📏',
-            label: 'Edges',
-            isActive: eq$(rightNavigatorTab$, 'Edges'),
-          }).onClick(() => {
-            rightNavigatorTab$.value = 'Edges';
-          }),
-          RightNavigatorButton({
-            icon: '🎨',
-            label: 'Faces',
-            isActive: eq$(rightNavigatorTab$, 'Faces'),
-          }).onClick(() => {
-            rightNavigatorTab$.value = 'Faces';
-          })
-        ),
-        Switch$(
-          rightNavigatorTab$,
-          'Nodes',
-          NodesOverview$({ state, widgetId }),
-          'Edges',
-          EdgesOverview$({ state, widgetId }),
-          'Faces',
-          FacesOverview$({ state, widgetId })
-        )
-      ),
-      CanvasWidget$({
-        structure: state.customDashboardWidgets.find(
-          widget => widget.id === widgetId
-        ),
-      })
-    );
-  };
-
+</script>
+<script src="views/editWidgetView/rightNavigator/RightNavigator.js"></script>
+<script src="views/editWidgetView/rightNavigatorHeader/RightNavigatorHeader.js"></script>
+<script src="views/editWidgetView/rightNavigatorButton/RightNavigatorButton.js"></script>
+<script src="views/editWidgetView/nodesOverview/nodeInfoBox/NodeInfoBox.js"></script>
+<script src="views/editWidgetView/nodesOverview/NodesOverview.js"></script>
+<script src="views/editWidgetView/edgesOverview/edgeInfoBox/EdgeInfoBox.js"></script>
+<script src="views/editWidgetView/edgesOverview/EdgesOverview.js"></script>
+<script src="views/editWidgetView/facesOverview/faceInfoBox/FaceInfoBox.js"></script>
+<script src="views/editWidgetView/facesOverview/FacesOverview.js"></script>
+<script src="views/editWidgetView/EditWidgetView.js"></script>
+<script>
   const App = ({ params, currentRoute }) => {
     const element = div(
       TopNavigator(),
@@ -1646,7 +1489,7 @@
             return EditWidgetView({ widgetId: params().widgetId });
           if (currentRoute() === '/alerts') return AlertsView();
           if (currentRoute() === '/analytics/<analyticId:string>')
-            return AnalyticView();
+            return AnalyticsView();
           return 'Route does not exist';
         })
       )
