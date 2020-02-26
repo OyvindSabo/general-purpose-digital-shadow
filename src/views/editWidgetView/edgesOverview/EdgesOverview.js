@@ -4,6 +4,7 @@ const EdgesOverview$ = ({ state, widgetId }) => {
   );
   return div$(
     div$('Edges'),
-    ...structure.edges.map(edge => EdgeInfoBox$({ structure, edge }))
+    ...structure.edges.map(edge => EdgeInfoBox$({ structure, edge })),
+    NewEdgeInfoForm$({ state, structure })
   );
 };
