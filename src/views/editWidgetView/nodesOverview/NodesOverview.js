@@ -3,5 +3,9 @@ const NodesOverview$ = ({ state, widgetId }) =>
     div$('Nodes'),
     ...state.customDashboardWidgets
       .find(widget => widget.id === widgetId)
-      .vertices.map(node => NodeInfoBox$(node))
+      .vertexIds.map(vertexId =>
+        structure.vertices.find(vertex => vertex.id === vertexId)
+      )
+      .filter(Boolean)
+      .map(node => NodeInfoBox$(node))
   );
