@@ -7,5 +7,8 @@ const FacesOverview$ = ({ state, widgetId }) => {
     ...state.customDashboardWidgets
       .find(widget => widget.id === widgetId)
       .faces.map(face => FaceInfoBox$({ structure, face }))
-  );
+  ).setStyle({
+    height: 'calc(100% - 80px)',
+    overflow: 'auto',
+  });
 };

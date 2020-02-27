@@ -6,5 +6,8 @@ const EdgesOverview$ = ({ state, widgetId }) => {
     div$('Edges'),
     ...structure.edges.map(edge => EdgeInfoBox$({ structure, edge })),
     NewEdgeInfoForm$({ state, structure })
-  );
+  ).setStyle({
+    height: 'calc(100% - 80px)',
+    overflow: 'auto',
+  });
 };

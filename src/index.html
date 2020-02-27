@@ -743,7 +743,21 @@
       });
       return element;
     };
+    element.setProps = propsObject => {
+      Object.entries(propsObject).forEach(([propKey, propValue$]) => {
+        if (propValue$ instanceof Observable) {
+          element[propKey] = propValue$.value;
+          window.addEventListener(propValue$.id, ({ detail }) => {
+            element[propKey] = detail;
+          });
+          return;
+        }
+        element[propKey] = propValue$;
+      });
+      return element;
+    };
     element.onClick = clickCallback => {
+      element.style.cursor = 'pointer';
       element.onclick = () => clickCallback(element);
       return element;
     };
@@ -755,11 +769,24 @@
       element.onmouseleave = () => mouseLeaveCallback(element);
       return element;
     };
+    element.onInput = inputCallback => {
+      element.oninput = () => inputCallback(element);
+      return element;
+    };
+    element.onChange = changeCallback => {
+      element.onchange = () => changeCallback(element);
+      return element;
+    };
     return element;
   };
   const div$ = (...children) => createElement$('div', ...children);
   const h1$ = (...children) => createElement$('h1', ...children);
   const br$ = () => createElement('br');
+  const select$ = (...children) => createElement$('select', ...children);
+  const button$ = (...children) => createElement$('button', ...children);
+  const option$ = ({ value, label }) =>
+    createElement$('option', label).setProps({ value });
+  const input$ = (value = '') => createElement$('input').setProps({ value });
   const canvas$ = ({ width, height }) => {
     const element = createElement('canvas');
     element.width = width;
@@ -1312,8 +1339,8 @@
 <script src="views/editWidgetView/infoBox/InfoBox.js"></script>
 <script src="views/editWidgetView/nodesOverview/nodeInfoBox/NodeInfoBox.js"></script>
 <script src="views/editWidgetView/nodesOverview/NodesOverview.js"></script>
-<script src="views/editWidgetView/edgesOverview/newEdgeForm/NewEdgeForm.js"></script>
 <script src="views/editWidgetView/edgesOverview/edgeInfoBox/EdgeInfoBox.js"></script>
+<script src="views/editWidgetView/edgesOverview/newEdgeForm/NewEdgeForm.js"></script>
 <script src="views/editWidgetView/edgesOverview/EdgesOverview.js"></script>
 <script src="views/editWidgetView/facesOverview/faceInfoBox/FaceInfoBox.js"></script>
 <script src="views/editWidgetView/facesOverview/FacesOverview.js"></script>

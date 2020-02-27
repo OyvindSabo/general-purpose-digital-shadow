@@ -135,4 +135,10 @@ const state = new (function() {
       structure => structure.id !== id
     );
   };
+  this.createEdge = ({ widgetId, edge }) => {
+    const widget = this.customDashboardWidgets.find(
+      ({ id }) => id === widgetId
+    );
+    widget.edges.push(edge);
+  };
 })();
