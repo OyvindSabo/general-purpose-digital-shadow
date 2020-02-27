@@ -17,7 +17,7 @@ const state = new (function() {
         },
         {
           color: 'blue',
-          vertexIds: ['0', '1'],
+          vertexIds: ['0', '2'],
           width: 2,
         },
         {
