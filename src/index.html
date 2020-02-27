@@ -1058,32 +1058,46 @@
     const phi = ry;
 
     const horizontallyRotatedVertex = {
-      x: vertex.x * Math.cos(theta) + vertex.z * Math.sin(theta),
-      y: vertex.y,
-      z: vertex.z * Math.cos(theta) - vertex.x * Math.sin(theta),
+      x$: add$(
+        multiply$(vertex.x$, Math.cos(theta)),
+        multiply$(vertex.z$, Math.sin(theta))
+      ),
+      y$: vertex.y$,
+      z$: subtract$(
+        multiply$(vertex.z$, Math.cos(theta)),
+        multiply$(vertex.x$.value, Math.sin(theta))
+      ),
     };
 
     return {
-      x: horizontallyRotatedVertex.x,
-      y:
-        horizontallyRotatedVertex.y * Math.cos(phi) -
-        horizontallyRotatedVertex.z * Math.sin(phi),
-      z:
-        horizontallyRotatedVertex.y * Math.sin(phi) +
-        horizontallyRotatedVertex.z * Math.cos(phi),
+      x$: horizontallyRotatedVertex.x$,
+      y$: subtract$(
+        multiply$(horizontallyRotatedVertex.y$, Math.cos(phi)),
+        multiply$(horizontallyRotatedVertex.z$, Math.sin(phi))
+      ),
+      z$: add$(
+        multiply$(horizontallyRotatedVertex.y$, Math.sin(phi)),
+        multiply$(horizontallyRotatedVertex.z$, Math.cos(phi))
+      ),
     };
   };
 
   const toCenterOfWidget = (vertex, ctx) => ({
-    x: vertex.x + ctx.canvas.width / 2,
-    y: vertex.y - ctx.canvas.height / 2,
-    z: vertex.z,
+    x$: add$(vertex.x$, ctx.canvas.width / 2),
+    y$: subtract$(vertex.y$, ctx.canvas.height / 2),
+    z$: vertex.z$,
   });
 
-  const toPerspective = (vertex, d, focalLength) => ({
-    x: vertex.x * (focalLength / (d + focalLength + vertex.z)),
-    y: vertex.y * (focalLength / (d + focalLength + vertex.z)),
-    z: vertex.z,
+  const toPerspective = (vertex, d, focalLength$) => ({
+    x$: multiply$(
+      vertex.x$,
+      divide$(focalLength$, add$(add$(d, focalLength$), vertex.z$))
+    ),
+    y$: multiply$(
+      vertex.y$,
+      divide$(focalLength$, add$(add$(d, focalLength$), vertex.z$))
+    ),
+    z$: vertex.z$,
   });
 
   /**
@@ -1103,31 +1117,31 @@
    * Defines the distance from the defined center of the structure, to the
    * camera.
    */
-  const render = (structure, ctx, center, rx, ry, d, focalLength) => {
+  const render = (structure, ctx, center, rx, ry, d, focalLength$) => {
     // Render the faces
-    structure.faces.forEach(({ color, vertexIds }) => {
+    structure.faces.forEach(({ color$, vertexIds }) => {
       vertexIds
-        .map(vertexId =>
-          structure.vertices.find(vertex => vertex.id === vertexId)
+        .map(vertexId$ =>
+          structure.vertices.find(vertex => vertex.id === vertexId$.value)
         )
         .filter(Boolean)
         .map(vertex => rotate(vertex, rx, ry))
-        .map(vertex => toPerspective(vertex, d, focalLength))
+        .map(vertex => toPerspective(vertex, d, focalLength$))
         .map(vertex => toCenterOfWidget(vertex, ctx))
         .forEach((vertex, index) => {
           if (index === 0) {
             ctx.beginPath();
-            ctx.moveTo(vertex.x, -vertex.y);
+            ctx.moveTo(vertex.x$.value, -vertex.y$.value);
             return;
           }
           if (index < vertexIds.length - 1) {
-            ctx.lineTo(vertex.x, -vertex.y);
+            ctx.lineTo(vertex.x$.value, -vertex.y$.value);
             return;
           }
           if (index === vertexIds.length - 1) {
-            ctx.lineTo(vertex.x, -vertex.y);
+            ctx.lineTo(vertex.x$.value, -vertex.y$.value);
             ctx.closePath();
-            ctx.fillStyle = color;
+            ctx.fillStyle = color$.value;
             ctx.fill();
             return;
           }
@@ -1135,50 +1149,56 @@
     });
 
     // Render the edges
-    structure.edges.forEach(({ color, vertexIds, width }) => {
+    structure.edges.forEach(({ color$, vertexIds, width$ }) => {
       // Draw the first vertex
       const vertices = vertexIds
-        .map(vertexId =>
-          structure.vertices.find(vertex => vertex.id === vertexId)
+        .map(vertexId$ =>
+          structure.vertices.find(vertex => vertex.id === vertexId$.value)
         )
         .filter(Boolean);
       const startVertex = toCenterOfWidget(
-        toPerspective(rotate(vertices[0], rx, ry), d, focalLength),
+        toPerspective(rotate(vertices[0], rx, ry), d, focalLength$),
         ctx
       );
       const endVertex = toCenterOfWidget(
-        toPerspective(rotate(vertices[1], rx, ry), d, focalLength),
+        toPerspective(rotate(vertices[1], rx, ry), d, focalLength$),
         ctx
       );
       ctx.beginPath();
       ctx.lineCap = 'round';
-      ctx.moveTo(startVertex.x, -startVertex.y);
-      ctx.lineTo(endVertex.x, -endVertex.y);
-      ctx.lineWidth = width;
-      ctx.strokeStyle = color;
+      ctx.moveTo(startVertex.x$.value, -startVertex.y$.value);
+      ctx.lineTo(endVertex.x$.value, -endVertex.y$.value);
+      ctx.lineWidth = width$;
+      ctx.strokeStyle = color$.value;
       ctx.stroke();
     });
   };
 
   const Camera = function({
-    target = { x: 0, y: 0, z: 0 },
-    horizontalRotation = 0,
-    verticalRotation = 0,
-    distance = 100,
-    focalLength = 1000,
+    target = {
+      x$: new Observable(0),
+      y$: new Observable(0),
+      z$: new Observable(0),
+    },
+    horizontalRotation$ = new Observable(0),
+    verticalRotation$ = new Observable(0),
+    distance$ = new Observabe(100),
+    focalLength$ = new Observable(1000),
   }) {
     this.target = target;
-    this.horizontalRotation = new Observable(horizontalRotation);
-    this.verticalRotation = new Observable(
-      Math.max(Math.min(verticalRotation, Math.PI / 4), -Math.PI / 2)
+    this.horizontalRotation$ = horizontalRotation$;
+    this.verticalRotation$ = new Observable(
+      Math.max(Math.min(verticalRotation$.value, Math.PI / 4), -Math.PI / 2)
     );
-    this.distance = new Observable(Math.max(distance, -focalLength / 2));
-    this.focalLength = focalLength;
+    this.distance$ = new Observable(
+      Math.max(distance$.value, -focalLength$.value / 2)
+    );
+    this.focalLength$ = focalLength$;
     this.setDistance = distance => {
-      this.distance.value = Math.max(distance, -focalLength / 2);
+      this.distance$.value = Math.max(distance, -focalLength$.value / 2);
     };
     this.setVerticalRotation = verticalRotation => {
-      this.verticalRotation.value = Math.max(
+      this.verticalRotation$.value = Math.max(
         Math.min(verticalRotation, Math.PI / 2),
         -Math.PI / 2
       );
@@ -1189,11 +1209,15 @@
     const state = { mouseDown: false };
     const canvas = canvas$({ height: 240, width: 400 });
     const camera = new Camera({
-      target: { x: 0, y: 0, z: 0 },
-      horizontalRotation: 0,
-      verticalRotation: 0,
-      distance: 100,
-      focalLength: 1000,
+      target: {
+        x$: new Observable(0),
+        y$: new Observable(0),
+        z$: new Observable(0),
+      },
+      horizontalRotation$: new Observable(0),
+      verticalRotation$: new Observable(0),
+      distance$: new Observable(100),
+      focalLength$: new Observable(1000),
     });
     const ctx = canvas.getContext('2d');
     const rerender = () =>
@@ -1201,14 +1225,14 @@
         structure,
         ctx,
         camera.target,
-        camera.horizontalRotation.value,
-        camera.verticalRotation.value,
-        camera.distance.value,
-        camera.focalLength
+        camera.horizontalRotation$.value,
+        camera.verticalRotation$.value,
+        camera.distance$.value,
+        camera.focalLength$
       );
     rerender();
     canvas.onwheel = event => {
-      camera.setDistance(camera.distance.value + event.deltaY);
+      camera.setDistance(camera.distance$.value + event.deltaY);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       rerender();
     };
@@ -1223,20 +1247,20 @@
     );
     canvas.onmousemove = event => {
       if (state.mouseDown) {
-        camera.horizontalRotation.value =
-          camera.horizontalRotation.value + event.movementX / 100;
+        camera.horizontalRotation$.value =
+          camera.horizontalRotation$.value + event.movementX / 100;
         camera.setVerticalRotation(
-          camera.verticalRotation.value + event.movementY / 100
+          camera.verticalRotation$.value + event.movementY / 100
         );
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         rerender();
       }
     };
-    window.addEventListener(camera.horizontalRotation.id, () => {
+    window.addEventListener(camera.horizontalRotation$.id, () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       rerender();
     });
-    window.addEventListener(camera.verticalRotation.id, ({ detail }) => {
+    window.addEventListener(camera.verticalRotation$.id, ({ detail }) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       rerender();
     });
@@ -1340,7 +1364,7 @@
 <script src="views/editWidgetView/nodesOverview/nodeInfoBox/NodeInfoBox.js"></script>
 <script src="views/editWidgetView/nodesOverview/NodesOverview.js"></script>
 <script src="views/editWidgetView/edgesOverview/edgeInfoBox/EdgeInfoBox.js"></script>
-<script src="views/editWidgetView/edgesOverview/newEdgeForm/NewEdgeForm.js"></script>
+<script src="views/editWidgetView/edgesOverview/edgeForm/EdgeForm.js"></script>
 <script src="views/editWidgetView/edgesOverview/EdgesOverview.js"></script>
 <script src="views/editWidgetView/facesOverview/faceInfoBox/FaceInfoBox.js"></script>
 <script src="views/editWidgetView/facesOverview/FacesOverview.js"></script>

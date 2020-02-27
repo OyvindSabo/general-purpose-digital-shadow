@@ -4,118 +4,210 @@ const state = new (function() {
     {
       id: '0',
       vertices: [
-        { id: '0', x: 0, y: 0, z: 0 },
-        { id: '1', x: 0, y: 0, z: 100 },
-        { id: '2', x: 0, y: 100, z: 0 },
-        { id: '3', x: 100, y: 0, z: 0 },
+        {
+          id: '0',
+          x$: new Observable(0),
+          y$: new Observable(0),
+          z$: new Observable(0),
+        },
+        {
+          id: '1',
+          x$: new Observable(0),
+          y$: new Observable(0),
+          z$: new Observable(100),
+        },
+        {
+          id: '2',
+          x$: new Observable(0),
+          y$: new Observable(100),
+          z$: new Observable(0),
+        },
+        {
+          id: '3',
+          x$: new Observable(100),
+          y$: new Observable(0),
+          z$: new Observable(0),
+        },
       ],
       edges: [
         {
-          color: 'blue',
-          vertexIds: ['0', '1'],
-          width: 2,
+          id: '0',
+          color$: new Observable('blue'),
+          vertexIds: [new Observable('0'), new Observable('1')],
+          width$: new Observable(2),
         },
         {
-          color: 'blue',
-          vertexIds: ['0', '1'],
-          width: 2,
+          id: '1',
+          color$: new Observable('blue'),
+          vertexIds: [new Observable('0'), new Observable('1')],
+          width$: new Observable(2),
         },
         {
-          color: 'blue',
-          vertexIds: ['0', '3'],
-          width: 2,
+          id: '2',
+          color$: new Observable('blue'),
+          vertexIds: [new Observable('0'), new Observable('3')],
+          width$: new Observable(2),
         },
         {
-          color: 'blue',
-          vertexIds: ['1', '2'],
-          width: 2,
+          id: '3',
+          color$: new Observable('blue'),
+          vertexIds: [new Observable('1'), new Observable('2')],
+          width$: new Observable(2),
         },
         {
-          color: 'blue',
-          vertexIds: ['1', '3'],
-          width: 2,
+          id: '4',
+          color$: new Observable('blue'),
+          vertexIds: [new Observable('1'), new Observable('3')],
+          width$: 2,
         },
         {
-          color: 'blue',
-          vertexIds: ['2', '3'],
-          width: 2,
+          id: '5',
+          color$: new Observable('blue'),
+          vertexIds: [new Observable('2'), new Observable('3')],
+          width$: new Observable(2),
         },
       ],
       faces: [
         {
-          color: 'rgba(128, 128, 255, 0.5)',
-          vertexIds: ['0', '1', '2'],
+          id: '0',
+          color$: new Observable('rgba(128, 128, 255, 0.5)'),
+          vertexIds: [
+            new Observable('0'),
+            new Observable('1'),
+            new Observable('2'),
+          ],
         },
         {
-          color: 'rgba(128, 128, 255, 0.5)',
-          vertexIds: ['0', '1', '3'],
+          id: '1',
+          color$: new Observable('rgba(128, 128, 255, 0.5)'),
+          vertexIds: [
+            new Observable('0'),
+            new Observable('1'),
+            new Observable('3'),
+          ],
         },
         {
-          color: 'rgba(128, 128, 255, 0.5)',
-          vertexIds: ['1', '2', '3'],
+          id: '2',
+          color$: new Observable('rgba(128, 128, 255, 0.5)'),
+          vertexIds: [
+            new Observable('1'),
+            new Observable('2'),
+            new Observable('3'),
+          ],
         },
         {
-          color: 'rgba(128, 128, 255, 0.5)',
-          vertexIds: ['0', '2', '3'],
+          id: '3',
+          color$: new Observable('rgba(128, 128, 255, 0.5)'),
+          vertexIds: [
+            new Observable('0'),
+            new Observable('2'),
+            new Observable('3'),
+          ],
         },
       ],
     },
     {
       id: '1',
       vertices: [
-        { id: '0', x: 0, y: 0, z: 0 },
-        { id: '1', x: 0, y: 0, z: 100 },
-        { id: '2', x: 0, y: 100, z: 0 },
-        { id: '3', x: 100, y: 0, z: 0 },
+        {
+          id: '0',
+          x$: new Observable(0),
+          y$: new Observable(0),
+          z$: new Observable(0),
+        },
+        {
+          id: '1',
+          x$: new Observable(0),
+          y$: new Observable(0),
+          z$: new Observable(100),
+        },
+        {
+          id: '2',
+          x$: new Observable(0),
+          y$: new Observable(100),
+          z$: new Observable(0),
+        },
+        {
+          id: '3',
+          x$: new Observable(100),
+          y$: new Observable(0),
+          z$: new Observable(0),
+        },
       ],
       edges: [
         {
-          color: 'red',
-          vertexIds: ['0', '1'],
-          width: 2,
+          id: '0',
+          color$: new Observable('red'),
+          vertexIds: [new Observable('0'), new Observable('1')],
+          width$: new Observable(2),
         },
         {
-          color: 'red',
-          vertexIds: ['0', '2'],
-          width: 2,
+          id: '1',
+          color$: new Observable('red'),
+          vertexIds: [new Observable('0'), new Observable('2')],
+          width$: new Observable(2),
         },
         {
-          color: 'red',
-          vertexIds: ['0', '3'],
-          width: 2,
+          id: '2',
+          color$: new Observable('red'),
+          vertexIds: [new Observable('0'), new Observable('3')],
+          width$: new Observable(2),
         },
         {
-          color: 'red',
-          vertexIds: ['1', '2'],
-          width: 2,
+          id: '3',
+          color$: new Observable('red'),
+          vertexIds: [new Observable('1'), new Observable('2')],
+          width$: new Observable(2),
         },
         {
-          color: 'red',
-          vertexIds: ['1', '3'],
-          width: 2,
+          id: '4',
+          color$: new Observable('red'),
+          vertexIds: [new Observable('1'), new Observable('3')],
+          width$: new Observable(2),
         },
         {
-          color: 'red',
-          vertexIds: ['2', '3'],
-          width: 2,
+          id: '5',
+          color$: new Observable('red'),
+          vertexIds: [new Observable('2'), new Observable('3')],
+          width$: new Observable(2),
         },
       ],
       faces: [
         {
-          color: 'rgba(255, 128, 128, 0.5)',
-          vertexIds: ['0', '1', '2'],
+          id: '0',
+          color$: new Observable('rgba(255, 128, 128, 0.5)'),
+          vertexIds: [
+            new Observable('0'),
+            new Observable('1'),
+            new Observable('2'),
+          ],
         },
         {
-          color: 'rgba(255, 128, 128, 0.5)',
-          vertexIds: ['0', '1', '3'],
+          id: '1',
+          color$: new Observable('rgba(255, 128, 128, 0.5)'),
+          vertexIds: [
+            new Observable('0'),
+            new Observable('1'),
+            new Observable('3'),
+          ],
         },
         {
-          color: 'rgba(255, 128, 128, 0.5)',
-          vertexIds: ['1', '2', '3'],
+          id: '2',
+          color$: new Observable('rgba(255, 128, 128, 0.5)'),
+          vertexIds: [
+            new Observable('1'),
+            new Observable('2'),
+            new Observable('3'),
+          ],
         },
         {
-          color: 'rgba(255, 128, 128, 0.5)',
-          vertexIds: ['0', '2', '3'],
+          id: '3',
+          color$: new Observable('rgba(255, 128, 128, 0.5)'),
+          vertexIds: [
+            new Observable('0'),
+            new Observable('2'),
+            new Observable('3'),
+          ],
         },
       ],
     },
@@ -135,10 +227,19 @@ const state = new (function() {
       structure => structure.id !== id
     );
   };
-  this.createEdge = ({ widgetId, edge }) => {
+  this.createOrUpdateEdge = ({ widgetId, edge: newEdge }) => {
     const widget = this.customDashboardWidgets.find(
       ({ id }) => id === widgetId
     );
-    widget.edges.push(edge);
+    const alreadyExistingEdge =
+      newEdge.id && widget.edges.find(edge => edge.id === newEdge.id);
+    if (alreadyExistingEdge) {
+      alreadyExistingEdge.color$.value = newEdge.color$.value;
+      alreadyExistingEdge.nodes[0].value = newEdge.nodes[0].value;
+      alreadyExistingEdge.nodes[0].value = newEdge.nodes[0].value;
+      alreadyExistingEdge.width$.value = newEdge.width$.value;
+    } else {
+      widget.edges.push(newEdge);
+    }
   };
 })();
