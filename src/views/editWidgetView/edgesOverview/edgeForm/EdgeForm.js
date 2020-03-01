@@ -66,9 +66,12 @@ const NewEdgeInfoForm$ = ({ state, structure, edge }) => {
           widgetId: structure.id,
           edge: {
             id: edge ? edge.id : `${Math.random()}${+new Date()}`,
-            color$: colorInput$,
-            vertexIds: [firstNodeInput$, secondNodeInput$],
-            width$: widthInput$,
+            color$: new Observable(colorInput$.value),
+            vertexIds: [
+              new Observable(firstNodeInput$.value),
+              new Observable(secondNodeInput$.value),
+            ],
+            width$: new Observable(widthInput$.value),
           },
         });
       })
