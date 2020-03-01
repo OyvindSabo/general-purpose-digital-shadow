@@ -1053,51 +1053,37 @@
       )
     );
 
-  const rotate = (vertex, rx, ry) => {
+  const rotate = ({ x, y, z }, rx, ry) => {
     const theta = rx;
     const phi = ry;
 
     const horizontallyRotatedVertex = {
-      x$: add$(
-        multiply$(vertex.x$, Math.cos(theta)),
-        multiply$(vertex.z$, Math.sin(theta))
-      ),
-      y$: vertex.y$,
-      z$: subtract$(
-        multiply$(vertex.z$, Math.cos(theta)),
-        multiply$(vertex.x$.value, Math.sin(theta))
-      ),
+      x: x * Math.cos(theta) + z * Math.sin(theta),
+      y: y,
+      z: z * Math.cos(theta) - x * Math.sin(theta),
     };
 
     return {
-      x$: horizontallyRotatedVertex.x$,
-      y$: subtract$(
-        multiply$(horizontallyRotatedVertex.y$, Math.cos(phi)),
-        multiply$(horizontallyRotatedVertex.z$, Math.sin(phi))
-      ),
-      z$: add$(
-        multiply$(horizontallyRotatedVertex.y$, Math.sin(phi)),
-        multiply$(horizontallyRotatedVertex.z$, Math.cos(phi))
-      ),
+      x: horizontallyRotatedVertex.x,
+      y:
+        horizontallyRotatedVertex.y * Math.cos(phi) -
+        horizontallyRotatedVertex.z * Math.sin(phi),
+      z:
+        horizontallyRotatedVertex.y * Math.sin(phi) +
+        horizontallyRotatedVertex.z * Math.cos(phi),
     };
   };
 
-  const toCenterOfWidget = (vertex, ctx) => ({
-    x$: add$(vertex.x$, ctx.canvas.width / 2),
-    y$: subtract$(vertex.y$, ctx.canvas.height / 2),
-    z$: vertex.z$,
+  const toCenterOfWidget = ({ x, y, z }, ctx) => ({
+    x: x + ctx.canvas.width / 2,
+    y: y - ctx.canvas.height / 2,
+    z: z,
   });
 
-  const toPerspective = (vertex, d, focalLength$) => ({
-    x$: multiply$(
-      vertex.x$,
-      divide$(focalLength$, add$(add$(d, focalLength$), vertex.z$))
-    ),
-    y$: multiply$(
-      vertex.y$,
-      divide$(focalLength$, add$(add$(d, focalLength$), vertex.z$))
-    ),
-    z$: vertex.z$,
+  const toPerspective = ({ x, y, z }, d, focalLength) => ({
+    x: x * (focalLength / (d + focalLength + z)),
+    y: y * (focalLength / (d + focalLength + z)),
+    z: z,
   });
 
   /**
@@ -1117,7 +1103,7 @@
    * Defines the distance from the defined center of the structure, to the
    * camera.
    */
-  const render = (structure, ctx, center, rx, ry, d, focalLength$) => {
+  const render = (structure, ctx, center, rx, ry, d, focalLength) => {
     // Render the faces
     structure.faces.forEach(({ color$, vertexIds }) => {
       vertexIds
@@ -1125,21 +1111,22 @@
           structure.vertices.find(vertex => vertex.id === vertexId$.value)
         )
         .filter(Boolean)
+        .map(({ x$, y$, z$ }) => ({ x: x$.value, y: y$.value, z: z$.value }))
         .map(vertex => rotate(vertex, rx, ry))
-        .map(vertex => toPerspective(vertex, d, focalLength$))
+        .map(vertex => toPerspective(vertex, d, focalLength))
         .map(vertex => toCenterOfWidget(vertex, ctx))
         .forEach((vertex, index) => {
           if (index === 0) {
             ctx.beginPath();
-            ctx.moveTo(vertex.x$.value, -vertex.y$.value);
+            ctx.moveTo(vertex.x, -vertex.y);
             return;
           }
           if (index < vertexIds.length - 1) {
-            ctx.lineTo(vertex.x$.value, -vertex.y$.value);
+            ctx.lineTo(vertex.x, -vertex.y);
             return;
           }
           if (index === vertexIds.length - 1) {
-            ctx.lineTo(vertex.x$.value, -vertex.y$.value);
+            ctx.lineTo(vertex.x, -vertex.y);
             ctx.closePath();
             ctx.fillStyle = color$.value;
             ctx.fill();
@@ -1155,19 +1142,20 @@
         .map(vertexId$ =>
           structure.vertices.find(vertex => vertex.id === vertexId$.value)
         )
+        .map(({ x$, y$, z$ }) => ({ x: x$.value, y: y$.value, z: z$.value }))
         .filter(Boolean);
       const startVertex = toCenterOfWidget(
-        toPerspective(rotate(vertices[0], rx, ry), d, focalLength$),
+        toPerspective(rotate(vertices[0], rx, ry), d, focalLength),
         ctx
       );
       const endVertex = toCenterOfWidget(
-        toPerspective(rotate(vertices[1], rx, ry), d, focalLength$),
+        toPerspective(rotate(vertices[1], rx, ry), d, focalLength),
         ctx
       );
       ctx.beginPath();
       ctx.lineCap = 'round';
-      ctx.moveTo(startVertex.x$.value, -startVertex.y$.value);
-      ctx.lineTo(endVertex.x$.value, -endVertex.y$.value);
+      ctx.moveTo(startVertex.x, -startVertex.y);
+      ctx.lineTo(endVertex.x, -endVertex.y);
       ctx.lineWidth = width$.value;
       ctx.strokeStyle = color$.value;
       ctx.stroke();
@@ -1220,7 +1208,7 @@
       focalLength$: new Observable(1000),
     });
     const ctx = canvas.getContext('2d');
-    const rerender = () =>
+    const rerender = () => {
       render(
         structure,
         ctx,
@@ -1228,13 +1216,12 @@
         camera.horizontalRotation$.value,
         camera.verticalRotation$.value,
         camera.distance$.value,
-        camera.focalLength$
+        camera.focalLength$.value
       );
+    };
     rerender();
     canvas.onwheel = event => {
       camera.setDistance(camera.distance$.value + event.deltaY);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      rerender();
     };
     window.addEventListener('mousedown', event => {
       state.mouseDown = true;
@@ -1252,8 +1239,6 @@
         camera.setVerticalRotation(
           camera.verticalRotation$.value + event.movementY / 100
         );
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        rerender();
       }
     };
     window.addEventListener(camera.horizontalRotation$.id, () => {
@@ -1261,6 +1246,14 @@
       rerender();
     });
     window.addEventListener(camera.verticalRotation$.id, ({ detail }) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      rerender();
+    });
+    window.addEventListener(camera.distance$.id, ({ detail }) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      rerender();
+    });
+    window.addEventListener(camera.focalLength$.id, ({ detail }) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       rerender();
     });

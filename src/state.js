@@ -39,7 +39,7 @@ const state = new (function() {
         {
           id: '1',
           color$: new Observable('blue'),
-          vertexIds: [new Observable('0'), new Observable('1')],
+          vertexIds: [new Observable('0'), new Observable('2')],
           width$: new Observable(2),
         },
         {
