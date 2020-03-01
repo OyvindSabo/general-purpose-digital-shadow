@@ -824,7 +824,7 @@
       .map(observable =>
         observable instanceof Observable ? observable.value : observable
       )
-      .reduce((a, b) => a + b);
+      .reduce((a, b) => a - b);
     const difference$ = new Observable(difference);
     observables.forEach(observable => {
       window.addEventListener(observable.id, ({ detail }) => {
@@ -1168,7 +1168,7 @@
       ctx.lineCap = 'round';
       ctx.moveTo(startVertex.x$.value, -startVertex.y$.value);
       ctx.lineTo(endVertex.x$.value, -endVertex.y$.value);
-      ctx.lineWidth = width$;
+      ctx.lineWidth = width$.value;
       ctx.strokeStyle = color$.value;
       ctx.stroke();
     });
