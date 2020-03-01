@@ -1209,6 +1209,7 @@
     });
     const ctx = canvas.getContext('2d');
     const rerender = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       render(
         structure,
         ctx,
@@ -1242,19 +1243,21 @@
       }
     };
     window.addEventListener(camera.horizontalRotation$.id, () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
       rerender();
     });
     window.addEventListener(camera.verticalRotation$.id, ({ detail }) => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
       rerender();
     });
     window.addEventListener(camera.distance$.id, ({ detail }) => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
       rerender();
     });
     window.addEventListener(camera.focalLength$.id, ({ detail }) => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      rerender();
+    });
+    window.addEventListener(camera.focalLength$.id, ({ detail }) => {
+      rerender();
+    });
+    window.addEventListener('UPDATED_STRUCTURE', ({ detail }) => {
       rerender();
     });
     return canvas;

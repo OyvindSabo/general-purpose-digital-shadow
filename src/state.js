@@ -241,5 +241,6 @@ const state = new (function() {
     } else {
       widget.edges.push(newEdge);
     }
+    window.dispatchEvent(new Event('UPDATED_STRUCTURE'));
   };
 })();
