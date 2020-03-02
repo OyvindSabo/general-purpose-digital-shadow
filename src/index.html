@@ -1,55 +1,225 @@
 <meta charset="utf-8" />
 
-<!-- Router -->
+<!-- Observable -->
 <script>
-  class Router {
-    /**
-     * @param {HTMLElement} rootElement
-     */
-    constructor(routes) {
-      this.params = {};
-      this.currentRoute = '';
-      this.routes = {};
-      this.titles = {};
-      this.observers = [];
-      this.setRoutes(routes);
-      window.addEventListener('hashchange', () => {
-        this.syncWithHash();
-      });
+  class Observable {
+    constructor(value) {
+      // Maybe this can cause an id collision of two observables created almost at the same time
+      this._id = `${Math.random()}${+new Date()}`;
+      this._value = value;
     }
-    /**
-     * @param {string} route
-     * One of the registered routes, without hashbang
-     */
-    navigateTo = route => {
-      location.hash = `#!${route}`;
-    };
-
-    refresh = () => this.syncWithHash();
-
-    // @possiblyNumber: string
-    static isNumber(possiblyNumber) {
-      return !isNaN(Number(possiblyNumber));
-    }
-    static isInt(possiblyInt) {
-      return (
-        Router.isNumber(possiblyInt) &&
-        parseInt(possiblyInt) === Number(possiblyInt)
+    emit() {
+      window.dispatchEvent(
+        new CustomEvent(this._id, {
+          detail: this._value,
+        })
       );
     }
-    static getTokens(hash) {
+    get id() {
+      return this._id;
+    }
+    get value() {
+      return this._value;
+    }
+    set value(value) {
+      // Maybe this should do a deep compare in case value is an object?
+      if (value === this._value) return;
+      this._value = value;
+      this.emit();
+    }
+  }
+</script>
+
+<!-- Observable utils -->
+<script>
+  // Observable utils
+  // Currently needs at least two arguments
+  const add$ = (...observables) => {
+    const sum = observables
+      .map(observable =>
+        observable instanceof Observable ? observable.value : observable
+      )
+      .reduce((a, b) => a + b);
+    const sum$ = new Observable(sum);
+    observables
+      .filter(observable => observable instanceof Observable)
+      .forEach(observable => {
+        window.addEventListener(observable.id, ({ detail }) => {
+          const sum = observables
+            .map(observable =>
+              observable instanceof Observable ? observable.value : observable
+            )
+            .reduce((a, b) => a + b);
+          sum$.value = sum;
+        });
+      });
+    return sum$;
+  };
+
+  // Currently needs at least two arguments
+  const subtract$ = (...observables) => {
+    const difference = observables
+      .map(observable =>
+        observable instanceof Observable ? observable.value : observable
+      )
+      .reduce((a, b) => a - b);
+    const difference$ = new Observable(difference);
+    observables.forEach(observable => {
+      window.addEventListener(observable.id, ({ detail }) => {
+        const difference = observables
+          .map(observable =>
+            observable instanceof Observable ? observable.value : observable
+          )
+          .reduce((a, b) => a - b);
+        difference$.value = difference;
+      });
+    });
+    return difference$;
+  };
+
+  // Currently needs at least two arguments
+  const multiply$ = (...observables) => {
+    const product = observables
+      .map(observable =>
+        observable instanceof Observable ? observable.value : observable
+      )
+      .reduce((a, b) => a * b);
+    const product$ = new Observable(product);
+    observables.forEach(observable => {
+      window.addEventListener(observable.id, ({ detail }) => {
+        const product = observables
+          .map(observable =>
+            observable instanceof Observable ? observable.value : observable
+          )
+          .reduce((a, b) => a * b);
+        product$.value = product;
+      });
+    });
+    return product$;
+  };
+
+  // Currently needs at least two arguments
+  const divide$ = (...observables) => {
+    const quotient = observables
+      .map(observable =>
+        observable instanceof Observable ? observable.value : observable
+      )
+      .reduce((a, b) => a / b);
+    const quotient$ = new Observable(quotient);
+    observables.forEach(observable => {
+      window.addEventListener(observable.id, ({ detail }) => {
+        const quotient = observables
+          .map(observable =>
+            observable instanceof Observable ? observable.value : observable
+          )
+          .reduce((a, b) => a / b);
+        quotient$.value = quotient;
+      });
+    });
+    return quotient$;
+  };
+
+  const choose$ = (observable, option1, option2) => {
+    const result$ = new Observable(
+      (observable instanceof Observable
+      ? observable.value
+      : observable)
+        ? option1 instanceof Observable
+          ? option1.value
+          : option1
+        : option2 instanceof Observable
+        ? option2.value
+        : option2
+    );
+    [observable, option1, option2]
+      .filter(observable => observable instanceof Observable)
+      .forEach(observable => {
+        window.addEventListener(observable.id, ({ detail }) => {
+          // TODO: Make it possible to set a specific child of an observable
+          result$.value = (observable instanceof Observable
+          ? observable.value
+          : observable)
+            ? option1 instanceof Observable
+              ? option1.value
+              : option1
+            : option2 instanceof Observable
+            ? option2.value
+            : option2;
+        });
+      });
+    return result$;
+  };
+
+  const eq$ = (...observables) => {
+    const equality = observables
+      .map(observable =>
+        observable instanceof Observable ? observable.value : observable
+      )
+      .every((element, _, array) => element === array[0]);
+    const equality$ = new Observable(equality);
+    observables.forEach(observable => {
+      window.addEventListener(observable.id, ({ detail }) => {
+        const equality = observables
+          .map(observable =>
+            observable instanceof Observable ? observable.value : observable
+          )
+          .every((element, _, array) => element === array[0]);
+        equality$.value = equality;
+      });
+    });
+    return equality$;
+  };
+
+  const or$ = (...observables) => {
+    const someTruthy = observables
+      .map(observable =>
+        observable instanceof Observable ? observable.value : observable
+      )
+      .some(Boolean);
+    const someTruthy$ = new Observable(someTruthy);
+    observables.forEach(observable => {
+      window.addEventListener(observable.id, ({ detail }) => {
+        const someTruthy = observables
+          .map(observable =>
+            observable instanceof Observable ? observable.value : observable
+          )
+          .some(Boolean);
+        someTruthy$.value = someTruthy;
+      });
+    });
+    return someTruthy$;
+  };
+</script>
+
+<!-- Router -->
+<script>
+  function Router(routes) {
+    /**
+     * @param {string} routes
+     */
+    this.setRoutes = function(routes) {
+      Object.entries(routes).forEach(([route, title]) => {
+        this.routes[route] = route;
+        this.titles[route] = title;
+        if (route === '/') {
+          this.routes[''] = route;
+          this.titles[''] = title;
+        }
+      });
+      this.syncWithHash();
+    };
+    Router.getTokens = function(hash) {
       return hash
         .split('/')
         .filter(Boolean)
         .filter(element => element !== '#')
         .filter(element => element !== '#!');
-    }
-
+    };
     /**
      * @param {string} token
      * @returns {boolean}
      */
-    static isParameterRouteToken(token) {
+    Router.isParameterRouteToken = function(token) {
       if (
         token.indexOf('<') !== 0 ||
         !token.slice(2, -4).includes(':') ||
@@ -65,8 +235,11 @@
         return false;
       }
       return true;
-    }
-    static parseParameterRouteToken(token) {
+    };
+    Router.appendTokenToHash = function(hash, token) {
+      return `${hash}/${token}`;
+    };
+    Router.parseParameterRouteToken = function(token) {
       const [parameter, type] = token
         .slice(token.indexOf('<') + 1, token.indexOf('>'))
         .split(':');
@@ -74,12 +247,9 @@
         parameter,
         type,
       };
-    }
-    static appendTokenToHash(hash, token) {
-      return `${hash}/${token}`;
-    }
+    };
     // (hash: string, route: string) => false | { [key: string]: number | string }
-    static getMatch(hash, route) {
+    Router.getMatch = function(hash, route) {
       const hashTokens = Router.getTokens(hash);
       const routeTokens = Router.getTokens(route);
       const params = {};
@@ -122,8 +292,8 @@
         }
       }
       return { params, reconstructedHash };
-    }
-    static getRouteAndParamsFromHash(hash, routes) {
+    };
+    Router.getRouteAndParamsFromHash = function(hash, routes) {
       for (let route of Object.keys(routes)) {
         const match = Router.getMatch(hash, route);
         if (match) {
@@ -132,25 +302,33 @@
         }
       }
       return { route: '', params: {}, reconstructedHash: '' };
-    }
-    static removeHash() {
-      return history.replaceState(null, null, ' ');
-    }
+    };
     /**
-     * @param {string} routes
+     * @param {Object.<string, number | string>} params
      */
-    setRoutes(routes) {
-      Object.entries(routes).forEach(([route, title]) => {
-        this.routes[route] = route;
-        this.titles[route] = title;
-        if (route === '/') {
-          this.routes[''] = route;
-          this.titles[''] = title;
-        }
+    this.setParams = function(params) {
+      this.params = params;
+      // Todo: Maybe dispatch some kind of event
+    };
+    this.setCurrentRoute = function(route) {
+      this.currentRoute$.value = route;
+    };
+    this.setCurrentTitle = function(title) {
+      this.currentTitle = title;
+    };
+    Router.removeHash = function() {
+      return history.replaceState(null, null, ' ');
+    };
+    // Rather than passing data, this one should pass a string saying which attribute has been updated
+    this.emit = function() {
+      this.observers.forEach(observer => {
+        if (!observer)
+          console.warn('Non-existing element registered as router observer');
+
+        observer({ currentRoute$: this.currentRoute$, params: this.params });
       });
-      this.syncWithHash();
-    }
-    syncWithHash() {
+    };
+    this.syncWithHash = function() {
       const { hash } = location;
       const {
         route,
@@ -163,28 +341,57 @@
       if (reconstructedHash === '#!') {
         Router.removeHash();
       } else {
-        location.hash = reconstructedHash;
+        history.replaceState(undefined, undefined, reconstructedHash);
       }
       document.title = this.currentTitle;
       this.emit();
-    }
+    };
+    this.params = {};
+    this.currentRoute$ = new Observable('');
+    this.routes = {};
+    this.titles = {};
+    this.observers = [];
+    this.hashChangeListeners = [];
+    this.setRoutes(routes);
+    window.addEventListener('hashchange', () => {
+      this.syncWithHash();
+      this.callHashChangeListeners();
+    });
     /**
-     * @param {Object.<string, number | string>} params
+     * @param {string} route
+     * One of the registered routes, without hashbang
      */
-    setParams(params) {
-      this.params = params;
-      // Todo: Maybe dispatch some kind of event
-    }
-    getParams = () => this.params;
-    setCurrentRoute(route) {
-      this.currentRoute = route;
-    }
-    getCurrentRoute = () => this.currentRoute;
-    setCurrentTitle(title) {
-      this.currentTitle = title;
-    }
-    getCurrentTitle = () => this.currentTitle;
-    static isProp = propsOrChild =>
+    this.navigateTo = route => {
+      location.hash = `#!${route}`;
+    };
+
+    this.refresh = () => this.syncWithHash();
+
+    // @possiblyNumber: string
+    Router.isNumber = function(possiblyNumber) {
+      return !isNaN(Number(possiblyNumber));
+    };
+    Router.isInt = function(possiblyInt) {
+      return (
+        Router.isNumber(possiblyInt) &&
+        parseInt(possiblyInt) === Number(possiblyInt)
+      );
+    };
+    this.onHashChange = callback => {
+      this.hashChangeListeners.push(callback);
+      this.callHashChangeListeners();
+    };
+    this.callHashChangeListeners = function() {
+      this.hashChangeListeners.forEach(hashChangeListener =>
+        hashChangeListener({
+          params: this.params,
+          currentRoute$: this.currentRoute$,
+        })
+      );
+    };
+    this.getParams = () => this.params;
+    this.getCurrentTitle = () => this.currentTitle;
+    Router.isProp = propsOrChild =>
       !(
         propsOrChild instanceof HTMLElement || typeof propsOrChild === 'string'
       );
@@ -192,23 +399,13 @@
     /**
      * @param {function({ params: Object.<string, string | number> }): void} observer
      */
-    subscribe = observer => {
+    this.subscribe = observer => {
       observer({
-        currentRoute: this.currentRoute,
+        currentRoute$: this.currentRoute$,
         params: this.params,
       });
       this.observers.push(observer);
     };
-
-    // Rather than passing data, this one should pass a string saying which attribute has been updated
-    emit() {
-      this.observers.forEach(observer => {
-        if (!observer)
-          console.warn('Non-existing element registered as router observer');
-
-        observer({ currentRoute: this.currentRoute, params: this.params });
-      });
-    }
   }
 </script>
 
@@ -346,7 +543,7 @@
 
 <!-- Components -->
 <script>
-  const TopNavigator = () => div().setStyle({ height: '40px' });
+  const TopNavigator$ = () => div$().setStyle({ height: '40px' });
 
   const LeftNavigatorButton = ({ icon, label, route, isActive }) => {
     const Button = Styled(div, {
@@ -386,8 +583,8 @@
     });
   };
 
-  const LeftNavigator = (...children) =>
-    div(...children).setStyle({
+  const LeftNavigator$ = (...children) =>
+    div$(...children).setStyle({
       height: '100%',
       width: '80px',
       borderRadius: '10px 0 0 0',
@@ -397,19 +594,16 @@
       background: 'White',
     });
 
-  const MainContainer = (...children) =>
-    div(...children).setStyle({
+  const MainContainer$ = (...children) =>
+    div$(...children).setStyle({
       height: 'calc(100% - 40px)',
       borderRadius: '10px 10px 0 0',
       background: 'GhostWhite',
     });
 
-  const HomeView = () => div('HomeView');
+  const HomeView = () => div$('HomeView');
 
-  const DataSourcesView = () => {
-    const element = div('DataSourcesView');
-    return element;
-  };
+  const DataSourcesView$ = () => div$('DataSourcesView');
 
   // Fake values stream
   const valuesStream = {
@@ -436,7 +630,7 @@
     },
     subscribe: observer => {
       observer({
-        currentRoute: valuesStream.currentRoute,
+        currentRoute$: valuesStream.currentRoute$,
         params: valuesStream.params,
       });
       valuesStream.observers.push(observer);
@@ -609,7 +803,7 @@
           )
       );
 
-  const ValuesView = () => {
+  const ValuesView$ = () => {
     const { sourceValues, derivedValues } = valuesStream;
     const element = div()
       .initState({ isEditingValue: false })
@@ -666,41 +860,8 @@
     valuesStream.subscribe(element.update);
     return element;
   };
-  const AnalyticView = () => {
-    const element = div('AnalyticsView');
-    return element;
-  };
-  const AlertsView = () => {
-    const element = div('AlertsView');
-    return element;
-  };
-
-  class Observable {
-    constructor(value) {
-      // Maybe this can cause an id collision of two observables created almost at the same time
-      this._id = `${Math.random()}${+new Date()}`;
-      this._value = value;
-    }
-    emit() {
-      window.dispatchEvent(
-        new CustomEvent(this._id, {
-          detail: this._value,
-        })
-      );
-    }
-    get id() {
-      return this._id;
-    }
-    get value() {
-      return this._value;
-    }
-    set value(value) {
-      // Maybe this should do a deep compare in case value is an object?
-      if (value === this._value) return;
-      this._value = value;
-      this.emit();
-    }
-  }
+  const AnalyticsView$ = () => div$('AnalyticsView');
+  const AlertsView$ = () => div$('AlertsView');
 
   const createElement$ = (elementType, ...observables) => {
     const element = document.createElement(elementType);
@@ -794,144 +955,6 @@
     return element;
   };
 
-  // Observable utils
-  // Currently needs at least two arguments
-  const add$ = (...observables) => {
-    const sum = observables
-      .map(observable =>
-        observable instanceof Observable ? observable.value : observable
-      )
-      .reduce((a, b) => a + b);
-    const sum$ = new Observable(sum);
-    observables
-      .filter(observable => observable instanceof Observable)
-      .forEach(observable => {
-        window.addEventListener(observable.id, ({ detail }) => {
-          const sum = observables
-            .map(observable =>
-              observable instanceof Observable ? observable.value : observable
-            )
-            .reduce((a, b) => a + b);
-          sum$.value = sum;
-        });
-      });
-    return sum$;
-  };
-
-  // Currently needs at least two arguments
-  const subtract$ = (...observables) => {
-    const difference = observables
-      .map(observable =>
-        observable instanceof Observable ? observable.value : observable
-      )
-      .reduce((a, b) => a - b);
-    const difference$ = new Observable(difference);
-    observables.forEach(observable => {
-      window.addEventListener(observable.id, ({ detail }) => {
-        const difference = observables
-          .map(observable =>
-            observable instanceof Observable ? observable.value : observable
-          )
-          .reduce((a, b) => a - b);
-        difference$.value = difference;
-      });
-    });
-    return difference$;
-  };
-
-  // Currently needs at least two arguments
-  const multiply$ = (...observables) => {
-    const product = observables
-      .map(observable =>
-        observable instanceof Observable ? observable.value : observable
-      )
-      .reduce((a, b) => a * b);
-    const product$ = new Observable(product);
-    observables.forEach(observable => {
-      window.addEventListener(observable.id, ({ detail }) => {
-        const product = observables
-          .map(observable =>
-            observable instanceof Observable ? observable.value : observable
-          )
-          .reduce((a, b) => a * b);
-        product$.value = product;
-      });
-    });
-    return product$;
-  };
-
-  // Currently needs at least two arguments
-  const divide$ = (...observables) => {
-    const quotient = observables
-      .map(observable =>
-        observable instanceof Observable ? observable.value : observable
-      )
-      .reduce((a, b) => a / b);
-    const quotient$ = new Observable(quotient);
-    observables.forEach(observable => {
-      window.addEventListener(observable.id, ({ detail }) => {
-        const quotient = observables
-          .map(observable =>
-            observable instanceof Observable ? observable.value : observable
-          )
-          .reduce((a, b) => a / b);
-        quotient$.value = quotient;
-      });
-    });
-    return quotient$;
-  };
-
-  const choose$ = (observable, option1, option2) => {
-    const result$ = new Observable(
-      (observable instanceof Observable
-      ? observable.value
-      : observable)
-        ? option1 instanceof Observable
-          ? option1.value
-          : option1
-        : option2 instanceof Observable
-        ? option2.value
-        : option2
-    );
-    [observable, option1, option2]
-      .filter(observable => observable instanceof Observable)
-      .forEach(observable => {
-        window.addEventListener(observable.id, ({ detail }) => {
-          // TODO: Make it possible to set a specific child of an observable
-          result$.value = (observable instanceof Observable
-          ? observable.value
-          : observable)
-            ? option1 instanceof Observable
-              ? option1.value
-              : option1
-            : option2 instanceof Observable
-            ? option2.value
-            : option2;
-        });
-      });
-    return result$;
-  };
-
-  const eq$ = (...observables) => {
-    const equality = observables
-      .map(observable =>
-        observable instanceof Observable ? observable.value : observable
-      )
-      .every((element, _, array) => element === array[0]);
-    const equality$ = new Observable(equality);
-    observables.forEach(observable => {
-      window.addEventListener(observable.id, ({ detail }) => {
-        const equality = observables
-          .map(observable =>
-            observable instanceof Observable ? observable.value : observable
-          )
-          .every((element, _, array) => element === array[0]);
-        equality$.value = equality;
-      });
-    });
-    return equality$;
-  };
-
   // Note the capital S. This is kind of a component and makes sure the correct
   // HTML element is always shown.
   const Switch$ = (statement$, ...clauses) => {
@@ -1004,8 +1027,8 @@
 </script>
 <script src="state.js"></script>
 <script>
-  const WidgetBackgroundContainer$ = (...children) =>
-    div$(...children).setStyle({
+  const WidgetBackgroundContainer$ = (...children) => {
+    return div$(...children).setStyle({
       padding: '20px',
       width: '480px',
       height: '320px',
@@ -1013,26 +1036,29 @@
       boxSizing: 'border-box',
       verticalAlign: 'top',
     });
+  };
 
-  const WidgetForegroundContainer$ = (...children) =>
-    div$(...children).setStyle({
+  const WidgetForegroundContainer$ = (...children) => {
+    return div$(...children).setStyle({
       padding: '20px',
       height: '100%',
       border: '1px solid LightGray',
       boxSizing: 'border-box',
       background: 'White',
     });
+  };
 
-  const WidgetInnerContainer$ = (...children) =>
-    div$(...children).setStyle({
+  const WidgetInnerContainer$ = (...children) => {
+    return div$(...children).setStyle({
       width: '100%',
       height: '100%',
       display: 'flex',
     });
+  };
 
   // This is just experimental and does nothing relevant
-  const Bar = ({ height$, maxHeight$ }) =>
-    div$().setStyle({
+  const Bar = ({ height$, maxHeight$ }) => {
+    return div$().setStyle({
       height: add$(multiply$(divide$(height$, maxHeight$), 100), '%'),
       maxHeight: '100%',
       background: 'LightGreen',
@@ -1041,9 +1067,10 @@
       transition: '0.1s',
       margin: 'auto 10px 0 10px',
     });
+  };
 
-  const BarChartWidget$ = ({ values$, maxValue$ }) =>
-    WidgetBackgroundContainer$(
+  const BarChartWidget$ = ({ values$, maxValue$ }) => {
+    return WidgetBackgroundContainer$(
       WidgetForegroundContainer$(
         WidgetInnerContainer$(
           ...values$.map(value$ =>
@@ -1052,6 +1079,7 @@
         )
       )
     );
+  };
 
   const rotate = ({ x, y, z }, rx, ry) => {
     const theta = rx;
@@ -1327,7 +1355,7 @@
     );
   };
 
-  const DashboardsView = () => {
+  const DashboardsView$ = () => {
     const title$ = new Observable('Dashboards');
     const count1$ = new Observable(1);
     const count2$ = new Observable(2);
@@ -1352,8 +1380,12 @@
       })
     );
   };
+
+  const EditDashboardsView$ = () => {
+    return div$('Edit dashboards view');
+  };
 </script>
-<script src="views/editWidgetView/rightNavigator/RightNavigator.js"></script>
+<!--<script src="views/editWidgetView/rightNavigator/RightNavigator.js"></script>
 <script src="views/editWidgetView/rightNavigatorHeader/RightNavigatorHeader.js"></script>
 <script src="views/editWidgetView/rightNavigatorButton/RightNavigatorButton.js"></script>
 <script src="views/editWidgetView/infoBox/InfoBox.js"></script>
@@ -1364,55 +1396,62 @@
 <script src="views/editWidgetView/edgesOverview/EdgesOverview.js"></script>
 <script src="views/editWidgetView/facesOverview/faceInfoBox/FaceInfoBox.js"></script>
 <script src="views/editWidgetView/facesOverview/FacesOverview.js"></script>
-<script src="views/editWidgetView/EditWidgetView.js"></script>
+<script src="views/editWidgetView/EditWidgetView.js"></script>-->
+
 <script>
-  const App = ({ params, currentRoute }) => {
-    const element = div(
-      TopNavigator(),
-      MainContainer(
-        LeftNavigator(
+  const App = ({ params, currentRoute$, state }) => {
+    console.log('currentRoute$: ', currentRoute$);
+    const element = div$(
+      TopNavigator$(),
+      MainContainer$(
+        LeftNavigator$(
           // Add something for home as well
           LeftNavigatorButton({
             icon: '🏗',
             label: 'Data sources',
             route: '/data-sources',
-            isActive: () => currentRoute() === '/data-sources',
+            isActive$: eq$(currentRoute$, '/data-sources'),
           }),
           LeftNavigatorButton({
             icon: '🧮',
             label: 'Values',
             route: '/values',
-            isActive: () => currentRoute() === '/values',
+            isActive$: eq$(currentRoute$, '/values'),
           }),
           LeftNavigatorButton({
             icon: '📊',
             label: 'Dashboards',
             route: '/dashboards',
-            isActive: () =>
-              ['/dashboards', '/dashboards/<widgetId:string>/edit'].includes(
-                currentRoute()
-              ),
+            isActive$: or$(
+              eq$(currentRoute$, '/dashboards'),
+              eq$(currentRoute$, '/dashboards/<widgetId:string>/edit')
+            ),
           }),
           LeftNavigatorButton({
             icon: '⏰',
             label: 'Alerts',
             route: '/alerts',
-            isActive: () => currentRoute() === '/alerts',
+            isActive$: eq$(currentRoute$, '/alerts'),
           })
         ),
         // Not sure I'm happy about this solution
-        Replaceable(() => {
-          if (currentRoute() === '/') return HomeView();
-          if (currentRoute() === '/data-sources') return DataSourcesView();
-          if (currentRoute() === '/values') return ValuesView();
-          if (currentRoute() === '/dashboards') return DashboardsView();
-          if (currentRoute() === '/dashboards/<widgetId:string>/edit')
-            return EditWidgetView({ widgetId: params().widgetId });
-          if (currentRoute() === '/alerts') return AlertsView();
-          if (currentRoute() === '/analytics/<analyticId:string>')
-            return AnalyticsView();
-          return 'Route does not exist';
-        })
+        Switch$(
+          currentRoute$,
+          '/',
+          HomeView(),
+          '/data-sources',
+          DataSourcesView$(),
+          '/values',
+          ValuesView$(),
+          '/dashboards',
+          DashboardsView$(),
+          '/dashboards/<widgetId:string>/edit',
+          EditDashboardsView$({ widgetId: params().widgetId }),
+          '/alerts',
+          AlertsView$(),
+          '/analytics/<analyticId:string>',
+          AnalyticsView$()
+        )
       )
     );
 
@@ -1428,6 +1467,8 @@
       height: '100%',
     });
     //const FIREBASE_API_KEY = 'AIzaSyCeGXLqw0MEwiSFHG1Wks1HfQHXRZoOuFY';
+    const MAX_AMOUNT_OF_DERIVED_VALUES = 100;
+    const MAX_AMOUNT_OF_WIDGETS = 100;
 
     // Create router
     const router = new Router({
@@ -1441,8 +1482,106 @@
       '/alerts': 'Alerts',
     });
 
+    const evaluateCode = (valuesCode, derivedValuesCode, widgetsCode) => {
+      return eval(`
+        const values = {};
+        const derivedValues = {};
+        const widgets = {};
+        ${valuesCode}
+        ${derivedValuesCode}
+        ${widgetsCode}
+        result = {
+          values,
+          derivedValues,
+          widgets,
+        };
+      `);
+    };
+
+    const buyPrice$ = new Observable(100);
+    const sellPrice$ = new Observable(100);
+
+    const state = {
+      valuesCode$: new Observable(''),
+      derivedValuesCode$: new Observable(''),
+      widgetsCode$: new Observable(''),
+
+      values: {},
+      derivedValues: {},
+      widgets: {},
+    };
+
+    window.addEventListener(state.valuesCode$.id, () => {
+      const evaluatedCode = evaluateCode(
+        state.valuesCode$.value,
+        state.derivedValuesCode$.value,
+        state.widgetsCode$.value
+      );
+      state.values = evaluatedCode.values;
+      state.derivedValues = evaluatedCode.derivedValues;
+      state.widgets = evaluatedCode.widgets;
+      //console.log('state: ', state);
+    });
+
+    // We can pretend we are fetching data from an api here
+    const updateValues = () => {
+      setTimeout(() => {
+        buyPrice$.value =
+          Math.floor(Math.random() * 2) == 1
+            ? buyPrice$.value * 1.01
+            : buyPrice$.value / 1.01;
+        sellPrice$.value =
+          Math.floor(Math.random() * 2) == 1
+            ? sellPrice$.value * 1.01
+            : sellPrice$.value / 1.01;
+        state.valuesCode$.value = `
+          values.buyPrice = ${buyPrice$.value};
+          values.sellPrice = ${sellPrice$.value};
+        `;
+        updateValues();
+      }, 100);
+    };
+    updateValues();
+
+    state.derivedValuesCode$.value = `
+      derivedValues.Profit = values.sellPrice - values.buyPrice;
+    `;
+    state.widgetsCode$.value = `
+      const point0 = { x: 0, y: 0, z: 0 };
+      const point1 = { x: 0, y: 0, z: 100 };
+      const point2 = { x: 0, y: 100, z: 0 };
+      const point3 = { x: 100, y: 0, z: 0 };
+
+      const surfaceColor = 'rgba(128, 128, 255, 0.5)';
+      const edgeColor = 'blue';
+
+      // We create the faces
+      const surface0 = { color: surfaceColor, points: [point0, point1, point2] };
+      const surface1 = { color: surfaceColor, points: [point0, point1, point3] };
+      const surface2 = { color: surfaceColor, points: [point1, point2, point3] };
+      const surface3 = { color: surfaceColor, points: [point0, point2, point3] };
+
+      // We create the edges
+      const edge0 = { color: edgeColor, points: [point0, point1], width: 2 };
+      const edge1 = { color: edgeColor, points: [point0, point2], width: 2 };
+      const edge2 = { color: edgeColor, points: [point0, point3], width: 2 };
+      const edge3 = { color: edgeColor, points: [point1, point2], width: 2 };
+      const edge4 = { color: edgeColor, points: [point1, point3], width: 2 };
+      const edge5 = { color: edgeColor, points: [point2, point3], width: 2 };
+
+      // We create the widget
+      widgets.pyramid = {
+        surfaces: [surface0, surface1, surface2, surface3],
+        edges: [edge0, edge1, edge2, edge3, edge4, edge5],
+      };
+    `;
+
     document.body.appendChild(
-      App({ params: router.getParams, currentRoute: router.getCurrentRoute })
+      App({
+        state,
+        params: router.getParams,
+        currentRoute$: router.currentRoute$,
+      })
     );
     document.body.update = props =>
       document.body.childNodes.forEach(childNode => {
