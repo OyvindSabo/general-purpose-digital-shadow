@@ -649,8 +649,16 @@
       borderRadius: '10px 0 0 0',
       borderRight: '1px solid LightGray',
       overflow: 'hidden',
-      float: 'left',
       background: 'White',
+      position: 'absolute',
+    });
+
+  const ViewContainer$ = (...children) =>
+    div$(...children).setStyle({
+      position: 'absolute',
+      top: '0',
+      left: '80px',
+      right: '0',
     });
 
   const MainContainer$ = (...children) =>
@@ -658,6 +666,9 @@
       height: 'calc(100% - 40px)',
       borderRadius: '10px 10px 0 0',
       background: 'GhostWhite',
+      position: 'absolute',
+      left: '0',
+      right: '0',
     });
 
   const HomeView = () => div$('HomeView');
@@ -863,6 +874,8 @@
   };
   const div$ = (...children) => createElement$('div', ...children);
   const h1$ = (...children) => createElement$('h1', ...children);
+  const textArea$ = (value = '') =>
+    createElement$('textarea').setProps({ value });
   const br$ = () => createElement('br');
   const select$ = (...children) => createElement$('select', ...children);
   const button$ = (...children) => createElement$('button', ...children);
@@ -1071,14 +1084,34 @@
 
   const ValuesView$ = ({ state }) =>
     div$(
-      ...state.derivedValues.map(({ label$, value$, isEmpty$ }) =>
-        ValueBox({
-          label$,
-          value$,
-          isEmpty$,
-        })
-      )
-    );
+      div$(
+        textArea$(state.derivedValuesCode$)
+          .setStyle({
+            width: '100%',
+            height: '240px',
+            padding: '20px',
+            background: 'black',
+            color: 'white',
+            fontFamily: '"Courier New", Courier, monospace',
+            fontSize: '20px',
+          })
+          .onInput(({ value }) => {
+            state.derivedValuesCode$.value = value;
+          })
+      ).setStyle({
+        display: 'inline-block',
+        width: '50%',
+      }),
+      div$(
+        ...state.derivedValues.map(({ label$, value$, isEmpty$ }) =>
+          ValueBox({
+            label$,
+            value$,
+            isEmpty$,
+          })
+        )
+      ).setStyle({ display: 'inline-block', width: '50%' })
+    ).setStyle({ width: '100%' });
 
   // Just a dummy observable
   const dashboardValue1$ = new Observable(100);
@@ -1529,22 +1562,24 @@
           })
         ),
         // Not sure I'm happy about this solution
-        Switch$(
-          currentRoute$,
-          '/',
-          HomeView(),
-          '/data-sources',
-          DataSourcesView$(),
-          '/values',
-          ValuesView$({ state }),
-          '/dashboards',
-          DashboardsView$(),
-          '/dashboards/<widgetId:string>/edit',
-          EditDashboardsView$({ widgetId: params().widgetId }),
-          '/alerts',
-          AlertsView$(),
-          '/analytics/<analyticId:string>',
-          AnalyticsView$()
+        ViewContainer$(
+          Switch$(
+            currentRoute$,
+            '/',
+            HomeView(),
+            '/data-sources',
+            DataSourcesView$(),
+            '/values',
+            ValuesView$({ state }),
+            '/dashboards',
+            DashboardsView$(),
+            '/dashboards/<widgetId:string>/edit',
+            EditDashboardsView$({ widgetId: params().widgetId }),
+            '/alerts',
+            AlertsView$(),
+            '/analytics/<analyticId:string>',
+            AnalyticsView$()
+          )
         )
       )
     );
