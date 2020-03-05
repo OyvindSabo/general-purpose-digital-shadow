@@ -1082,36 +1082,110 @@
           )
       );
 
+  const ValuesViewTopNavigator$ = (...children) =>
+    div$(...children).setStyle({ width: '100%', height: '80px' });
+
+  const ValuesViewTopNavigatorButton = ({ icon, label$, isActive$ }) => {
+    const isHovered$ = new Observable(false);
+    return div$(
+      div$(icon).setStyle({
+        fontSize: '30px',
+        textAlign: 'center',
+        marginTop: '15px',
+        pointerEvents: 'none',
+        userSelect: 'none',
+        transform: choose$(isActive$, 'rotate(180deg)', 'rotate(0deg)'),
+        transition: '0.25s',
+      }),
+      div$(label$).setStyle({
+        fontSize: '15px',
+        textAlign: 'center',
+        pointerEvents: 'none',
+        userSelect: 'none',
+      })
+    )
+      .setStyle({
+        background: choose$(
+          or$(isActive$, isHovered$),
+          'whitesmoke',
+          'initial'
+        ),
+        color: choose$(or$(isActive$, isHovered$), 'dimgray', 'gray'),
+        height: '80px',
+        width: '80px',
+        overflow: 'hidden',
+        transition: '0.25s',
+        cursor: 'pointer',
+      })
+      .onMouseEnter(element => {
+        isHovered$.value = true;
+      })
+      .onMouseLeave(element => {
+        isHovered$.value = false;
+      });
+  };
+
   const ValuesView$ = ({ state }) =>
     div$(
+      ValuesViewTopNavigator$(
+        ValuesViewTopNavigatorButton({
+          icon: '{}',
+          label$: choose$(
+            state.derivedValuesEditorIsOpen$,
+            'Hide editor',
+            'Show editor'
+          ),
+          route: '/data-sources',
+          isActive$: state.derivedValuesEditorIsOpen$,
+        }).onClick(() => {
+          state.derivedValuesEditorIsOpen$.value = !state
+            .derivedValuesEditorIsOpen$.value;
+        })
+      ),
       div$(
         textArea$(state.derivedValuesCode$)
           .setStyle({
             width: '100%',
-            height: '240px',
+            height: 'calc(100vh - 120px)',
             padding: '20px',
             background: 'black',
             color: 'white',
             fontFamily: '"Courier New", Courier, monospace',
-            fontSize: '20px',
+            fontSize: '14px',
+            lineHeight: '20px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
           })
           .onInput(({ value }) => {
             state.derivedValuesCode$.value = value;
           })
       ).setStyle({
         display: 'inline-block',
-        width: '50%',
+        width: choose$(state.derivedValuesEditorIsOpen$, '50%', '0'),
+        transition: '0.25s',
+        overflow: 'hidden',
       }),
       div$(
-        ...state.derivedValues.map(({ label$, value$, isEmpty$ }) =>
-          ValueBox({
-            label$,
-            value$,
-            isEmpty$,
-          })
-        )
-      ).setStyle({ display: 'inline-block', width: '50%' })
-    ).setStyle({ width: '100%' });
+        div$(
+          ...state.derivedValues.map(({ label$, value$, isEmpty$ }) =>
+            ValueBox({
+              label$,
+              value$,
+              isEmpty$,
+            })
+          )
+        ).setStyle({
+          position: 'relative',
+          top: '0',
+        })
+      ).setStyle({
+        display: 'inline-block',
+        width: '50%',
+        position: 'absolute',
+      })
+    ).setStyle({
+      width: '100%',
+    });
 
   // Just a dummy observable
   const dashboardValue1$ = new Observable(100);
@@ -1631,6 +1705,8 @@
     const sellPrice$ = new Observable(100);
 
     const state = {
+      derivedValuesEditorIsOpen$: new Observable(false),
+
       valuesCode$: new Observable(''),
       derivedValuesCode$: new Observable(''),
       widgetsCode$: new Observable(''),
