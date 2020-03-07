@@ -197,16 +197,18 @@
       )
       .some(Boolean);
     const someTruthy$ = new Observable(someTruthy);
-    observables.forEach(observable => {
-      window.addEventListener(observable.id, ({ detail }) => {
-        const someTruthy = observables
-          .map(observable =>
-            observable instanceof Observable ? observable.value : observable
-          )
-          .some(Boolean);
-        someTruthy$.value = someTruthy;
+    observables
+      .filter(observable => observable instanceof Observable)
+      .forEach(observable => {
+        window.addEventListener(observable.id, ({ detail }) => {
+          const someTruthy = observables
+            .map(observable =>
+              observable instanceof Observable ? observable.value : observable
+            )
+            .some(Boolean);
+          someTruthy$.value = someTruthy;
+        });
       });
-    });
     return someTruthy$;
   };
 
@@ -825,7 +827,7 @@
   const ValuesViewTopNavigator$ = (...children) =>
     div$(...children).setStyle({ width: '100%', height: '80px' });
 
-  const ValuesViewTopNavigatorButton = ({ icon, label$, isActive$ }) => {
+  const ValuesViewTopNavigatorButton = ({ icon, label$, isOpen$ }) => {
     const isHovered$ = new Observable(false);
     return div$(
       div$(icon).setStyle({
@@ -834,7 +836,7 @@
         marginTop: '15px',
         pointerEvents: 'none',
         userSelect: 'none',
-        transform: choose$(isActive$, 'rotate(180deg)', 'rotate(0deg)'),
+        transform: choose$(isOpen$, 'rotate(180deg)', 'rotate(0deg)'),
         transition: '0.25s',
       }),
       div$(label$).setStyle({
@@ -861,8 +863,8 @@
       });
   };
 
-  const CodeEditor$ = value$ =>
-    textArea$(value$).setStyle({
+  const CodeEditor$ = value$ => {
+    return textArea$(value$).setStyle({
       width: '100%',
       height: 'calc(100vh - 120px)',
       padding: '20px',
@@ -874,6 +876,7 @@
       whiteSpace: 'nowrap',
       overflow: 'hidden',
     });
+  };
 
   const SmallWidgetBackgroundContainer$ = (...children) => {
     return div$(...children).setStyle({
@@ -944,21 +947,18 @@
       )
     );
 
-  const ValuesView$ = ({ state }) =>
-    div$(
+  const ValuesView$ = ({ state, currentRoute$ }) => {
+    const codeEditorIsOpen$ = eq$(currentRoute$, '/values/edit');
+    return div$(
       ValuesViewTopNavigator$(
         ValuesViewTopNavigatorButton({
           icon: '{}',
-          label$: choose$(
-            state.derivedValuesEditorIsOpen$,
-            'Hide editor',
-            'Show editor'
-          ),
-          route: '/data-sources',
-          isActive$: state.derivedValuesEditorIsOpen$,
+          label$: choose$(codeEditorIsOpen$, 'Hide editor', 'Show editor'),
+          isOpen$: codeEditorIsOpen$,
         }).onClick(() => {
-          state.derivedValuesEditorIsOpen$.value = !state
-            .derivedValuesEditorIsOpen$.value;
+          location.hash = codeEditorIsOpen$.value
+            ? '#!/values'
+            : '#!/values/edit';
         })
       ),
       div$(
@@ -967,7 +967,7 @@
         })
       ).setStyle({
         display: 'inline-block',
-        width: choose$(state.derivedValuesEditorIsOpen$, '50%', '0'),
+        width: choose$(codeEditorIsOpen$, '50%', '0'),
         transition: '0.25s',
         overflow: 'hidden',
       }),
@@ -979,6 +979,7 @@
         ).setStyle({ position: 'relative', top: '0' })
       ).setStyle({ display: 'inline-block', position: 'absolute' })
     ).setStyle({ width: '100%' });
+  };
 
   // Just a dummy observable
   const dashboardValue1$ = new Observable(100);
@@ -1352,18 +1353,6 @@
     return div$('Edit dashboards view');
   };
 </script>
-<!--<script src="views/editWidgetView/rightNavigator/RightNavigator.js"></script>
-<script src="views/editWidgetView/rightNavigatorHeader/RightNavigatorHeader.js"></script>
-<script src="views/editWidgetView/rightNavigatorButton/RightNavigatorButton.js"></script>
-<script src="views/editWidgetView/infoBox/InfoBox.js"></script>
-<script src="views/editWidgetView/nodesOverview/nodeInfoBox/NodeInfoBox.js"></script>
-<script src="views/editWidgetView/nodesOverview/NodesOverview.js"></script>
-<script src="views/editWidgetView/edgesOverview/edgeInfoBox/EdgeInfoBox.js"></script>
-<script src="views/editWidgetView/edgesOverview/edgeForm/EdgeForm.js"></script>
-<script src="views/editWidgetView/edgesOverview/EdgesOverview.js"></script>
-<script src="views/editWidgetView/facesOverview/faceInfoBox/FaceInfoBox.js"></script>
-<script src="views/editWidgetView/facesOverview/FacesOverview.js"></script>
-<script src="views/editWidgetView/EditWidgetView.js"></script>-->
 
 <script>
   const App = ({ params, currentRoute$, state }) => {
@@ -1402,21 +1391,24 @@
         ),
         // Not sure I'm happy about this solution
         ViewContainer$(
-          Switch$(
-            currentRoute$,
-            '/',
-            HomeView$(),
-            '/data-sources',
-            DataSourcesView$(),
-            '/values',
-            ValuesView$({ state }),
-            '/dashboards',
-            DashboardsView$(),
-            '/dashboards/<widgetId:string>/edit',
-            EditDashboardsView$({ widgetId: params().widgetId }),
-            '/alerts',
-            AlertsView$(),
-            '/analytics/<analyticId:string>',
+          If$(eq$(currentRoute$, '/'), HomeView$()),
+          If$(eq$(currentRoute$, '/data-sources'), DataSourcesView$()),
+          If$(
+            or$(
+              eq$(currentRoute$, '/values'), // Hack, for some reason the code editor animation doesn't work without this
+              eq$(currentRoute$, '/values/edit'),
+              eq$(currentRoute$, '/values')
+            ),
+            ValuesView$({ state, currentRoute$ })
+          ),
+          If$(eq$(currentRoute$, '/dashboards'), DashboardsView$()),
+          If$(
+            eq$(currentRoute$, '/dashboards/<widgetId:string>/edit'),
+            EditDashboardsView$({ widgetId: params().widgetId })
+          ),
+          If$(eq$(currentRoute$, '/alerts'), AlertsView$()),
+          If$(
+            eq$(currentRoute$, '/analytics/<analyticId:string>'),
             AnalyticsView$()
           )
         )
@@ -1443,6 +1435,7 @@
       '/': 'Home',
       '/data-sources': 'Data sources',
       '/values': 'Values',
+      '/values/edit': 'Edit values',
       '/analytics/<analyticId:string>': 'Analytics',
       // TODO: It should be possible to have multiple dashboards
       '/dashboards': 'Dashboards',
@@ -1488,10 +1481,12 @@
           isEmpty$: new Observable(true),
         })
       ),
-      /*widgets$: [...new Array(MAX_AMOUNT_OF_DERIVED_VALUES).keys()].map(() => ({
-        label$: new Observable(null),
-        value$: new Observable(null),
-      })),*/
+      widgets: [...new Array(MAX_AMOUNT_OF_DERIVED_VALUES).keys()].map(() => ({
+        label$: new Observable(''),
+        edges$: new Observable([]),
+        surfaces$: new Observable([]),
+        isEmpty$: new Observable(true),
+      })),
     };
 
     window.addEventListener(state.valuesCode$.id, () => {
@@ -1519,12 +1514,21 @@
         isEmpty$.value = !derivedValuesEntries[index];
       });
 
-      /*const widgetsEntries = Object.entries(evaluatedCode.widgets);
-      state.widgets.forEach(({ label$, value$, isEmpty$ }, index) => {
-        label$.value = widgetsEntries[index] ? widgetsEntries[index][0] : null;
-        value$.value = widgetsEntries[index] ? widgetsEntries[index][1] : null;
-        isEmpty$.value = Boolean(widgetsEntries[index]);
-      });*/
+      const widgetsEntries = Object.entries(evaluatedCode.widgets);
+      state.widgets.forEach(
+        ({ label$, edges$, surfaces$, isEmpty$ }, index) => {
+          label$.value = derivedValuesEntries[index]
+            ? derivedValuesEntries[index][0]
+            : '';
+          edges$.value = widgetsEntries[index]
+            ? widgetsEntries[index][1].edges
+            : [];
+          surfaces$.value = widgetsEntries[index]
+            ? widgetsEntries[index][1].surfaces
+            : [];
+          isEmpty$.value = Boolean(widgetsEntries[index]);
+        }
+      );
     });
 
     // We can pretend we are fetching data from an api here
