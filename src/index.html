@@ -244,6 +244,149 @@
   };
 </script>
 
+<!-- Observable HTML -->
+<script>
+  const createElement$ = (elementType, ...observables) => {
+    const element = document.createElement(elementType);
+    observables.forEach(observable => {
+      if (
+        // If it is observable value
+        observable instanceof Observable &&
+        ['string', 'number'].includes(typeof observable.value)
+      ) {
+        const textNode = document.createTextNode(observable.value);
+        element.appendChild(textNode);
+        window.addEventListener(observable.id, ({ detail }) => {
+          textNode.nodeValue = detail;
+        });
+        return;
+      }
+      if (
+        // If it is non-observable value
+        ['string', 'number'].includes(typeof observable)
+      ) {
+        const textNode = document.createTextNode(observable);
+        element.appendChild(textNode);
+        return;
+      }
+      // If it is a dom node
+      element.appendChild(observable);
+    });
+    // Note that styleObject$ is an object with observable values, not an observable object
+    // TODO: It should also be possible to set the style as a non-observable object
+    element.setStyle = styleObject$ => {
+      Object.entries(styleObject$).forEach(([styleProperty, styleValue$]) => {
+        if (styleValue$ instanceof Observable) {
+          element.style[styleProperty] = styleValue$.value;
+          window.addEventListener(styleValue$.id, ({ detail }) => {
+            element.style[styleProperty] = detail;
+          });
+          return;
+        }
+        element.style[styleProperty] = styleValue$;
+      });
+      return element;
+    };
+    element.setProps = propsObject => {
+      Object.entries(propsObject).forEach(([propKey, propValue$]) => {
+        if (propValue$ instanceof Observable) {
+          element[propKey] = propValue$.value;
+          window.addEventListener(propValue$.id, ({ detail }) => {
+            element[propKey] = detail;
+          });
+          return;
+        }
+        element[propKey] = propValue$;
+      });
+      return element;
+    };
+    element.onClick = clickCallback => {
+      element.style.cursor = 'pointer';
+      element.onclick = () => clickCallback(element);
+      return element;
+    };
+    element.onMouseEnter = mouseEnterCallback => {
+      element.onmouseenter = () => mouseEnterCallback(element);
+      return element;
+    };
+    element.onMouseLeave = mouseLeaveCallback => {
+      element.onmouseleave = () => mouseLeaveCallback(element);
+      return element;
+    };
+    element.onInput = inputCallback => {
+      element.oninput = () => inputCallback(element);
+      return element;
+    };
+    element.onChange = changeCallback => {
+      element.onchange = () => changeCallback(element);
+      return element;
+    };
+    return element;
+  };
+  const div$ = (...children) => createElement$('div', ...children);
+  const h1$ = (...children) => createElement$('h1', ...children);
+  const textArea$ = (value = '') =>
+    createElement$('textarea').setProps({ value });
+  const br$ = () => createElement('br');
+  const select$ = (...children) => createElement$('select', ...children);
+  const button$ = (...children) => createElement$('button', ...children);
+  const option$ = ({ value, label }) =>
+    createElement$('option', label).setProps({ value });
+  const input$ = (value = '') => createElement$('input').setProps({ value });
+  const canvas$ = ({ width, height }) => {
+    const element = createElement('canvas');
+    element.width = width;
+    element.height = height;
+    return element;
+  };
+</script>
+
+<!-- Observable HTML util components -->
+<script>
+  const Choose$ = (observable, element1, element2) => {
+    let element = (observable instanceof Observable
+    ? observable.value
+    : observable)
+      ? element1
+      : element2;
+    if (observable instanceof Observable) {
+      window.addEventListener(observable.id, ({ detail }) => {
+        // TODO: Make it possible to set a specific child of an observable
+        newElement = (observable instanceof Observable
+        ? observable.value
+        : observable)
+          ? element1
+          : element2;
+
+        if (newElement !== element) {
+          element.parentNode.replaceChild(newElement, element);
+          element = newElement;
+        }
+      });
+    }
+    return element;
+  };
+
+  const Switch$ = (statement$, ...clauses) => {
+    const cases = clauses.filter((_, i) => i % 2 === 0);
+    const elements = clauses.filter((_, i) => i % 2 !== 0);
+    return div$(
+      ...cases.map((theCase, i) => {
+        const element = elements[i];
+        // Warning: Assumes that display is not initially dynamic
+        const display = element.style.display;
+        return element.setStyle({
+          display: choose$(eq$(statement$, theCase), display, 'none'),
+        });
+      })
+    );
+  };
+
+  const Nothing$ = () => div$().setStyle({ display: 'none' });
+
+  const If$ = (observable, element) => Choose$(observable, element, Nothing$());
+</script>
+
 <!-- Router -->
 <script>
   function Router(routes) {
@@ -671,266 +814,11 @@
       right: '0',
     });
 
-  const HomeView = () => div$('HomeView');
+  const HomeView$ = () => div$('HomeView');
 
   const DataSourcesView$ = () => div$('DataSourcesView');
-
-  // Fake values stream
-  const valuesStream = {
-    observers: [],
-    sourceValues: {
-      valueA: 1000,
-      valueB: 1000,
-      valueC: 1000,
-      valueD: 1000,
-    },
-    derivedValues: {
-      'valueA + valueB': {
-        dependsOn: { sourceValues: ['valueA', 'valueB'], derivedValues: [] },
-        calculation: '({ valueA, valueB }) => valueA + valueB',
-      },
-    },
-    setSourceValues: newSourceValues => {
-      Object.assign(valuesStream.sourceValues, newSourceValues);
-      valuesStream.emit();
-    },
-    setDerivedValues: newDerivedValues => {
-      Object.assign(valuesStream.derivedValues, newDerivedValues);
-      valuesStream.emit();
-    },
-    subscribe: observer => {
-      observer({
-        currentRoute$: valuesStream.currentRoute$,
-        params: valuesStream.params,
-      });
-      valuesStream.observers.push(observer);
-    },
-    emit: () =>
-      valuesStream.observers.forEach(observer => {
-        observer();
-      }),
-  };
-  // Regularly update dummy data
-  const updateValuesStream = () =>
-    setTimeout(() => {
-      valuesStream.setSourceValues({
-        valueA:
-          Math.floor(Math.random() * 2) == 1
-            ? valuesStream.sourceValues.valueA * 1.01
-            : valuesStream.sourceValues.valueA / 1.01,
-        valueB:
-          Math.floor(Math.random() * 2) == 1
-            ? valuesStream.sourceValues.valueB * 1.01
-            : valuesStream.sourceValues.valueB / 1.01,
-        valueC:
-          Math.floor(Math.random() * 2) == 1
-            ? valuesStream.sourceValues.valueC * 1.01
-            : valuesStream.sourceValues.valueC / 1.01,
-        valueD:
-          Math.floor(Math.random() * 2) == 1
-            ? valuesStream.sourceValues.valueD * 1.01
-            : valuesStream.sourceValues.valueD / 1.01,
-      });
-      updateValuesStream();
-    }, 100);
-  setTimeout(updateValuesStream);
-
-  /*const ValuesView$ = () => {
-    const { sourceValues, derivedValues } = valuesStream;
-    const element = div()
-      .initState({ isEditingValue: false })
-      .initChildren(
-        element =>
-          div(
-            ValueBox({
-              value: () => sourceValues.valueA,
-              label: () => 'valueA',
-            }),
-            ValueBox({
-              value: () => sourceValues.valueB,
-              label: () => 'valueB',
-            }),
-            ValueBox({
-              value: () => sourceValues.valueC,
-              label: () => 'valueC',
-            }),
-            ValueBox({
-              value: () => sourceValues.valueD,
-              label: () => 'valueD',
-            }),
-            Replaceables(() =>
-              Object.keys(derivedValues).map(key =>
-                ValueBox({
-                  value: () => calculateDerivedValue(valuesStream, key),
-                  label: () => key,
-                })
-              )
-            ),
-            NewValueBox({
-              label: () =>
-                element.state.isEditingValue ? 'Cancel' : 'New value',
-            }).onClick(() =>
-              element.setState({
-                isEditingValue: !element.state.isEditingValue,
-              })
-            )
-          ),
-        element =>
-          div(
-            If(
-              () => element.state.isEditingValue,
-              () =>
-                CodeEditor({
-                  onSave: derivedValue => {
-                    valuesStream.setDerivedValues(derivedValue);
-                    element.setState({ isEditingValue: false });
-                  },
-                })
-            )
-          )
-      );
-    valuesStream.subscribe(element.update);
-    return element;
-  };*/
   const AnalyticsView$ = () => div$('AnalyticsView');
   const AlertsView$ = () => div$('AlertsView');
-
-  const createElement$ = (elementType, ...observables) => {
-    const element = document.createElement(elementType);
-    observables.forEach(observable => {
-      if (
-        // If it is observable value
-        observable instanceof Observable &&
-        ['string', 'number'].includes(typeof observable.value)
-      ) {
-        const textNode = document.createTextNode(observable.value);
-        element.appendChild(textNode);
-        window.addEventListener(observable.id, ({ detail }) => {
-          textNode.nodeValue = detail;
-        });
-        return;
-      }
-      if (
-        // If it is non-observable value
-        ['string', 'number'].includes(typeof observable)
-      ) {
-        const textNode = document.createTextNode(observable);
-        element.appendChild(textNode);
-        return;
-      }
-      // If it is a dom node
-      element.appendChild(observable);
-    });
-    // Note that styleObject$ is an object with observable values, not an observable object
-    // TODO: It should also be possible to set the style as a non-observable object
-    element.setStyle = styleObject$ => {
-      Object.entries(styleObject$).forEach(([styleProperty, styleValue$]) => {
-        if (styleValue$ instanceof Observable) {
-          element.style[styleProperty] = styleValue$.value;
-          window.addEventListener(styleValue$.id, ({ detail }) => {
-            element.style[styleProperty] = detail;
-          });
-          return;
-        }
-        element.style[styleProperty] = styleValue$;
-      });
-      return element;
-    };
-    element.setProps = propsObject => {
-      Object.entries(propsObject).forEach(([propKey, propValue$]) => {
-        if (propValue$ instanceof Observable) {
-          element[propKey] = propValue$.value;
-          window.addEventListener(propValue$.id, ({ detail }) => {
-            element[propKey] = detail;
-          });
-          return;
-        }
-        element[propKey] = propValue$;
-      });
-      return element;
-    };
-    element.onClick = clickCallback => {
-      element.style.cursor = 'pointer';
-      element.onclick = () => clickCallback(element);
-      return element;
-    };
-    element.onMouseEnter = mouseEnterCallback => {
-      element.onmouseenter = () => mouseEnterCallback(element);
-      return element;
-    };
-    element.onMouseLeave = mouseLeaveCallback => {
-      element.onmouseleave = () => mouseLeaveCallback(element);
-      return element;
-    };
-    element.onInput = inputCallback => {
-      element.oninput = () => inputCallback(element);
-      return element;
-    };
-    element.onChange = changeCallback => {
-      element.onchange = () => changeCallback(element);
-      return element;
-    };
-    return element;
-  };
-  const div$ = (...children) => createElement$('div', ...children);
-  const h1$ = (...children) => createElement$('h1', ...children);
-  const textArea$ = (value = '') =>
-    createElement$('textarea').setProps({ value });
-  const br$ = () => createElement('br');
-  const select$ = (...children) => createElement$('select', ...children);
-  const button$ = (...children) => createElement$('button', ...children);
-  const option$ = ({ value, label }) =>
-    createElement$('option', label).setProps({ value });
-  const input$ = (value = '') => createElement$('input').setProps({ value });
-  const canvas$ = ({ width, height }) => {
-    const element = createElement('canvas');
-    element.width = width;
-    element.height = height;
-    return element;
-  };
-
-  const Choose$ = (observable, element1, element2) => {
-    let element = (observable instanceof Observable
-    ? observable.value
-    : observable)
-      ? element1
-      : element2;
-    if (observable instanceof Observable) {
-      window.addEventListener(observable.id, ({ detail }) => {
-        // TODO: Make it possible to set a specific child of an observable
-        newElement = (observable instanceof Observable
-        ? observable.value
-        : observable)
-          ? element1
-          : element2;
-
-        if (newElement !== element) {
-          element.parentNode.replaceChild(newElement, element);
-          element = newElement;
-        }
-      });
-    }
-    return element;
-  };
-
-  const Switch$ = (statement$, ...clauses) => {
-    const cases = clauses.filter((_, i) => i % 2 === 0);
-    const elements = clauses.filter((_, i) => i % 2 !== 0);
-    return div$(
-      ...cases.map((theCase, i) => {
-        const element = elements[i];
-        // Warning: Assumes that display is not initially dynamic
-        const display = element.style.display;
-        return element.setStyle({
-          display: choose$(eq$(statement$, theCase), display, 'none'),
-        });
-      })
-    );
-  };
-
-  const Nothing$ = () => div$().setStyle({ display: 'none' });
-
-  const If$ = (observable, element) => Choose$(observable, element, Nothing$());
 
   // This is not used and can probably be removed
   const toArray$ = (...observables) => {
@@ -1639,7 +1527,7 @@
           Switch$(
             currentRoute$,
             '/',
-            HomeView(),
+            HomeView$(),
             '/data-sources',
             DataSourcesView$(),
             '/values',
