@@ -815,161 +815,13 @@
     });
 
   const HomeView$ = () => div$('HomeView');
-
   const DataSourcesView$ = () => div$('DataSourcesView');
   const AnalyticsView$ = () => div$('AnalyticsView');
   const AlertsView$ = () => div$('AlertsView');
-
-  // This is not used and can probably be removed
-  const toArray$ = (...observables) => {
-    const observableArray = observables.map(({ value }) => value);
-    const array$ = new Observable(observableArray);
-    observables.forEach((observable, i) => {
-      window.addEventListener(observable.id, ({ detail }) => {
-        // TODO: Make it possible to set a specific child of an observable
-        array$.value = observables.map(({ value }) => value);
-      });
-    });
-    return array$;
-  };
 </script>
 
 <!-- Components -->
 <script>
-  const ValueBoxBox = (...children) =>
-    div$(...children).setStyle({
-      height: '160px',
-      width: '240px',
-      transition: '0.25s',
-      display: 'inline-block',
-      color: 'Gray',
-      borderRight: '1px solid LightGray',
-      boxSizing: 'border-box',
-    });
-
-  const ValueBoxLabel = ({ label$ }) =>
-    div$(label$).setStyle({
-      marginTop: '30px',
-      fontSize: '30px',
-      textAlign: 'center',
-      pointerEvents: 'none',
-      userSelect: 'none',
-    });
-
-  const ValueBoxValue = ({ value$ }) =>
-    div$(toFixed$(value$, 2)).setStyle({
-      fontSize: '60px',
-      textAlign: 'center',
-      pointerEvents: 'none',
-      userSelect: 'none',
-    });
-
-  const ValueBox = ({ value$, label$, isEmpty$ }) =>
-    If$(
-      not$(isEmpty$),
-      ValueBoxBox(ValueBoxLabel({ label$ }), ValueBoxValue({ value$ }))
-    );
-
-  const NewValueBoxBox = Styled(div, {
-    height: '160px',
-    width: '240px',
-    transition: '0.25s',
-    display: 'inline-block',
-    color: 'Gray',
-    borderRight: '1px solid LightGray',
-    cursor: 'pointer',
-    boxSizing: 'border-box',
-  });
-
-  const NewValueBoxValue = ({ isHovered }) => {
-    const element = Styled(div, {
-      fontSize: '60px',
-      textAlign: 'center',
-      pointerEvents: 'none',
-      userSelect: 'none',
-      transition: '0.25s',
-    })('+');
-    element.update = () => {
-      element.style.transform = `rotate(${isHovered() ? 90 : 0}deg)`;
-    };
-    return element;
-  };
-  const NewValueBox = ({ label }) =>
-    NewValueBoxBox()
-      .initState({ hovered: false })
-      .initChildren(ValueBoxLabel(label), element =>
-        NewValueBoxValue({
-          isHovered: () => element.state.isHovered,
-        })
-      )
-      .onMouseEnter(element => {
-        element
-          .setStyle({ background: 'WhiteSmoke', color: 'DimGray' })
-          .setState({ isHovered: true });
-      })
-      .onMouseLeave(element => {
-        element
-          .setStyle({ background: 'initial', color: 'Gray' })
-          .setState({ isHovered: false });
-      });
-
-  const calculateDerivedValue = (valuesStream, valueName) => {
-    const { dependsOn, calculation } = valuesStream.derivedValues[valueName];
-    return eval(
-      `${
-        Object.entries(valuesStream.sourceValues)
-          .map(([name, value]) => `${name} = ${value};`)
-          .join('') /* 'valueA = 4; valueB = 5;'*/
-      }
-          (${calculation})({${[
-        ...Object.keys(
-          valuesStream.sourceValues
-        ) /* Here we should maybe for simplicity pass all arguments which are not the one we are calculating? */ /*,
-        ...dependsOn.derivedValues,*/,
-      ].join(', ')}})`
-    );
-  };
-
-  const CodeEditor = ({ onSave }) =>
-    div()
-      .initState({ name: '', calculation: '' })
-      .initChildren(
-        element =>
-          div(
-            input()
-              .setStyle({ width: '720px', height: '40px', fontSize: '20px' })
-              .onInput((_, event) =>
-                element.setState({ name: event.target.value })
-              ),
-            button('Save')
-              .setStyle({
-                background: 'CornflowerBlue',
-                color: 'white',
-                width: '240px',
-                height: '40px',
-                fontSize: '20px',
-              })
-              .onClick(() =>
-                onSave({
-                  [element.state.name]: {
-                    calculation: element.state.calculation,
-                  },
-                })
-              )
-          ),
-        element =>
-          div(
-            textArea()
-              .setStyle({
-                width: '960px',
-                height: '240px',
-              })
-              .onInput((_, event) =>
-                element.setState({ calculation: event.target.value })
-              )
-          )
-      );
-
   const ValuesViewTopNavigator$ = (...children) =>
     div$(...children).setStyle({ width: '100%', height: '80px' });
 
@@ -993,12 +845,8 @@
       })
     )
       .setStyle({
-        background: choose$(
-          or$(isActive$, isHovered$),
-          'whitesmoke',
-          'initial'
-        ),
-        color: choose$(or$(isActive$, isHovered$), 'dimgray', 'gray'),
+        background: choose$(isHovered$, 'whitesmoke', 'initial'),
+        color: choose$(isHovered$, 'dimgray', 'gray'),
         height: '80px',
         width: '80px',
         overflow: 'hidden',
@@ -1012,6 +860,89 @@
         isHovered$.value = false;
       });
   };
+
+  const CodeEditor$ = value$ =>
+    textArea$(value$).setStyle({
+      width: '100%',
+      height: 'calc(100vh - 120px)',
+      padding: '20px',
+      background: 'black',
+      color: 'white',
+      fontFamily: '"Courier New", Courier, monospace',
+      fontSize: '14px',
+      lineHeight: '20px',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+    });
+
+  const SmallWidgetBackgroundContainer$ = (...children) => {
+    return div$(...children).setStyle({
+      padding: '20px',
+      width: '360px',
+      height: '240px',
+      display: 'inline-block',
+      boxSizing: 'border-box',
+      verticalAlign: 'top',
+    });
+  };
+
+  const MediumWidgetBackgroundContainer$ = (...children) => {
+    return div$(...children).setStyle({
+      padding: '20px',
+      width: '480px',
+      height: '320px',
+      display: 'inline-block',
+      boxSizing: 'border-box',
+      verticalAlign: 'top',
+    });
+  };
+
+  const WidgetForegroundContainer$ = (...children) => {
+    return div$(...children).setStyle({
+      padding: '20px',
+      height: '100%',
+      border: '1px solid LightGray',
+      boxSizing: 'border-box',
+      background: 'White',
+    });
+  };
+
+  const WidgetInnerContainer$ = (...children) => {
+    return div$(...children).setStyle({
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+    });
+  };
+
+  const ValueWidgetLabel$ = ({ label$ }) =>
+    div$(label$).setStyle({
+      fontSize: '20px',
+      textAlign: 'center',
+    });
+
+  const ValueWidgetValue$ = ({ value$ }) =>
+    div$(toFixed$(value$, 2)).setStyle({
+      fontSize: '60px',
+      textAlign: 'center',
+      width: '100%',
+      position: 'absolute',
+      top: '50%',
+      transform: 'translate(0, -50%)',
+    });
+
+  const ValueWidget$ = ({ label$, value$, isEmpty$ }) =>
+    If$(
+      not$(isEmpty$),
+      SmallWidgetBackgroundContainer$(
+        WidgetForegroundContainer$(
+          div$(
+            ValueWidgetLabel$({ label$ }),
+            ValueWidgetValue$({ value$ })
+          ).setStyle({ height: '100%', position: 'relative', color: 'dimgray' })
+        )
+      )
+    );
 
   const ValuesView$ = ({ state }) =>
     div$(
@@ -1031,22 +962,9 @@
         })
       ),
       div$(
-        textArea$(state.derivedValuesCode$)
-          .setStyle({
-            width: '100%',
-            height: 'calc(100vh - 120px)',
-            padding: '20px',
-            background: 'black',
-            color: 'white',
-            fontFamily: '"Courier New", Courier, monospace',
-            fontSize: '14px',
-            lineHeight: '20px',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-          })
-          .onInput(({ value }) => {
-            state.derivedValuesCode$.value = value;
-          })
+        CodeEditor$(state.derivedValuesCode$).onInput(({ value }) => {
+          state.derivedValuesCode$.value = value;
+        })
       ).setStyle({
         display: 'inline-block',
         width: choose$(state.derivedValuesEditorIsOpen$, '50%', '0'),
@@ -1056,23 +974,11 @@
       div$(
         div$(
           ...state.derivedValues.map(({ label$, value$, isEmpty$ }) =>
-            ValueBox({
-              label$,
-              value$,
-              isEmpty$,
-            })
+            ValueWidget$({ label$, value$, isEmpty$ })
           )
-        ).setStyle({
-          position: 'relative',
-          top: '0',
-        })
-      ).setStyle({
-        display: 'inline-block',
-        position: 'absolute',
-      })
-    ).setStyle({
-      width: '100%',
-    });
+        ).setStyle({ position: 'relative', top: '0' })
+      ).setStyle({ display: 'inline-block', position: 'absolute' })
+    ).setStyle({ width: '100%' });
 
   // Just a dummy observable
   const dashboardValue1$ = new Observable(100);
@@ -1114,37 +1020,9 @@
     dashboardValue6$,
   ];
 </script>
+<!-- TODO: This import should be removed -->
 <script src="state.js"></script>
 <script>
-  const WidgetBackgroundContainer$ = (...children) => {
-    return div$(...children).setStyle({
-      padding: '20px',
-      width: '480px',
-      height: '320px',
-      display: 'inline-block',
-      boxSizing: 'border-box',
-      verticalAlign: 'top',
-    });
-  };
-
-  const WidgetForegroundContainer$ = (...children) => {
-    return div$(...children).setStyle({
-      padding: '20px',
-      height: '100%',
-      border: '1px solid LightGray',
-      boxSizing: 'border-box',
-      background: 'White',
-    });
-  };
-
-  const WidgetInnerContainer$ = (...children) => {
-    return div$(...children).setStyle({
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-    });
-  };
-
   // This is just experimental and does nothing relevant
   const Bar = ({ height$, maxHeight$ }) => {
     return div$().setStyle({
@@ -1159,7 +1037,7 @@
   };
 
   const BarChartWidget$ = ({ values$, maxValue$ }) => {
-    return WidgetBackgroundContainer$(
+    return MediumWidgetBackgroundContainer$(
       WidgetForegroundContainer$(
         WidgetInnerContainer$(
           ...values$.map(value$ =>
@@ -1394,7 +1272,7 @@
 
   const CanvasWidget$ = ({ structure }) => {
     const isVisible = new Observable(false);
-    return WidgetBackgroundContainer$(
+    return MediumWidgetBackgroundContainer$(
       WidgetForegroundContainer$(
         ThreeDimVisualization$({ structure }),
         icon$({ icon: '🗑️', isVisible }).onClick(() => {
@@ -1419,7 +1297,7 @@
 
   const AddNewWidget = () => {
     const isHovered = new Observable(false);
-    return WidgetBackgroundContainer$(
+    return MediumWidgetBackgroundContainer$(
       WidgetForegroundContainer$(
         div$('+').setStyle({
           fontSize: '60px',
