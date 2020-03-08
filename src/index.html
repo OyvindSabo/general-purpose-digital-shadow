@@ -1467,7 +1467,7 @@
           values.sellPrice = ${sellPrice$.value};
         `;
         updateValues();
-      }, 10);
+      }, 100);
     };
     updateValues();
 
@@ -1506,6 +1506,40 @@
         surfaces: [surface0, surface1, surface2, surface3],
         edges: [edge0, edge1, edge2, edge3, edge4, edge5],
       };
+
+      widgets.barChart = {
+        surfaces: [{
+          color: \`rgba(0, 255, 0, 0.5)\`,
+          points: [{ x: 0, y: 0, z: 0 }, { x: 0, y: profit, z: 0 }, { x: 10, y: profit, z: 0 }, { x: 10, y: 0, z: 0 }]
+        },
+        {
+          color: \`rgba(0, 255, 0, 0.5)\`,
+          points: [{ x: 20, y: 0, z: 0 }, { x: 20, y: profit, z: 0 }, { x: 30, y: profit, z: 0 }, { x: 30, y: 0, z: 0 }]
+        }],
+        edges: [],
+      }
+
+      widgets.threeDimensionalBarChart = {
+        surfaces: [
+          {
+            color: 'black',
+            points: [{ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: -profit }, { x: 10, y: 0, z: -profit }, { x: 10, y: 0, z: 0 }],
+          },
+          {
+            color: 'black',
+            points: [{ x: 20, y: 0, z: 0 }, { x: 20, y: 0, z: -profit }, { x: 30, y: 0, z: -profit }, { x: 30, y: 0, z: 0 }],
+          },
+          {
+            color: \`rgba(0, 255, 0, 0.5)\`,
+            points: [{ x: 0, y: 0, z: 0 }, { x: 0, y: profit, z: 0 }, { x: 10, y: profit, z: 0 }, { x: 10, y: 0, z: 0 }],
+          },
+          {
+            color: \`rgba(0, 255, 0, 0.5)\`,
+            points: [{ x: 20, y: 0, z: 0 }, { x: 20, y: profit, z: 0 }, { x: 30, y: profit, z: 0 }, { x: 30, y: 0, z: 0 }],
+          },
+        ],
+        edges: [],
+      }
     `;
 
     document.body.appendChild(
