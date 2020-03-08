@@ -1025,7 +1025,7 @@
 <script src="state.js"></script>
 <script>
   // This is just experimental and does nothing relevant
-  const Bar = ({ height$, maxHeight$ }) => {
+  /*const Bar = ({ height$, maxHeight$ }) => {
     return div$().setStyle({
       height: add$(multiply$(divide$(height$, maxHeight$), 100), '%'),
       maxHeight: '100%',
@@ -1035,9 +1035,9 @@
       transition: '0.1s',
       margin: 'auto 10px 0 10px',
     });
-  };
+  };*/
 
-  const BarChartWidget$ = ({ values$, maxValue$ }) => {
+  /*const BarChartWidget$ = ({ values$, maxValue$ }) => {
     return MediumWidgetBackgroundContainer$(
       WidgetForegroundContainer$(
         WidgetInnerContainer$(
@@ -1047,7 +1047,7 @@
         )
       )
     );
-  };
+  };*/
 
   const rotate = ({ x, y, z }, rx, ry) => {
     const theta = rx;
@@ -1099,32 +1099,27 @@
    * Defines the distance from the defined center of the structure, to the
    * camera.
    */
-  const render = (structure, ctx, center, rx, ry, d, focalLength) => {
+  const render = (surfaces$, edges$, ctx, center, rx, ry, d, focalLength) => {
     // Render the faces
-    structure.faces.forEach(({ color$, vertexIds }) => {
-      vertexIds
-        .map(vertexId$ =>
-          structure.vertices.find(vertex => vertex.id === vertexId$.value)
-        )
-        .filter(Boolean)
-        .map(({ x$, y$, z$ }) => ({ x: x$.value, y: y$.value, z: z$.value }))
-        .map(vertex => rotate(vertex, rx, ry))
-        .map(vertex => toPerspective(vertex, d, focalLength))
-        .map(vertex => toCenterOfWidget(vertex, ctx))
-        .forEach((vertex, index) => {
+    surfaces$.value.forEach(({ color, points }) => {
+      points
+        .map(point => rotate(point, rx, ry))
+        .map(point => toPerspective(point, d, focalLength))
+        .map(point => toCenterOfWidget(point, ctx))
+        .forEach((point, index) => {
           if (index === 0) {
             ctx.beginPath();
-            ctx.moveTo(vertex.x, -vertex.y);
+            ctx.moveTo(point.x, -point.y);
             return;
           }
-          if (index < vertexIds.length - 1) {
-            ctx.lineTo(vertex.x, -vertex.y);
+          if (index < points.length - 1) {
+            ctx.lineTo(point.x, -point.y);
             return;
           }
-          if (index === vertexIds.length - 1) {
-            ctx.lineTo(vertex.x, -vertex.y);
+          if (index === points.length - 1) {
+            ctx.lineTo(point.x, -point.y);
             ctx.closePath();
-            ctx.fillStyle = color$.value;
+            ctx.fillStyle = color;
             ctx.fill();
             return;
           }
@@ -1132,28 +1127,22 @@
     });
 
     // Render the edges
-    structure.edges.forEach(({ color$, vertexIds, width$ }) => {
+    edges$.value.forEach(({ color, points, width }) => {
       // Draw the first vertex
-      const vertices = vertexIds
-        .map(vertexId$ =>
-          structure.vertices.find(vertex => vertex.id === vertexId$.value)
-        )
-        .map(({ x$, y$, z$ }) => ({ x: x$.value, y: y$.value, z: z$.value }))
-        .filter(Boolean);
-      const startVertex = toCenterOfWidget(
-        toPerspective(rotate(vertices[0], rx, ry), d, focalLength),
+      const startPoint = toCenterOfWidget(
+        toPerspective(rotate(points[0], rx, ry), d, focalLength),
         ctx
       );
-      const endVertex = toCenterOfWidget(
-        toPerspective(rotate(vertices[1], rx, ry), d, focalLength),
+      const endPoint = toCenterOfWidget(
+        toPerspective(rotate(points[1], rx, ry), d, focalLength),
         ctx
       );
       ctx.beginPath();
       ctx.lineCap = 'round';
-      ctx.moveTo(startVertex.x, -startVertex.y);
-      ctx.lineTo(endVertex.x, -endVertex.y);
-      ctx.lineWidth = width$.value;
-      ctx.strokeStyle = color$.value;
+      ctx.moveTo(startPoint.x, -startPoint.y);
+      ctx.lineTo(endPoint.x, -endPoint.y);
+      ctx.lineWidth = width;
+      ctx.strokeStyle = color;
       ctx.stroke();
     });
   };
@@ -1189,7 +1178,7 @@
     };
   };
 
-  const ThreeDimVisualization$ = ({ structure }) => {
+  const ThreeDimVisualization$ = ({ surfaces$, edges$ }) => {
     const state = { mouseDown: false };
     const canvas = canvas$({ height: 240, width: 400 });
     const camera = new Camera({
@@ -1207,7 +1196,8 @@
     const rerender = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       render(
-        structure,
+        surfaces$,
+        edges$,
         ctx,
         camera.target,
         camera.horizontalRotation$.value,
@@ -1253,46 +1243,23 @@
     window.addEventListener(camera.focalLength$.id, ({ detail }) => {
       rerender();
     });
-    window.addEventListener('UPDATED_STRUCTURE', ({ detail }) => {
+    window.addEventListener(surfaces$.id, ({ detail }) => {
+      rerender();
+    });
+    window.addEventListener(edges$.id, ({ detail }) => {
       rerender();
     });
     return canvas;
   };
 
-  const icon$ = ({ icon, onClick, isVisible }) =>
-    div$(icon).setStyle({
-      position: 'relative',
-      bottom: '20px',
-      opacity: choose$(isVisible, '1', '0'),
-      float: 'right',
-      cursor: 'pointer',
-      marginLeft: '10px',
-      userSelect: 'none',
-      transition: '0.25s',
-    });
-
-  const CanvasWidget$ = ({ structure }) => {
-    const isVisible = new Observable(false);
-    return MediumWidgetBackgroundContainer$(
-      WidgetForegroundContainer$(
-        ThreeDimVisualization$({ structure }),
-        icon$({ icon: '🗑️', isVisible }).onClick(() => {
-          state.deleteCustomDashboardWidgetById(structure.id);
-          location.hash = '#!/dashboards';
-        }),
-        icon$({
-          icon: '✏️',
-          isVisible,
-        }).onClick(() => {
-          location.hash = `#!/dashboards/${structure.id}/edit`;
-        })
+  const CanvasWidget$ = ({ surfaces$, edges$, isEmpty$ }) => {
+    return If$(
+      not$(isEmpty$),
+      MediumWidgetBackgroundContainer$(
+        WidgetForegroundContainer$(
+          ThreeDimVisualization$({ surfaces$, edges$ })
+        )
       )
-        .onMouseEnter(element => {
-          isVisible.value = true;
-        })
-        .onMouseLeave(element => {
-          isVisible.value = false;
-        })
     );
   };
 
@@ -1323,7 +1290,7 @@
     );
   };
 
-  const DashboardsView$ = () => {
+  const DashboardsView$ = ({ state }) => {
     const title$ = new Observable('Dashboards');
     const count1$ = new Observable(1);
     const count2$ = new Observable(2);
@@ -1335,22 +1302,14 @@
       title$.value = title$.value.toLowerCase();
     };
     return div$(
-      BarChartWidget$({
-        values$: dashboardValues$,
-        maxValue$: new Observable(200),
-      }),
-      ...state.customDashboardWidgets.map(structure =>
-        CanvasWidget$({ structure })
+      ...state.widgets.map(({ surfaces$, edges$, isEmpty$ }) =>
+        CanvasWidget$({ surfaces$, edges$, isEmpty$ })
       ),
       AddNewWidget().onClick(() => {
         const idOfNewStructure = state.createNewCustomDashboardWidget();
-        location.hash = `#!/dashboards/${idOfNewStructure}/edit`;
+        location.hash = `#!/dashboards/edit`;
       })
     );
-  };
-
-  const EditDashboardsView$ = () => {
-    return div$('Edit dashboards view');
   };
 </script>
 
@@ -1401,10 +1360,12 @@
             ),
             ValuesView$({ state, currentRoute$ })
           ),
-          If$(eq$(currentRoute$, '/dashboards'), DashboardsView$()),
           If$(
-            eq$(currentRoute$, '/dashboards/<widgetId:string>/edit'),
-            EditDashboardsView$({ widgetId: params().widgetId })
+            or$(
+              eq$(currentRoute$, '/dashboards'),
+              eq$(currentRoute$, '/dashboards/edit')
+            ),
+            DashboardsView$({ state, currentRoute$ })
           ),
           If$(eq$(currentRoute$, '/alerts'), AlertsView$()),
           If$(
@@ -1439,6 +1400,7 @@
       '/analytics/<analyticId:string>': 'Analytics',
       // TODO: It should be possible to have multiple dashboards
       '/dashboards': 'Dashboards',
+      '/dashboards/edit': 'Edit dashboards',
       '/dashboards/<widgetId:string>/edit': 'Edit widget',
       '/alerts': 'Alerts',
     });
@@ -1500,7 +1462,7 @@
       state.values.forEach(({ label$, value$, isEmpty$ }, index) => {
         label$.value = valuesEntries[index] ? valuesEntries[index][0] : '';
         value$.value = valuesEntries[index] ? valuesEntries[index][1] : 0;
-        isEmpty$.value = Boolean(valuesEntries[index]);
+        isEmpty$.value = !Boolean(valuesEntries[index]);
       });
 
       const derivedValuesEntries = Object.entries(evaluatedCode.derivedValues);
@@ -1526,7 +1488,7 @@
           surfaces$.value = widgetsEntries[index]
             ? widgetsEntries[index][1].surfaces
             : [];
-          isEmpty$.value = Boolean(widgetsEntries[index]);
+          isEmpty$.value = !widgetsEntries[index];
         }
       );
     });
@@ -1547,7 +1509,7 @@
           values.sellPrice = ${sellPrice$.value};
         `;
         updateValues();
-      }, 100);
+      }, 10);
     };
     updateValues();
 
@@ -1557,10 +1519,12 @@
       derivedValues['Dollar Profit']    = derivedValues.Profit / 8;
     `;
     state.widgetsCode$.value = `
+      const profit = 100 + derivedValues.Profit;
+
       const point0 = { x: 0, y: 0, z: 0 };
-      const point1 = { x: 0, y: 0, z: 100 };
-      const point2 = { x: 0, y: 100, z: 0 };
-      const point3 = { x: 100, y: 0, z: 0 };
+      const point1 = { x: 0, y: 0, z: profit };
+      const point2 = { x: 0, y: profit, z: 0 };
+      const point3 = { x: profit, y: 0, z: 0 };
 
       const surfaceColor = 'rgba(128, 128, 255, 0.5)';
       const edgeColor = 'blue';
