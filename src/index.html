@@ -958,9 +958,11 @@
           : '#!/values/edit';
       }),
       div$(
-        CodeEditor$(state.derivedValuesCode$).onInput(({ value }) => {
-          state.derivedValuesCode$.value = value;
-        })
+        CodeEditor$(state.derivedValuesCode$)
+          .onInput(({ value }) => {
+            state.derivedValuesCode$.value = value;
+          })
+          .setStyle({ paddingLeft: '80px' })
       ).setStyle({
         display: 'inline-block',
         width: choose$(codeEditorIsOpen$, '50%', '0'),
@@ -973,7 +975,12 @@
             ValueWidget$({ label$, value$, isEmpty$ })
           )
         ).setStyle({ position: 'relative', top: '0' })
-      ).setStyle({ display: 'inline-block', position: 'absolute' })
+      ).setStyle({
+        display: 'inline-block',
+        position: 'absolute',
+        paddingLeft: choose$(codeEditorIsOpen$, '0', '80px'),
+        transition: '0.5s',
+      })
     ).setStyle({ width: '100%' });
   };
 </script>
@@ -1233,9 +1240,11 @@
           : '#!/dashboards/edit';
       }),
       div$(
-        CodeEditor$(state.widgetsCode$).onInput(({ value }) => {
-          state.widgetsCode$.value = value;
-        })
+        CodeEditor$(state.widgetsCode$)
+          .onInput(({ value }) => {
+            state.widgetsCode$.value = value;
+          })
+          .setStyle({ paddingLeft: '80px' })
       ).setStyle({
         display: 'inline-block',
         width: choose$(codeEditorIsOpen$, '50%', '0'),
@@ -1248,7 +1257,12 @@
             CanvasWidget$({ surfaces$, edges$, isEmpty$ })
           )
         ).setStyle({ position: 'relative', top: '0' })
-      ).setStyle({ display: 'inline-block', position: 'absolute' })
+      ).setStyle({
+        display: 'inline-block',
+        position: 'absolute',
+        paddingLeft: choose$(codeEditorIsOpen$, '0', '80px'),
+        transition: '0.5s',
+      })
     ).setStyle({ width: '100%' });
   };
 </script>
