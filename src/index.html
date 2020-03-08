@@ -749,7 +749,7 @@
         height: '80px',
         width: '80px',
         overflow: 'hidden',
-        transition: '0.25s',
+        transition: '0.5s',
         cursor: 'pointer',
       });
     const Icon = (...children) =>
@@ -827,33 +827,31 @@
   const ValuesViewTopNavigator$ = (...children) =>
     div$(...children).setStyle({ width: '100%', height: '80px' });
 
-  const ValuesViewTopNavigatorButton = ({ icon, label$, isOpen$ }) => {
+  const ExpandCodeEditorButton$ = ({ icon, label$, isOpen$ }) => {
     const isHovered$ = new Observable(false);
     return div$(
-      div$(icon).setStyle({
+      div$(choose$(isOpen$, '−', '+')).setStyle({
         fontSize: '30px',
         textAlign: 'center',
         marginTop: '15px',
         pointerEvents: 'none',
         userSelect: 'none',
         transform: choose$(isOpen$, 'rotate(180deg)', 'rotate(0deg)'),
-        transition: '0.25s',
-      }),
-      div$(label$).setStyle({
-        fontSize: '15px',
-        textAlign: 'center',
-        pointerEvents: 'none',
-        userSelect: 'none',
+        transition: '0.5s',
       })
     )
       .setStyle({
-        background: choose$(isHovered$, 'whitesmoke', 'initial'),
-        color: choose$(isHovered$, 'dimgray', 'gray'),
-        height: '80px',
-        width: '80px',
+        position: 'absolute',
+        background: choose$(isHovered$, 'dodgerblue', 'royalblue'),
+        borderRadius: '50%',
+        color: 'white',
+        height: '60px',
+        width: '60px',
+        margin: '10px',
         overflow: 'hidden',
-        transition: '0.25s',
+        transition: '0.5s',
         cursor: 'pointer',
+        zIndex: '1',
       })
       .onMouseEnter(element => {
         isHovered$.value = true;
@@ -950,17 +948,15 @@
   const ValuesView$ = ({ state, currentRoute$ }) => {
     const codeEditorIsOpen$ = eq$(currentRoute$, '/values/edit');
     return div$(
-      ValuesViewTopNavigator$(
-        ValuesViewTopNavigatorButton({
-          icon: '{}',
-          label$: choose$(codeEditorIsOpen$, 'Hide editor', 'Show editor'),
-          isOpen$: codeEditorIsOpen$,
-        }).onClick(() => {
-          location.hash = codeEditorIsOpen$.value
-            ? '#!/values'
-            : '#!/values/edit';
-        })
-      ),
+      ExpandCodeEditorButton$({
+        icon: '{}',
+        label$: choose$(codeEditorIsOpen$, 'Hide editor', 'Show editor'),
+        isOpen$: codeEditorIsOpen$,
+      }).onClick(() => {
+        location.hash = codeEditorIsOpen$.value
+          ? '#!/values'
+          : '#!/values/edit';
+      }),
       div$(
         CodeEditor$(state.derivedValuesCode$).onInput(({ value }) => {
           state.derivedValuesCode$.value = value;
@@ -968,7 +964,7 @@
       ).setStyle({
         display: 'inline-block',
         width: choose$(codeEditorIsOpen$, '50%', '0'),
-        transition: '0.25s',
+        transition: '0.5s',
         overflow: 'hidden',
       }),
       div$(
@@ -1197,19 +1193,19 @@
     );
   };
 
-  const AddNewWidget = () => {
+  const OpenWidgetEditorButton$ = value => {
     const isHovered = new Observable(false);
     return MediumWidgetBackgroundContainer$(
       WidgetForegroundContainer$(
-        div$('+').setStyle({
+        div$(value).setStyle({
           fontSize: '60px',
           textAlign: 'center',
           lineHeight: '240px',
           pointerEvents: 'none',
           userSelect: 'none',
           color: choose$(isHovered, 'DimGray', 'Gray'),
-          transition: '0.25s',
-          transform: choose$(isHovered, 'rotate(90deg)', 'rotate(0deg)'),
+          transition: '0.5s',
+          transform: choose$(isHovered, 'rotate(180deg)', 'rotate(0deg)'),
         })
       )
         .setStyle({
@@ -1227,17 +1223,15 @@
   const DashboardsView$ = ({ state, currentRoute$ }) => {
     const codeEditorIsOpen$ = eq$(currentRoute$, '/dashboards/edit');
     return div$(
-      ValuesViewTopNavigator$(
-        ValuesViewTopNavigatorButton({
-          icon: '{}',
-          label$: choose$(codeEditorIsOpen$, 'Hide editor', 'Show editor'),
-          isOpen$: codeEditorIsOpen$,
-        }).onClick(() => {
-          location.hash = codeEditorIsOpen$.value
-            ? '#!/dashboards'
-            : '#!/dashboards/edit';
-        })
-      ),
+      ExpandCodeEditorButton$({
+        icon: '+',
+        label$: choose$(codeEditorIsOpen$, 'Hide editor', 'Show editor'),
+        isOpen$: codeEditorIsOpen$,
+      }).onClick(() => {
+        location.hash = codeEditorIsOpen$.value
+          ? '#!/dashboards'
+          : '#!/dashboards/edit';
+      }),
       div$(
         CodeEditor$(state.widgetsCode$).onInput(({ value }) => {
           state.widgetsCode$.value = value;
@@ -1245,18 +1239,14 @@
       ).setStyle({
         display: 'inline-block',
         width: choose$(codeEditorIsOpen$, '50%', '0'),
-        transition: '0.25s',
+        transition: '0.5s',
         overflow: 'hidden',
       }),
       div$(
         div$(
           ...state.widgets.map(({ surfaces$, edges$, isEmpty$ }) =>
             CanvasWidget$({ surfaces$, edges$, isEmpty$ })
-          ),
-          AddNewWidget().onClick(() => {
-            const idOfNewStructure = state.createNewCustomDashboardWidget();
-            location.hash = `#!/dashboards/edit`;
-          })
+          )
         ).setStyle({ position: 'relative', top: '0' })
       ).setStyle({ display: 'inline-block', position: 'absolute' })
     ).setStyle({ width: '100%' });
