@@ -980,75 +980,9 @@
       ).setStyle({ display: 'inline-block', position: 'absolute' })
     ).setStyle({ width: '100%' });
   };
-
-  // Just a dummy observable
-  const dashboardValue1$ = new Observable(100);
-  const dashboardValue2$ = new Observable(100);
-  const dashboardValue3$ = new Observable(100);
-  const dashboardValue4$ = new Observable(100);
-  const dashboardValue5$ = new Observable(100);
-  const dashboardValue6$ = new Observable(100);
-  const updateDashboardValue = () =>
-    setTimeout(() => {
-      const value1 = dashboardValue1$.value;
-      const value2 = dashboardValue2$.value;
-      const value3 = dashboardValue3$.value;
-      const value4 = dashboardValue4$.value;
-      const value5 = dashboardValue5$.value;
-      const value6 = dashboardValue6$.value;
-      dashboardValue1$.value =
-        Math.floor(Math.random() * 2) == 1 ? value1 * 1.01 : value1 / 1.01;
-      dashboardValue2$.value =
-        Math.floor(Math.random() * 2) == 1 ? value2 * 1.01 : value2 / 1.01;
-      dashboardValue3$.value =
-        Math.floor(Math.random() * 2) == 1 ? value3 * 1.01 : value3 / 1.01;
-      dashboardValue4$.value =
-        Math.floor(Math.random() * 2) == 1 ? value4 * 1.01 : value4 / 1.01;
-      dashboardValue5$.value =
-        Math.floor(Math.random() * 2) == 1 ? value5 * 1.01 : value5 / 1.01;
-      dashboardValue6$.value =
-        Math.floor(Math.random() * 2) == 1 ? value6 * 1.01 : value6 / 1.01;
-      updateDashboardValue();
-    }, 100);
-  updateDashboardValue();
-
-  const dashboardValues$ = [
-    dashboardValue1$,
-    dashboardValue2$,
-    dashboardValue3$,
-    dashboardValue4$,
-    dashboardValue5$,
-    dashboardValue6$,
-  ];
 </script>
 <!-- TODO: This import should be removed -->
-<script src="state.js"></script>
 <script>
-  // This is just experimental and does nothing relevant
-  /*const Bar = ({ height$, maxHeight$ }) => {
-    return div$().setStyle({
-      height: add$(multiply$(divide$(height$, maxHeight$), 100), '%'),
-      maxHeight: '100%',
-      background: 'LightGreen',
-      flexGrow: '1',
-      marginTop: 'auto',
-      transition: '0.1s',
-      margin: 'auto 10px 0 10px',
-    });
-  };*/
-
-  /*const BarChartWidget$ = ({ values$, maxValue$ }) => {
-    return MediumWidgetBackgroundContainer$(
-      WidgetForegroundContainer$(
-        WidgetInnerContainer$(
-          ...values$.map(value$ =>
-            Bar({ height$: value$, maxHeight$: maxValue$ })
-          )
-        )
-      )
-    );
-  };*/
-
   const rotate = ({ x, y, z }, rx, ry) => {
     const theta = rx;
     const phi = ry;
@@ -1290,26 +1224,42 @@
     );
   };
 
-  const DashboardsView$ = ({ state }) => {
-    const title$ = new Observable('Dashboards');
-    const count1$ = new Observable(1);
-    const count2$ = new Observable(2);
-    const count$ = add$(count1$, count2$);
-    const element = div$(count$);
-    element.onclick = () => {
-      count1$.value = count1$.value + 1;
-      count2$.value = count1$.value + 1;
-      title$.value = title$.value.toLowerCase();
-    };
+  const DashboardsView$ = ({ state, currentRoute$ }) => {
+    const codeEditorIsOpen$ = eq$(currentRoute$, '/dashboards/edit');
     return div$(
-      ...state.widgets.map(({ surfaces$, edges$, isEmpty$ }) =>
-        CanvasWidget$({ surfaces$, edges$, isEmpty$ })
+      ValuesViewTopNavigator$(
+        ValuesViewTopNavigatorButton({
+          icon: '{}',
+          label$: choose$(codeEditorIsOpen$, 'Hide editor', 'Show editor'),
+          isOpen$: codeEditorIsOpen$,
+        }).onClick(() => {
+          location.hash = codeEditorIsOpen$.value
+            ? '#!/dashboards'
+            : '#!/dashboards/edit';
+        })
       ),
-      AddNewWidget().onClick(() => {
-        const idOfNewStructure = state.createNewCustomDashboardWidget();
-        location.hash = `#!/dashboards/edit`;
-      })
-    );
+      div$(
+        CodeEditor$(state.widgetsCode$).onInput(({ value }) => {
+          state.widgetsCode$.value = value;
+        })
+      ).setStyle({
+        display: 'inline-block',
+        width: choose$(codeEditorIsOpen$, '50%', '0'),
+        transition: '0.25s',
+        overflow: 'hidden',
+      }),
+      div$(
+        div$(
+          ...state.widgets.map(({ surfaces$, edges$, isEmpty$ }) =>
+            CanvasWidget$({ surfaces$, edges$, isEmpty$ })
+          ),
+          AddNewWidget().onClick(() => {
+            const idOfNewStructure = state.createNewCustomDashboardWidget();
+            location.hash = `#!/dashboards/edit`;
+          })
+        ).setStyle({ position: 'relative', top: '0' })
+      ).setStyle({ display: 'inline-block', position: 'absolute' })
+    ).setStyle({ width: '100%' });
   };
 </script>
 
@@ -1362,8 +1312,9 @@
           ),
           If$(
             or$(
-              eq$(currentRoute$, '/dashboards'),
-              eq$(currentRoute$, '/dashboards/edit')
+              eq$(currentRoute$, '/dashboards'), // Hack, for some reason the code editor animation doesn't work without this
+              eq$(currentRoute$, '/dashboards/edit'),
+              eq$(currentRoute$, '/dashboards')
             ),
             DashboardsView$({ state, currentRoute$ })
           ),
