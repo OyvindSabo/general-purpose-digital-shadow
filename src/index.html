@@ -1284,7 +1284,10 @@
             icon: '🧮',
             label: 'Values',
             route: '/values',
-            isActive$: eq$(currentRoute$, '/values'),
+            isActive$: or$(
+              eq$(currentRoute$, '/values'),
+              eq$(currentRoute$, '/values/edit')
+            ),
           }),
           LeftNavigatorButton({
             icon: '📊',
@@ -1292,7 +1295,7 @@
             route: '/dashboards',
             isActive$: or$(
               eq$(currentRoute$, '/dashboards'),
-              eq$(currentRoute$, '/dashboards/<widgetId:string>/edit')
+              eq$(currentRoute$, '/dashboards/edit')
             ),
           }),
           LeftNavigatorButton({
