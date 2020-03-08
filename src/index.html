@@ -1014,8 +1014,8 @@
   });
 
   const toPerspective = ({ x, y, z }, d, focalLength) => ({
-    x: x * (focalLength / (d + focalLength + z)),
-    y: y * (focalLength / (d + focalLength + z)),
+    x: x * (focalLength / (d + focalLength - z)),
+    y: y * (focalLength / (d + focalLength - z)),
     z: z,
   });
 
@@ -1093,7 +1093,7 @@
     horizontalRotation$ = new Observable(0),
     verticalRotation$ = new Observable(0),
     distance$ = new Observabe(100),
-    focalLength$ = new Observable(1000),
+    focalLength$ = new Observable(100),
   }) {
     this.target = target;
     this.horizontalRotation$ = horizontalRotation$;
@@ -1127,7 +1127,7 @@
       horizontalRotation$: new Observable(0),
       verticalRotation$: new Observable(0),
       distance$: new Observable(100),
-      focalLength$: new Observable(1000),
+      focalLength$: new Observable(100),
     });
     const ctx = canvas.getContext('2d');
     const rerender = () => {
@@ -1145,7 +1145,7 @@
     };
     rerender();
     canvas.onwheel = event => {
-      camera.setDistance(camera.distance$.value + event.deltaY);
+      camera.setDistance(camera.distance$.value + event.deltaY / 5);
     };
     window.addEventListener('mousedown', event => {
       state.mouseDown = true;
