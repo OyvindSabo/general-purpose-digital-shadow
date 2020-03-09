@@ -899,7 +899,6 @@
 
   const WidgetForegroundContainer$ = (...children) => {
     return div$(...children).setStyle({
-      padding: '20px',
       height: '100%',
       border: '1px solid LightGray',
       boxSizing: 'border-box',
@@ -918,7 +917,10 @@
   const ValueWidgetLabel$ = ({ label$ }) =>
     div$(label$).setStyle({
       fontSize: '20px',
+      marginTop: '20px',
       textAlign: 'center',
+      position: 'absolute',
+      width: '100%',
     });
 
   const ValueWidgetValue$ = ({ value$ }) =>
@@ -936,11 +938,9 @@
       not$(isEmpty$),
       SmallWidgetBackgroundContainer$(
         WidgetForegroundContainer$(
-          div$(
-            ValueWidgetLabel$({ label$ }),
-            ValueWidgetValue$({ value$ })
-          ).setStyle({ height: '100%', position: 'relative', color: 'dimgray' })
-        )
+          ValueWidgetLabel$({ label$ }),
+          ValueWidgetValue$({ value$ })
+        ).setStyle({ height: '100%', position: 'relative', color: 'dimgray' })
       )
     );
 
@@ -1110,7 +1110,9 @@
 
   const ThreeDimVisualization$ = ({ surfaces$, edges$ }) => {
     const state = { mouseDown: false };
-    const canvas = canvas$({ height: 240, width: 400 });
+    const canvas = canvas$({ height: 280, width: 440 }).setStyle({
+      position: 'absolute',
+    });
     const camera = new Camera({
       target: [new Observable(0), new Observable(0), new Observable(0)],
       horizontalRotation$: new Observable(0),
@@ -1178,41 +1180,19 @@
     return canvas;
   };
 
-  const CanvasWidget$ = ({ surfaces$, edges$, isEmpty$ }) => {
+  const CanvasWidget$ = ({ label$, surfaces$, edges$, isEmpty$ }) => {
     return If$(
       not$(isEmpty$),
       MediumWidgetBackgroundContainer$(
         WidgetForegroundContainer$(
-          ThreeDimVisualization$({ surfaces$, edges$ })
-        )
-      )
-    );
-  };
-
-  const OpenWidgetEditorButton$ = value => {
-    const isHovered = new Observable(false);
-    return MediumWidgetBackgroundContainer$(
-      WidgetForegroundContainer$(
-        div$(value).setStyle({
-          fontSize: '60px',
-          textAlign: 'center',
-          lineHeight: '240px',
-          pointerEvents: 'none',
-          userSelect: 'none',
-          color: choose$(isHovered, 'DimGray', 'Gray'),
-          transition: '0.5s',
-          transform: choose$(isHovered, 'rotate(180deg)', 'rotate(0deg)'),
+          ThreeDimVisualization$({ surfaces$, edges$ }),
+          ValueWidgetLabel$({ label$ })
+        ).setStyle({
+          height: '100%',
+          position: 'relative',
+          color: 'dimgray',
         })
       )
-        .setStyle({
-          cursor: 'pointer',
-        })
-        .onMouseEnter(element => {
-          isHovered.value = true;
-        })
-        .onMouseLeave(element => {
-          isHovered.value = false;
-        })
     );
   };
 
@@ -1242,8 +1222,8 @@
       }),
       div$(
         div$(
-          ...state.widgets.map(({ surfaces$, edges$, isEmpty$ }) =>
-            CanvasWidget$({ surfaces$, edges$, isEmpty$ })
+          ...state.widgets.map(({ label$, surfaces$, edges$, isEmpty$ }) =>
+            CanvasWidget$({ label$, surfaces$, edges$, isEmpty$ })
           )
         ).setStyle({ position: 'relative', top: '0' })
       ).setStyle({
