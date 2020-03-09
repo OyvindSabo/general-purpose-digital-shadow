@@ -985,38 +985,36 @@
 </script>
 <!-- TODO: This import should be removed -->
 <script>
-  const rotate = ({ x, y, z }, rx, ry) => {
+  const rotate = ([x, y, z], rx, ry) => {
     const theta = rx;
     const phi = ry;
 
-    const horizontallyRotatedVertex = {
-      x: x * Math.cos(theta) + z * Math.sin(theta),
-      y: y,
-      z: z * Math.cos(theta) - x * Math.sin(theta),
-    };
+    const horizontallyRotatedVertex = [
+      x * Math.cos(theta) + z * Math.sin(theta),
+      y,
+      z * Math.cos(theta) - x * Math.sin(theta),
+    ];
 
-    return {
-      x: horizontallyRotatedVertex.x,
-      y:
-        horizontallyRotatedVertex.y * Math.cos(phi) -
-        horizontallyRotatedVertex.z * Math.sin(phi),
-      z:
-        horizontallyRotatedVertex.y * Math.sin(phi) +
-        horizontallyRotatedVertex.z * Math.cos(phi),
-    };
+    return [
+      horizontallyRotatedVertex[0],
+      horizontallyRotatedVertex[1] * Math.cos(phi) -
+        horizontallyRotatedVertex[2] * Math.sin(phi),
+      horizontallyRotatedVertex[1] * Math.sin(phi) +
+        horizontallyRotatedVertex[2] * Math.cos(phi),
+    ];
   };
 
-  const toCenterOfWidget = ({ x, y, z }, ctx) => ({
-    x: x + ctx.canvas.width / 2,
-    y: y - ctx.canvas.height / 2,
-    z: z,
-  });
+  const toCenterOfWidget = ([x, y, z], ctx) => [
+    x + ctx.canvas.width / 2,
+    y - ctx.canvas.height / 2,
+    z,
+  ];
 
-  const toPerspective = ({ x, y, z }, d, focalLength) => ({
-    x: x * (focalLength / (d + focalLength - z)),
-    y: y * (focalLength / (d + focalLength - z)),
-    z: z,
-  });
+  const toPerspective = ([x, y, z], d, focalLength) => [
+    x * (focalLength / (d + focalLength - z)),
+    y * (focalLength / (d + focalLength - z)),
+    z,
+  ];
 
   /**
    * @param {number} dx
@@ -1045,15 +1043,15 @@
         .forEach((point, index) => {
           if (index === 0) {
             ctx.beginPath();
-            ctx.moveTo(point.x, -point.y);
+            ctx.moveTo(point[0], -point[1]);
             return;
           }
           if (index < points.length - 1) {
-            ctx.lineTo(point.x, -point.y);
+            ctx.lineTo(point[0], -point[1]);
             return;
           }
           if (index === points.length - 1) {
-            ctx.lineTo(point.x, -point.y);
+            ctx.lineTo(point[0], -point[1]);
             ctx.closePath();
             ctx.fillStyle = color;
             ctx.fill();
@@ -1075,8 +1073,8 @@
       );
       ctx.beginPath();
       ctx.lineCap = 'round';
-      ctx.moveTo(startPoint.x, -startPoint.y);
-      ctx.lineTo(endPoint.x, -endPoint.y);
+      ctx.moveTo(startPoint[0], -startPoint[1]);
+      ctx.lineTo(endPoint[0], -endPoint[1]);
       ctx.lineWidth = width;
       ctx.strokeStyle = color;
       ctx.stroke();
@@ -1084,11 +1082,7 @@
   };
 
   const Camera = function({
-    target = {
-      x$: new Observable(0),
-      y$: new Observable(0),
-      z$: new Observable(0),
-    },
+    target = [new Observable(0), new Observable(0), new Observable(0)],
     horizontalRotation$ = new Observable(0),
     verticalRotation$ = new Observable(0),
     distance$ = new Observabe(100),
@@ -1118,11 +1112,7 @@
     const state = { mouseDown: false };
     const canvas = canvas$({ height: 240, width: 400 });
     const camera = new Camera({
-      target: {
-        x$: new Observable(0),
-        y$: new Observable(0),
-        z$: new Observable(0),
-      },
+      target: [new Observable(0), new Observable(0), new Observable(0)],
       horizontalRotation$: new Observable(0),
       verticalRotation$: new Observable(0),
       distance$: new Observable(100),
@@ -1167,22 +1157,22 @@
     window.addEventListener(camera.horizontalRotation$.id, () => {
       rerender();
     });
-    window.addEventListener(camera.verticalRotation$.id, ({ detail }) => {
+    window.addEventListener(camera.verticalRotation$.id, () => {
       rerender();
     });
-    window.addEventListener(camera.distance$.id, ({ detail }) => {
+    window.addEventListener(camera.distance$.id, () => {
       rerender();
     });
-    window.addEventListener(camera.focalLength$.id, ({ detail }) => {
+    window.addEventListener(camera.focalLength$.id, () => {
       rerender();
     });
-    window.addEventListener(camera.focalLength$.id, ({ detail }) => {
+    window.addEventListener(camera.focalLength$.id, () => {
       rerender();
     });
-    window.addEventListener(surfaces$.id, ({ detail }) => {
+    window.addEventListener(surfaces$.id, () => {
       rerender();
     });
-    window.addEventListener(edges$.id, ({ detail }) => {
+    window.addEventListener(edges$.id, () => {
       rerender();
     });
     return canvas;
@@ -1478,10 +1468,10 @@
     state.widgetsCode$.value = `
       const profit = 100 + derivedValues.Profit;
 
-      const point0 = { x: 0, y: 0, z: 0 };
-      const point1 = { x: 0, y: 0, z: profit };
-      const point2 = { x: 0, y: profit, z: 0 };
-      const point3 = { x: profit, y: 0, z: 0 };
+      const point0 = [     0,      0,      0];
+      const point1 = [     0,      0, profit];
+      const point2 = [     0, profit,      0];
+      const point3 = [profit,      0,      0];
 
       const surfaceColor = 'rgba(128, 128, 255, 0.5)';
       const edgeColor = 'blue';
@@ -1506,35 +1496,59 @@
         edges: [edge0, edge1, edge2, edge3, edge4, edge5],
       };
 
+      /*******************************************************************************
+      BAR CHART
+      *******************************************************************************/
       widgets.barChart = {
         surfaces: [{
           color: \`rgba(0, 255, 0, 0.5)\`,
-          points: [{ x: 0, y: 0, z: 0 }, { x: 0, y: profit, z: 0 }, { x: 10, y: profit, z: 0 }, { x: 10, y: 0, z: 0 }]
+          points: [[ 0,      0, 0],
+                   [ 0, profit, 0],
+                   [10, profit, 0],
+                   [10,      0, 0]]
         },
         {
           color: \`rgba(0, 255, 0, 0.5)\`,
-          points: [{ x: 20, y: 0, z: 0 }, { x: 20, y: profit, z: 0 }, { x: 30, y: profit, z: 0 }, { x: 30, y: 0, z: 0 }]
+          points: [[20,      0, 0],
+                   [20, profit, 0],
+                   [30, profit, 0],
+                   [30,      0, 0]]
         }],
         edges: [],
       }
 
+      /*******************************************************************************
+      3D BAR CHART
+      *******************************************************************************/
       widgets.threeDimensionalBarChart = {
         surfaces: [
           {
             color: 'black',
-            points: [{ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: -profit }, { x: 10, y: 0, z: -profit }, { x: 10, y: 0, z: 0 }],
+            points: [[ 0, 0,       0],
+                     [ 0, 0, -profit],
+                     [10, 0, -profit],
+                     [10, 0,      0 ]],
           },
           {
             color: 'black',
-            points: [{ x: 20, y: 0, z: 0 }, { x: 20, y: 0, z: -profit }, { x: 30, y: 0, z: -profit }, { x: 30, y: 0, z: 0 }],
+            points: [[20, 0,       0],
+                     [20, 0, -profit],
+                     [30, 0, -profit],
+                     [30, 0,      0 ]],
           },
           {
             color: \`rgba(0, 255, 0, 0.5)\`,
-            points: [{ x: 0, y: 0, z: 0 }, { x: 0, y: profit, z: 0 }, { x: 10, y: profit, z: 0 }, { x: 10, y: 0, z: 0 }],
+            points: [[ 0,      0, 0],
+                     [ 0, profit, 0],
+                     [10, profit, 0],
+                     [10,      0, 0]],
           },
           {
             color: \`rgba(0, 255, 0, 0.5)\`,
-            points: [{ x: 20, y: 0, z: 0 }, { x: 20, y: profit, z: 0 }, { x: 30, y: profit, z: 0 }, { x: 30, y: 0, z: 0 }],
+            points: [[20,      0, 0],
+                     [20, profit, 0],
+                     [30, profit, 0],
+                     [30,      0, 0]],
           },
         ],
         edges: [],
