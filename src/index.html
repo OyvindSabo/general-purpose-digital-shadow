@@ -1004,11 +1004,16 @@
     ];
   };
 
-  const toCenterOfWidget = ([x, y, z], ctx) => [
-    x + ctx.canvas.width / 2,
-    y - ctx.canvas.height / 2,
-    z,
+  const toCenterOfStructure = ([x, y, z], transformedCenterOfStructure) => [
+    x - transformedCenterOfStructure[0],
+    y - transformedCenterOfStructure[1],
+    z - transformedCenterOfStructure[2],
   ];
+
+  const toCenterOfWidget = ([x, y, z], ctx) => {
+    // TODO: Find the average node position compared to the center
+    return [x + ctx.canvas.width / 2, y - ctx.canvas.height / 2, z];
+  };
 
   const toPerspective = ([x, y, z], d, focalLength) => [
     x * (focalLength / (d + focalLength - z)),
@@ -1034,11 +1039,27 @@
    * camera.
    */
   const render = (surfaces$, edges$, ctx, center, rx, ry, d, focalLength) => {
+    const transformedCenterOfStructure = [
+      ...surfaces$.value.map(({ points }) => points).flat(),
+      ...edges$.value.map(({ points }) => points).flat(),
+    ]
+      .map(point => rotate(point, rx, ry))
+      .map(point => toPerspective(point, d, focalLength))
+      .reduce(
+        (average, point, _, points) => [
+          average[0] + point[0] / points.length,
+          average[1] + point[1] / points.length,
+          average[2] + point[2] / points.length,
+        ],
+        [0, 0, 0]
+      );
+
     // Render the faces
     surfaces$.value.forEach(({ color, points }) => {
       points
         .map(point => rotate(point, rx, ry))
         .map(point => toPerspective(point, d, focalLength))
+        .map(point => toCenterOfStructure(point, transformedCenterOfStructure))
         .map(point => toCenterOfWidget(point, ctx))
         .forEach((point, index) => {
           if (index === 0) {
@@ -1064,11 +1085,17 @@
     edges$.value.forEach(({ color, points, width }) => {
       // Draw the first vertex
       const startPoint = toCenterOfWidget(
-        toPerspective(rotate(points[0], rx, ry), d, focalLength),
+        toCenterOfStructure(
+          toPerspective(rotate(points[0], rx, ry), d, focalLength),
+          transformedCenterOfStructure
+        ),
         ctx
       );
       const endPoint = toCenterOfWidget(
-        toPerspective(rotate(points[1], rx, ry), d, focalLength),
+        toCenterOfStructure(
+          toPerspective(rotate(points[1], rx, ry), d, focalLength),
+          transformedCenterOfStructure
+        ),
         ctx
       );
       ctx.beginPath();
