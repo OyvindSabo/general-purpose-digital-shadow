@@ -1406,9 +1406,7 @@
       const widgetsEntries = Object.entries(evaluatedCode.widgets);
       state.widgets.forEach(
         ({ label$, edges$, surfaces$, isEmpty$ }, index) => {
-          label$.value = derivedValuesEntries[index]
-            ? derivedValuesEntries[index][0]
-            : '';
+          label$.value = widgetsEntries[index] ? widgetsEntries[index][0] : '';
           edges$.value = widgetsEntries[index]
             ? widgetsEntries[index][1].edges
             : [];
@@ -1471,7 +1469,7 @@
       const edge5 = { color: edgeColor, points: [point2, point3], width: 2 };
 
       // We create the widget
-      widgets.pyramid = {
+      widgets.Pyramid = {
         surfaces: [surface0, surface1, surface2, surface3],
         edges: [edge0, edge1, edge2, edge3, edge4, edge5],
       };
@@ -1479,7 +1477,7 @@
       /*******************************************************************************
       BAR CHART
       *******************************************************************************/
-      widgets.barChart = {
+      widgets['Bar Chart'] = {
         surfaces: [{
           color: \`rgba(0, 255, 0, 0.5)\`,
           points: [[ 0,      0, 0],
@@ -1500,7 +1498,7 @@
       /*******************************************************************************
       3D BAR CHART
       *******************************************************************************/
-      widgets.threeDimensionalBarChart = {
+      widgets['3D Bar Chart'] = {
         surfaces: [
           {
             color: 'black',
