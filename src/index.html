@@ -1038,28 +1038,13 @@
    * Defines the distance from the defined center of the structure, to the
    * camera.
    */
-  const render = (surfaces$, edges$, ctx, center, rx, ry, d, focalLength) => {
-    const transformedCenterOfStructure = [
-      ...surfaces$.value.map(({ points }) => points).flat(),
-      ...edges$.value.map(({ points }) => points).flat(),
-    ]
-      .map(point => rotate(point, rx, ry))
-      .map(point => toPerspective(point, d, focalLength))
-      .reduce(
-        (average, point, _, points) => [
-          average[0] + point[0] / points.length,
-          average[1] + point[1] / points.length,
-          average[2] + point[2] / points.length,
-        ],
-        [0, 0, 0]
-      );
-
+  const render = (surfaces$, edges$, ctx, center$, rx, ry, d, focalLength) => {
     // Render the faces
     surfaces$.value.forEach(({ color, points }) => {
       points
+        .map(point => toCenterOfStructure(point, center$.value))
         .map(point => rotate(point, rx, ry))
         .map(point => toPerspective(point, d, focalLength))
-        .map(point => toCenterOfStructure(point, transformedCenterOfStructure))
         .map(point => toCenterOfWidget(point, ctx))
         .forEach((point, index) => {
           if (index === 0) {
@@ -1085,16 +1070,19 @@
     edges$.value.forEach(({ color, points, width }) => {
       // Draw the first vertex
       const startPoint = toCenterOfWidget(
-        toCenterOfStructure(
-          toPerspective(rotate(points[0], rx, ry), d, focalLength),
-          transformedCenterOfStructure
+        toPerspective(
+          rotate(toCenterOfStructure(points[0], center$.value), rx, ry),
+          d,
+          focalLength
         ),
+
         ctx
       );
       const endPoint = toCenterOfWidget(
-        toCenterOfStructure(
-          toPerspective(rotate(points[1], rx, ry), d, focalLength),
-          transformedCenterOfStructure
+        toPerspective(
+          rotate(toCenterOfStructure(points[1], center$.value), rx, ry),
+          d,
+          focalLength
         ),
         ctx
       );
@@ -1109,7 +1097,7 @@
   };
 
   const Camera = function({
-    target = [new Observable(0), new Observable(0), new Observable(0)],
+    target = new Observable([0, 0, 0]),
     horizontalRotation$ = new Observable(0),
     verticalRotation$ = new Observable(0),
     distance$ = new Observabe(100),
@@ -1135,13 +1123,13 @@
     };
   };
 
-  const ThreeDimVisualization$ = ({ surfaces$, edges$ }) => {
+  const ThreeDimVisualization$ = ({ surfaces$, edges$, center$ }) => {
     const state = { mouseDown: false };
     const canvas = canvas$({ height: 280, width: 440 }).setStyle({
       position: 'absolute',
     });
     const camera = new Camera({
-      target: [new Observable(0), new Observable(0), new Observable(0)],
+      target: center$,
       horizontalRotation$: new Observable(0),
       verticalRotation$: new Observable(0),
       distance$: new Observable(100),
@@ -1204,15 +1192,18 @@
     window.addEventListener(edges$.id, () => {
       rerender();
     });
+    window.addEventListener(center$.id, () => {
+      rerender();
+    });
     return canvas;
   };
 
-  const CanvasWidget$ = ({ label$, surfaces$, edges$, isEmpty$ }) => {
+  const CanvasWidget$ = ({ label$, surfaces$, edges$, center$, isEmpty$ }) => {
     return If$(
       not$(isEmpty$),
       MediumWidgetBackgroundContainer$(
         WidgetForegroundContainer$(
-          ThreeDimVisualization$({ surfaces$, edges$ }),
+          ThreeDimVisualization$({ surfaces$, edges$, center$ }),
           ValueWidgetLabel$({ label$ })
         ).setStyle({
           height: '100%',
@@ -1249,8 +1240,9 @@
       }),
       div$(
         div$(
-          ...state.widgets.map(({ label$, surfaces$, edges$, isEmpty$ }) =>
-            CanvasWidget$({ label$, surfaces$, edges$, isEmpty$ })
+          ...state.widgets.map(
+            ({ label$, surfaces$, edges$, center$, isEmpty$ }) =>
+              CanvasWidget$({ label$, surfaces$, edges$, center$, isEmpty$ })
           )
         ).setStyle({ position: 'relative', top: '0' })
       ).setStyle({
@@ -1401,6 +1393,7 @@
         label$: new Observable(''),
         edges$: new Observable([]),
         surfaces$: new Observable([]),
+        center$: new Observable([0, 0, 0]),
         isEmpty$: new Observable(true),
       })),
     };
@@ -1432,14 +1425,17 @@
 
       const widgetsEntries = Object.entries(evaluatedCode.widgets);
       state.widgets.forEach(
-        ({ label$, edges$, surfaces$, isEmpty$ }, index) => {
+        ({ label$, edges$, surfaces$, center$, isEmpty$ }, index) => {
           label$.value = widgetsEntries[index] ? widgetsEntries[index][0] : '';
           edges$.value = widgetsEntries[index]
-            ? widgetsEntries[index][1].edges
+            ? widgetsEntries[index][1].edges || []
             : [];
           surfaces$.value = widgetsEntries[index]
-            ? widgetsEntries[index][1].surfaces
+            ? widgetsEntries[index][1].surfaces || []
             : [];
+          center$.value = widgetsEntries[index]
+            ? widgetsEntries[index][1].center || [0, 0, 0]
+            : [0, 0, 0]; // TODO
           isEmpty$.value = !widgetsEntries[index];
         }
       );
@@ -1519,7 +1515,6 @@
                    [30, profit, 0],
                    [30,      0, 0]]
         }],
-        edges: [],
       }
 
       /*******************************************************************************
@@ -1556,7 +1551,7 @@
                      [30,      0, 0]],
           },
         ],
-        edges: [],
+        center: [15, 50, 0]
       }
     `;
 
