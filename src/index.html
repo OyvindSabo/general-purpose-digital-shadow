@@ -1511,6 +1511,80 @@
         edges: [
           // Front frame
           { points: [[-25, 0, 0], [25, 0, 0]], color: 'black', width: 2 },
+          { points: [[-25, 40, 0], [25, 40, 0]], color: 'black', width: 2 },
+          { points: [[-25, 0, 0], [-25, 40, 0]], color: 'black', width: 2 },
+          { points: [[25, 0, 0], [25, 40, 0]], color: 'black', width: 2 },
+
+          // Rear frame
+          { points: [[-25, 0, 275], [25, 0, 275]], color: 'black', width: 2 },
+          { points: [[-25, 40, 275], [25, 40, 275]], color: 'black', width: 2 },
+          { points: [[-25, 0, 275], [-25, 40, 275]], color: 'black', width: 2 },
+          { points: [[25, 0, 275], [25, 40, 275]], color: 'black', width: 2 },
+
+          // Bottom left frame rails
+          { points: [[25, 0, 0], [25, 0, 25]], color: 'black', width: 2 },
+          { points: [[25, 0, 25], [50, 0, 150]], color: 'black', width: 2 },
+          { points: [[50, 0, 150], [50, 0, 225]], color: 'black', width: 2 },
+          { points: [[50, 0, 225], [25, 0, 250]], color: 'black', width: 2 },
+          { points: [[25, 0, 250], [25, 0, 275]], color: 'black', width: 2 },
+
+          // Bottom right frame rails
+          { points: [[-25, 0, 0], [-25, 0, 25]], color: 'black', width: 2 },
+          { points: [[-25, 0, 25], [-50, 0, 150]], color: 'black', width: 2 },
+          { points: [[-50, 0, 150], [-50, 0, 225]], color: 'black', width: 2 },
+          { points: [[-50, 0, 225], [-25, 0, 250]], color: 'black', width: 2 },
+          { points: [[-25, 0, 250], [-25, 0, 275]], color: 'black', width: 2 },
+
+          // Top left frame rails
+          { points: [[25, 40, 0], [25, 40, 25]], color: 'black', width: 2 },
+          { points: [[25, 40, 25], [50, 40, 150]], color: 'black', width: 2 },
+          { points: [[50, 40, 150], [50, 40, 225]], color: 'black', width: 2 },
+          { points: [[50, 40, 225], [25, 40, 250]], color: 'black', width: 2 },
+          { points: [[25, 40, 250], [25, 40, 275]], color: 'black', width: 2 },
+
+          // Top right frame rails
+          { points: [[-25, 40, 0], [-25, 40, 25]], color: 'black', width: 2 },
+          { points: [[-25, 40, 25], [-50, 40, 150]], color: 'black', width: 2 },
+          { points: [[-50, 40, 150], [-50, 40, 225]], color: 'black', width: 2 },
+          { points: [[-50, 40, 225], [-25, 40, 250]], color: 'black', width: 2 },
+          { points: [[-25, 40, 250], [-25, 40, 275]], color: 'black', width: 2 },
+
+          // Left diagonal struts
+          { points: [[25, 40, 25], [25, 0, 25]], color: 'black', width: 2 },
+          { points: [[25, 0, 25], [50, 40, 150]], color: 'black', width: 2 },
+          { points: [[50, 40, 150], [50, 0, 150]], color: 'black', width: 2 },
+          { points: [[50, 0, 150], [50, 40, 225]], color: 'black', width: 2 },
+          { points: [[50, 0, 225], [25, 40, 250]], color: 'black', width: 2 },
+          { points: [[25, 0, 250], [25, 40, 275]], color: 'black', width: 2 },
+
+          // Right diagonal struts
+          { points: [[-25, 40, 25], [-25, 0, 25]], color: 'black', width: 2 },
+          { points: [[-25, 0, 25], [-50, 40, 150]], color: 'black', width: 2 },
+          { points: [[-50, 40, 150], [-50, 0, 150]], color: 'black', width: 2 },
+          { points: [[-50, 0, 150], [-50, 40, 225]], color: 'black', width: 2 },
+          { points: [[-50, 0, 225], [-25, 40, 250]], color: 'black', width: 2 },
+          { points: [[-25, 0, 250], [-25, 40, 275]], color: 'black', width: 2 },
+
+          // Top
+          { points: [[50, 40, 225], [50, 60, 250]], color: 'black', width: 2 },
+          { points: [[50, 60, 250], [50, 60, 275]], color: 'black', width: 2 },
+          { points: [[50, 60, 275], [25, 40, 275]], color: 'black', width: 2 },
+          { points: [[50, 60, 250], [25, 40, 250]], color: 'black', width: 2 },
+          { points: [[-25, 40, 25], [25, 40, 25]], color: 'black', width: 2 },
+
+          { points: [[-50, 40, 225], [-50, 60, 250]], color: 'black', width: 2 },
+          { points: [[-50, 60, 250], [-50, 60, 275]], color: 'black', width: 2 },
+          { points: [[-50, 60, 275], [-25, 40, 275]], color: 'black', width: 2 },
+          { points: [[-50, 60, 250], [-25, 40, 250]], color: 'black', width: 2 },
+
+          { points: [[-50, 60, 250], [50, 60, 250]], color: 'black', width: 2 },
+          { points: [[-50, 60, 275], [50, 60, 275]], color: 'black', width: 2 },
+          { points: [[-25, 40, 250], [25, 40, 250]], color: 'black', width: 2 },
+          { points: [[-50, 40, 150], [50, 40, 150]], color: 'black', width: 2 },
+
+          // Bottom
+          { points: [[-50, 0, 150], [50, 0, 150]], color: 'black', width: 2 },
+          { points: [[-25, 0, 25], [25, 0, 25]], color: 'black', width: 2 },
           
           // Front left wishbones
           { points: [[25, 0, 0], [75, -5 + compression, 12.5]], color: 'black', width: 2 },
