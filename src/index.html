@@ -1019,8 +1019,8 @@
   const toPerspective = ([x, y, z], d, focalLength) =>
     focalLength
       ? [
-          x * (focalLength / (d + focalLength - z)),
-          y * (focalLength / (d + focalLength - z)),
+          x * (focalLength / (d + focalLength + z)),
+          y * (focalLength / (d + focalLength + z)),
           z,
         ]
       : [x, y, z];
@@ -1194,9 +1194,9 @@
     canvas.onmousemove = event => {
       if (state.mouseDown) {
         camera.horizontalRotation$.value =
-          camera.horizontalRotation$.value + event.movementX / 100;
+          camera.horizontalRotation$.value - event.movementX / 100;
         camera.setVerticalRotation(
-          camera.verticalRotation$.value + event.movementY / 100
+          camera.verticalRotation$.value - event.movementY / 100
         );
       }
     };
@@ -1509,6 +1509,9 @@
       const compression = derivedValues['Compression (cm)'];
       widgets['Double Wisbone Suspension'] = {
         edges: [
+          // Front frame
+          { points: [[-25, 0, 0], [25, 0, 0]], color: 'black', width: 2 },
+          
           // Front left wishbones
           { points: [[25, 0, 0], [75, -5 + compression, 12.5]], color: 'black', width: 2 },
           { points: [[25, 0, 25], [75, -5 + compression, 12.5]], color: 'black', width: 2 },
