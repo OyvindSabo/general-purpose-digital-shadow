@@ -1499,8 +1499,48 @@
       derivedValues['A constant value'] = 45;
       derivedValues['Profit']           = values.sellPrice - values.buyPrice;
       derivedValues['Dollar Profit']    = derivedValues.Profit / 8;
+      derivedValues['Compression (cm)'] = Math.random() * 10;
     `;
     state.widgetsCode$.value = `
+      /*******************************************************************************
+      DOUBLE WISHBONE SUSPENSION
+      *******************************************************************************/
+      
+      const compression = derivedValues['Compression (cm)'];
+      widgets['Double Wisbone Suspension'] = {
+        edges: [
+          // Front left wishbones
+          { points: [[25, 0, 0], [75, -5 + compression, 12.5]], color: 'black', width: 2 },
+          { points: [[25, 0, 25], [75, -5 + compression, 12.5]], color: 'black', width: 2 },
+          { points: [[25, 40, 0], [75, 35 + compression, 12.5]], color: 'black', width: 2 },
+          { points: [[25, 40, 25], [75, 35 + compression, 12.5]], color: 'black', width: 2 },
+
+          // Front right wishbones
+          { points: [[-25, 0, 0], [-75, -5 + compression, 12.5]], color: 'black', width: 2 },
+          { points: [[-25, 0, 25], [-75, -5 + compression, 12.5]], color: 'black', width: 2 },
+          { points: [[-25, 40, 0], [-75, 35 + compression, 12.5]], color: 'black', width: 2 },
+          { points: [[-25, 40, 25], [-75, 35 + compression, 12.5]], color: 'black', width: 2 },
+
+          // Rear left wishbones
+          { points: [[25, 0, 250], [75, -5 + compression, 262.5]], color: 'black', width: 2 },
+          { points: [[25, 0, 275], [75, -5 + compression, 262.5]], color: 'black', width: 2 },
+          { points: [[25, 40, 250], [75, 35 + compression, 262.5]], color: 'black', width: 2 },
+          { points: [[25, 40, 275], [75, 35 + compression, 262.5]], color: 'black', width: 2 },
+
+          // Rear right wishbones
+          { points: [[-25, 0, 250], [-75, -5 + compression, 262.5]], color: 'black', width: 2 },
+          { points: [[-25, 0, 275], [-75, -5 + compression, 262.5]], color: 'black', width: 2 },
+          { points: [[-25, 40, 250], [-75, 35 + compression, 262.5]], color: 'black', width: 2 },
+          { points: [[-25, 40, 275], [-75, 35 + compression, 262.5]], color: 'black', width: 2 },
+        ],
+        center: [0, 20, 125],
+        is3d: true,
+      }
+
+      /*******************************************************************************
+      3D PYRAMID
+      *******************************************************************************/
+      
       const profit = 100 + derivedValues.Profit;
 
       const point0 = [     0,      0,      0];
