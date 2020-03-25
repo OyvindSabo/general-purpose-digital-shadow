@@ -11,50 +11,9 @@ const { If$, Choose$ } = include('src/libraries/observableHtml/utils.js');
 
 // Components
 const TopNavigator$ = include('src/components/topNavigator/TopNavigator.js');
-
-const LeftNavigatorButton = ({ icon, label, route, isActive$ }) => {
-  const Button = (...children) =>
-    div$(...children).setStyle({
-      height: '80px',
-      width: '80px',
-      overflow: 'hidden',
-      transition: '0.5s',
-      cursor: 'pointer',
-    });
-  const Icon = (...children) =>
-    div$(...children).setStyle({
-      fontSize: '30px',
-      textAlign: 'center',
-      marginTop: '15px',
-      pointerEvents: 'none',
-      userSelect: 'none',
-    });
-  const Label = (...children) =>
-    div$(...children).setStyle({
-      fontSize: '15px',
-      textAlign: 'center',
-      pointerEvents: 'none',
-      userSelect: 'none',
-    });
-  return Button(Icon(icon), Label(label))
-    .setStyle({
-      background: choose$(isActive$, 'whitesmoke', 'initial'),
-      color: choose$(isActive$, 'dimgray', 'gray'),
-    })
-    .onMouseEnter(element => {
-      element.setStyle({
-        background: 'whitesmoke',
-        color: 'dimgray',
-      });
-    })
-    .onMouseLeave(element => {
-      element.setStyle({
-        background: choose$(isActive$, 'whitesmoke', 'initial'),
-        color: choose$(isActive$, 'dimgray', 'gray'),
-      });
-    })
-    .onClick(() => (location.hash = `#!${route}`));
-};
+const LeftNavigatorButton$ = include(
+  'src/components/leftNavigatorButton/LeftNavigatorButton.js'
+);
 
 const LeftNavigator$ = include('src/components/leftNavigator/LeftNavigator.js');
 const ViewContainer$ = include('src/components/viewContainer/ViewContainer.js');
@@ -515,13 +474,13 @@ const App = ({ params, currentRoute$, state }) => {
     MainContainer$(
       LeftNavigator$(
         // Add something for home as well
-        LeftNavigatorButton({
+        LeftNavigatorButton$({
           icon: '🏗',
           label: 'Data sources',
           route: '/data-sources',
           isActive$: eq$(currentRoute$, '/data-sources'),
         }),
-        LeftNavigatorButton({
+        LeftNavigatorButton$({
           icon: '🧮',
           label: 'Values',
           route: '/values',
@@ -530,7 +489,7 @@ const App = ({ params, currentRoute$, state }) => {
             eq$(currentRoute$, '/values/edit')
           ),
         }),
-        LeftNavigatorButton({
+        LeftNavigatorButton$({
           icon: '📊',
           label: 'Dashboards',
           route: '/dashboards',
@@ -539,7 +498,7 @@ const App = ({ params, currentRoute$, state }) => {
             eq$(currentRoute$, '/dashboards/edit')
           ),
         }),
-        LeftNavigatorButton({
+        LeftNavigatorButton$({
           icon: '⏰',
           label: 'Alerts',
           route: '/alerts',
