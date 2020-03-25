@@ -672,6 +672,17 @@ module.exports = TopNavigator$;
   return module.exports;
 })();
 
+modules['src/views/home/Home.js'] = (() => {
+  const module = { exports: {} };
+  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const HomeView$ = () => div$('HomeView');
+
+module.exports = HomeView$;
+
+  return module.exports;
+})();
+
 modules['src/libraries/styled/Styled.js'] = (() => {
   const module = { exports: {} };
   const Styled = (Component, style) => (...children) =>
@@ -715,6 +726,25 @@ const ViewContainer$ = Styled(div$, {
 });
 
 module.exports = ViewContainer$;
+
+  return module.exports;
+})();
+
+modules['src/components/mainContainer/MainContainer.js'] = (() => {
+  const module = { exports: {} };
+  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const Styled = include('src/libraries/styled/Styled.js');
+
+const MainContainer$ = Styled(div$, {
+  height: 'calc(100% - 40px)',
+  borderRadius: '10px 10px 0 0',
+  background: 'GhostWhite',
+  position: 'absolute',
+  left: '0',
+  right: '0',
+});
+
+module.exports = MainContainer$;
 
   return module.exports;
 })();
@@ -781,18 +811,8 @@ const LeftNavigatorButton = ({ icon, label, route, isActive$ }) => {
 
 const LeftNavigator$ = include('src/components/leftNavigator/LeftNavigator.js');
 const ViewContainer$ = include('src/components/viewContainer/ViewContainer.js');
-
-const MainContainer$ = (...children) =>
-  div$(...children).setStyle({
-    height: 'calc(100% - 40px)',
-    borderRadius: '10px 10px 0 0',
-    background: 'GhostWhite',
-    position: 'absolute',
-    left: '0',
-    right: '0',
-  });
-
-const HomeView$ = () => div$('HomeView');
+const MainContainer$ = include('src/components/mainContainer/MainContainer.js');
+const HomeView$ = include('src/views/home/Home.js');
 const DataSourcesView$ = () => div$('DataSourcesView');
 const AnalyticsView$ = () => div$('AnalyticsView');
 const AlertsView$ = () => div$('AlertsView');

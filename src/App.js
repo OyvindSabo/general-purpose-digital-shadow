@@ -59,8 +59,7 @@ const LeftNavigatorButton = ({ icon, label, route, isActive$ }) => {
 const LeftNavigator$ = include('src/components/leftNavigator/LeftNavigator.js');
 const ViewContainer$ = include('src/components/viewContainer/ViewContainer.js');
 const MainContainer$ = include('src/components/mainContainer/MainContainer.js');
-
-const HomeView$ = () => div$('HomeView');
+const HomeView$ = include('src/views/home/Home.js');
 const DataSourcesView$ = () => div$('DataSourcesView');
 const AnalyticsView$ = () => div$('AnalyticsView');
 const AlertsView$ = () => div$('AlertsView');
