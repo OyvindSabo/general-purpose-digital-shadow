@@ -694,6 +694,92 @@ module.exports = DataSourcesView$;
   return module.exports;
 })();
 
+modules['src/components/expandCodeEditorButton/ExpandCodeEditorButton.js'] = (() => {
+  const module = { exports: {} };
+  const Observable = include('src/libraries/observable/Observable.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const { choose$ } = include('src/libraries/observable/utils.js');
+
+const ExpandCodeEditorButton$ = ({ icon, label$, isOpen$ }) => {
+  const isHovered$ = new Observable(false);
+  return div$(
+    div$(choose$(isOpen$, '−', '+')).setStyle({
+      fontSize: '30px',
+      textAlign: 'center',
+      marginTop: '15px',
+      pointerEvents: 'none',
+      userSelect: 'none',
+      transform: choose$(isOpen$, 'rotate(180deg)', 'rotate(0deg)'),
+      transition: '0.5s',
+    })
+  )
+    .setStyle({
+      position: 'absolute',
+      background: choose$(isHovered$, 'dodgerblue', 'royalblue'),
+      borderRadius: '50%',
+      color: 'white',
+      height: '60px',
+      width: '60px',
+      margin: '10px',
+      overflow: 'hidden',
+      transition: '0.5s',
+      cursor: 'pointer',
+      zIndex: '1',
+    })
+    .onMouseEnter(element => {
+      isHovered$.value = true;
+    })
+    .onMouseLeave(element => {
+      isHovered$.value = false;
+    });
+};
+
+module.exports = ExpandCodeEditorButton$;
+
+  return module.exports;
+})();
+
+modules['src/components/codeEditor/CodeEditor.js'] = (() => {
+  const module = { exports: {} };
+  const { textArea$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const CodeEditor$ = value$ => {
+  return textArea$(value$).setStyle({
+    width: '100%',
+    height: 'calc(100vh - 40px)',
+    padding: '20px',
+    background: 'black',
+    color: 'white',
+    fontFamily: '"Courier New", Courier, monospace',
+    fontSize: '14px',
+    lineHeight: '20px',
+    whiteSpace: 'nowrap',
+  });
+};
+
+module.exports = CodeEditor$;
+
+  return module.exports;
+})();
+
+modules['src/components/widgetForegroundContainer/WidgetForegroundContainer.js'] = (() => {
+  const module = { exports: {} };
+  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const WidgetForegroundContainer$ = (...children) => {
+  return div$(...children).setStyle({
+    height: '100%',
+    border: '1px solid LightGray',
+    boxSizing: 'border-box',
+    background: 'White',
+  });
+};
+
+module.exports = WidgetForegroundContainer$;
+
+  return module.exports;
+})();
+
 modules['src/libraries/styled/Styled.js'] = (() => {
   const module = { exports: {} };
   const Styled = (Component, style) => (...children) =>
@@ -828,88 +914,9 @@ module.exports = LeftNavigatorButton$;
   return module.exports;
 })();
 
-modules['src/App.js'] = (() => {
+modules['src/components/mediumWidgetBackgroundContainer/MediumWidgetBackgroundContainer.js'] = (() => {
   const module = { exports: {} };
-  // Observable
-
-const Observable = include('src/libraries/observable/Observable.js');
-const { eq$, choose$, or$, not$, toFixed$ } = include(
-  'src/libraries/observable/utils.js'
-);
-const { div$, textArea$, canvas$ } = include(
-  'src/libraries/observableHtml/ObservableHtml.js'
-);
-const { If$, Choose$ } = include('src/libraries/observableHtml/utils.js');
-
-const TopNavigator$ = include('src/components/topNavigator/TopNavigator.js');
-const LeftNavigatorButton$ = include(
-  'src/components/leftNavigatorButton/LeftNavigatorButton.js'
-);
-const LeftNavigator$ = include('src/components/leftNavigator/LeftNavigator.js');
-const ViewContainer$ = include('src/components/viewContainer/ViewContainer.js');
-const MainContainer$ = include('src/components/mainContainer/MainContainer.js');
-const Home$ = include('src/views/home/Home.js');
-const DataSources$ = include('src/views/dataSources/DataSources.js');
-const AlertsView$ = () => div$('AlertsView');
-
-const ExpandCodeEditorButton$ = ({ icon, label$, isOpen$ }) => {
-  const isHovered$ = new Observable(false);
-  return div$(
-    div$(choose$(isOpen$, '−', '+')).setStyle({
-      fontSize: '30px',
-      textAlign: 'center',
-      marginTop: '15px',
-      pointerEvents: 'none',
-      userSelect: 'none',
-      transform: choose$(isOpen$, 'rotate(180deg)', 'rotate(0deg)'),
-      transition: '0.5s',
-    })
-  )
-    .setStyle({
-      position: 'absolute',
-      background: choose$(isHovered$, 'dodgerblue', 'royalblue'),
-      borderRadius: '50%',
-      color: 'white',
-      height: '60px',
-      width: '60px',
-      margin: '10px',
-      overflow: 'hidden',
-      transition: '0.5s',
-      cursor: 'pointer',
-      zIndex: '1',
-    })
-    .onMouseEnter(element => {
-      isHovered$.value = true;
-    })
-    .onMouseLeave(element => {
-      isHovered$.value = false;
-    });
-};
-
-const CodeEditor$ = value$ => {
-  return textArea$(value$).setStyle({
-    width: '100%',
-    height: 'calc(100vh - 40px)',
-    padding: '20px',
-    background: 'black',
-    color: 'white',
-    fontFamily: '"Courier New", Courier, monospace',
-    fontSize: '14px',
-    lineHeight: '20px',
-    whiteSpace: 'nowrap',
-  });
-};
-
-const SmallWidgetBackgroundContainer$ = (...children) => {
-  return div$(...children).setStyle({
-    padding: '20px',
-    width: '360px',
-    height: '240px',
-    display: 'inline-block',
-    boxSizing: 'border-box',
-    verticalAlign: 'top',
-  });
-};
+  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
 const MediumWidgetBackgroundContainer$ = (...children) => {
   return div$(...children).setStyle({
@@ -922,16 +929,16 @@ const MediumWidgetBackgroundContainer$ = (...children) => {
   });
 };
 
-const WidgetForegroundContainer$ = (...children) => {
-  return div$(...children).setStyle({
-    height: '100%',
-    border: '1px solid LightGray',
-    boxSizing: 'border-box',
-    background: 'White',
-  });
-};
+module.exports = MediumWidgetBackgroundContainer$;
 
-const ValueWidgetLabel$ = ({ label$ }) =>
+  return module.exports;
+})();
+
+modules['src/components/widgetLabel/WidgetLabel.js'] = (() => {
+  const module = { exports: {} };
+  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const WidgetLabel$ = ({ label$ }) =>
   div$(label$).setStyle({
     fontSize: '20px',
     marginTop: '20px',
@@ -940,65 +947,92 @@ const ValueWidgetLabel$ = ({ label$ }) =>
     width: '100%',
   });
 
-const ValueWidgetValue$ = ({ value$ }) =>
-  div$(toFixed$(value$, 2)).setStyle({
-    fontSize: '60px',
-    textAlign: 'center',
-    width: '100%',
-    position: 'absolute',
-    top: '50%',
-    transform: 'translate(0, -50%)',
-  });
+module.exports = WidgetLabel$;
 
-const ValueWidget$ = ({ label$, value$, isEmpty$ }) =>
-  If$(
-    not$(isEmpty$),
-    SmallWidgetBackgroundContainer$(
-      WidgetForegroundContainer$(
-        ValueWidgetLabel$({ label$ }),
-        ValueWidgetValue$({ value$ })
-      ).setStyle({ height: '100%', position: 'relative', color: 'dimgray' })
-    )
+  return module.exports;
+})();
+
+modules['src/components/visualization/threeDimVisualization/camera/Camera.js'] = (() => {
+  const module = { exports: {} };
+  const Observable = include('src/libraries/observable/Observable.js');
+
+const Camera = function({
+  target = new Observable([0, 0, 0]),
+  horizontalRotation$ = new Observable(0),
+  verticalRotation$ = new Observable(0),
+  distance$ = new Observabe(100),
+  focalLength$ = new Observable(100),
+}) {
+  this.target = target;
+  this.horizontalRotation$ = horizontalRotation$;
+  this.verticalRotation$ = new Observable(
+    Math.max(Math.min(verticalRotation$.value, Math.PI / 4), -Math.PI / 2)
   );
-
-const ValuesView$ = ({ state, currentRoute$ }) => {
-  const codeEditorIsOpen$ = eq$(currentRoute$, '/values/edit');
-  return div$(
-    ExpandCodeEditorButton$({
-      icon: '{}',
-      label$: choose$(codeEditorIsOpen$, 'Hide editor', 'Show editor'),
-      isOpen$: codeEditorIsOpen$,
-    }).onClick(() => {
-      location.hash = codeEditorIsOpen$.value ? '#!/values' : '#!/values/edit';
-    }),
-    div$(
-      CodeEditor$(state.derivedValuesCode$)
-        .onInput(({ value }) => {
-          state.derivedValuesCode$.value = value;
-        })
-        .setStyle({ paddingLeft: '80px' })
-    ).setStyle({
-      display: 'inline-block',
-      width: choose$(codeEditorIsOpen$, '50%', '0'),
-      transition: '0.5s',
-      overflow: 'hidden',
-    }),
-    div$(
-      div$(
-        ...state.derivedValues.map(({ label$, value$, isEmpty$ }) =>
-          ValueWidget$({ label$, value$, isEmpty$ })
-        )
-      ).setStyle({ position: 'relative', top: '0' })
-    ).setStyle({
-      display: 'inline-block',
-      position: 'absolute',
-      paddingLeft: choose$(codeEditorIsOpen$, '0', '80px'),
-      transition: '0.5s',
-    })
-  ).setStyle({ width: '100%' });
+  this.distance$ = new Observable(
+    Math.max(distance$.value, -focalLength$.value / 2)
+  );
+  this.focalLength$ = focalLength$;
+  this.setDistance = distance => {
+    this.distance$.value = Math.max(distance, -focalLength$.value / 2);
+  };
+  this.setVerticalRotation = verticalRotation => {
+    this.verticalRotation$.value = Math.max(
+      Math.min(verticalRotation, Math.PI / 2),
+      -Math.PI / 2
+    );
+  };
 };
 
-const rotate = ([x, y, z], rx, ry) => {
+module.exports = Camera;
+
+  return module.exports;
+})();
+
+modules['src/components/visualization/render/toCenterOfWidget/toCenterOfWidget.js'] = (() => {
+  const module = { exports: {} };
+  const toCenterOfWidget = ([x, y, z], ctx) => [
+  x + ctx.canvas.width / 2,
+  y - ctx.canvas.height / 2,
+  z,
+];
+
+module.exports = toCenterOfWidget;
+
+  return module.exports;
+})();
+
+modules['src/components/visualization/render/toPerspective/toPerspective.js'] = (() => {
+  const module = { exports: {} };
+  const toPerspective = ([x, y, z], d, focalLength) =>
+  focalLength
+    ? [
+        x * (focalLength / (d + focalLength + z)),
+        y * (focalLength / (d + focalLength + z)),
+        z,
+      ]
+    : [x, y, z];
+
+module.exports = toPerspective;
+
+  return module.exports;
+})();
+
+modules['src/components/visualization/render/toCenterOfStructure/toCenterOfStructure.js'] = (() => {
+  const module = { exports: {} };
+  const toCenterOfStructure = ([x, y, z], transformedCenterOfStructure) => [
+  x - transformedCenterOfStructure[0],
+  y - transformedCenterOfStructure[1],
+  z - transformedCenterOfStructure[2],
+];
+
+module.exports = toCenterOfStructure;
+
+  return module.exports;
+})();
+
+modules['src/components/visualization/render/rotate/rotate.js'] = (() => {
+  const module = { exports: {} };
+  const rotate = ([x, y, z], rx, ry) => {
   const theta = rx;
   const phi = ry;
 
@@ -1017,26 +1051,23 @@ const rotate = ([x, y, z], rx, ry) => {
   ];
 };
 
-const toCenterOfStructure = ([x, y, z], transformedCenterOfStructure) => [
-  x - transformedCenterOfStructure[0],
-  y - transformedCenterOfStructure[1],
-  z - transformedCenterOfStructure[2],
-];
+module.exports = rotate;
 
-const toCenterOfWidget = ([x, y, z], ctx) => [
-  x + ctx.canvas.width / 2,
-  y - ctx.canvas.height / 2,
-  z,
-];
+  return module.exports;
+})();
 
-const toPerspective = ([x, y, z], d, focalLength) =>
-  focalLength
-    ? [
-        x * (focalLength / (d + focalLength + z)),
-        y * (focalLength / (d + focalLength + z)),
-        z,
-      ]
-    : [x, y, z];
+modules['src/components/visualization/render/render.js'] = (() => {
+  const module = { exports: {} };
+  const toCenterOfWidget = include(
+  'src/components/visualization/render/toCenterOfWidget/toCenterOfWidget.js'
+);
+const toPerspective = include(
+  'src/components/visualization/render/toPerspective/toPerspective.js'
+);
+const toCenterOfStructure = include(
+  'src/components/visualization/render/toCenterOfStructure/toCenterOfStructure.js'
+);
+const rotate = include('src/components/visualization/render/rotate/rotate.js');
 
 /**
  * @param {number} dx
@@ -1122,48 +1153,19 @@ const render = (
   });
 };
 
-const Camera = function({
-  target = new Observable([0, 0, 0]),
-  horizontalRotation$ = new Observable(0),
-  verticalRotation$ = new Observable(0),
-  distance$ = new Observabe(100),
-  focalLength$ = new Observable(100),
-}) {
-  this.target = target;
-  this.horizontalRotation$ = horizontalRotation$;
-  this.verticalRotation$ = new Observable(
-    Math.max(Math.min(verticalRotation$.value, Math.PI / 4), -Math.PI / 2)
-  );
-  this.distance$ = new Observable(
-    Math.max(distance$.value, -focalLength$.value / 2)
-  );
-  this.focalLength$ = focalLength$;
-  this.setDistance = distance => {
-    this.distance$.value = Math.max(distance, -focalLength$.value / 2);
-  };
-  this.setVerticalRotation = verticalRotation => {
-    this.verticalRotation$.value = Math.max(
-      Math.min(verticalRotation, Math.PI / 2),
-      -Math.PI / 2
-    );
-  };
-};
+module.exports = render;
 
-const TwoDimVisualization$ = ({ surfaces$, edges$, center$ }) => {
-  const canvas = canvas$({ height: 280, width: 440 }).setStyle({
-    position: 'absolute',
-  });
-  const ctx = canvas.getContext('2d');
-  const rerender = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    render(surfaces$, edges$, ctx, center$.value);
-  };
-  rerender();
-  window.addEventListener(surfaces$.id, () => rerender());
-  window.addEventListener(edges$.id, () => rerender());
-  window.addEventListener(center$.id, () => rerender());
-  return canvas;
-};
+  return module.exports;
+})();
+
+modules['src/components/visualization/threeDimVisualization/ThreeDimVisualization.js'] = (() => {
+  const module = { exports: {} };
+  const Observable = include('src/libraries/observable/Observable.js');
+const { canvas$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const Camera = include(
+  'src/components/visualization/threeDimVisualization/camera/Camera.js'
+);
+const render = include('src/components/visualization/render/render.js');
 
 const ThreeDimVisualization$ = ({ surfaces$, edges$, center$ }) => {
   const state = { mouseDown: false };
@@ -1223,6 +1225,55 @@ const ThreeDimVisualization$ = ({ surfaces$, edges$, center$ }) => {
   return canvas;
 };
 
+module.exports = ThreeDimVisualization$;
+
+  return module.exports;
+})();
+
+modules['src/components/visualization/twoDimVisualization/TwoDimVisualization.js'] = (() => {
+  const module = { exports: {} };
+  const { canvas$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const render = include('src/components/visualization/render/render.js');
+
+const TwoDimVisualization$ = ({ surfaces$, edges$, center$ }) => {
+  const canvas = canvas$({ height: 280, width: 440 }).setStyle({
+    position: 'absolute',
+  });
+  const ctx = canvas.getContext('2d');
+  const rerender = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    render(surfaces$, edges$, ctx, center$.value);
+  };
+  rerender();
+  window.addEventListener(surfaces$.id, () => rerender());
+  window.addEventListener(edges$.id, () => rerender());
+  window.addEventListener(center$.id, () => rerender());
+  return canvas;
+};
+
+module.exports = TwoDimVisualization$;
+
+  return module.exports;
+})();
+
+modules['src/components/canvasWidget/CanvasWidget.js'] = (() => {
+  const module = { exports: {} };
+  const MediumWidgetBackgroundContainer$ = include(
+  'src/components/mediumWidgetBackgroundContainer/MediumWidgetBackgroundContainer.js'
+);
+const WidgetForegroundContainer$ = include(
+  'src/components/widgetForegroundContainer/WidgetForegroundContainer.js'
+);
+const ThreeDimVisualization$ = include(
+  'src/components/visualization/threeDimVisualization/ThreeDimVisualization.js'
+);
+const TwoDimVisualization$ = include(
+  'src/components/visualization/twoDimVisualization/TwoDimVisualization.js'
+);
+const WidgetLabel$ = include('src/components/widgetLabel/WidgetLabel.js');
+const { choose$, not$ } = include('src/libraries/observable/utils.js');
+const { Choose$, If$ } = include('src/libraries/observableHtml/utils.js');
+
 const CanvasWidget$ = ({
   label$,
   surfaces$,
@@ -1240,7 +1291,7 @@ const CanvasWidget$ = ({
           ThreeDimVisualization$({ surfaces$, edges$, center$ }),
           TwoDimVisualization$({ surfaces$, edges$, center$ })
         ),
-        ValueWidgetLabel$({ label$ })
+        WidgetLabel$({ label$ })
       ).setStyle({
         height: '100%',
         position: 'relative',
@@ -1250,7 +1301,22 @@ const CanvasWidget$ = ({
   );
 };
 
-const DashboardsView$ = ({ state, currentRoute$ }) => {
+module.exports = CanvasWidget$;
+
+  return module.exports;
+})();
+
+modules['src/views/dashboards/Dashboards.js'] = (() => {
+  const module = { exports: {} };
+  const CodeEditor$ = include('src/components/codeEditor/CodeEditor.js');
+const ExpandCodeEditorButton$ = include(
+  'src/components/expandCodeEditorButton/ExpandCodeEditorButton.js'
+);
+const CanvasWidget$ = include('src/components/canvasWidget/CanvasWidget.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const { eq$, choose$ } = include('src/libraries/observable/utils.js');
+
+const Dashboards$ = ({ state, currentRoute$ }) => {
   const codeEditorIsOpen$ = eq$(currentRoute$, '/dashboards/edit');
   return div$(
     ExpandCodeEditorButton$({
@@ -1296,6 +1362,125 @@ const DashboardsView$ = ({ state, currentRoute$ }) => {
     })
   ).setStyle({ width: '100%' });
 };
+
+module.exports = Dashboards$;
+
+  return module.exports;
+})();
+
+modules['src/App.js'] = (() => {
+  const module = { exports: {} };
+  // Observable
+
+const Observable = include('src/libraries/observable/Observable.js');
+const { eq$, choose$, or$, not$, toFixed$ } = include(
+  'src/libraries/observable/utils.js'
+);
+const { div$, textArea$, canvas$ } = include(
+  'src/libraries/observableHtml/ObservableHtml.js'
+);
+const { If$, Choose$ } = include('src/libraries/observableHtml/utils.js');
+
+const TopNavigator$ = include('src/components/topNavigator/TopNavigator.js');
+const LeftNavigatorButton$ = include(
+  'src/components/leftNavigatorButton/LeftNavigatorButton.js'
+);
+const LeftNavigator$ = include('src/components/leftNavigator/LeftNavigator.js');
+const ViewContainer$ = include('src/components/viewContainer/ViewContainer.js');
+const MainContainer$ = include('src/components/mainContainer/MainContainer.js');
+const Home$ = include('src/views/home/Home.js');
+const DataSources$ = include('src/views/dataSources/DataSources.js');
+const AlertsView$ = () => div$('AlertsView');
+
+const ExpandCodeEditorButton$ = include(
+  'src/components/expandCodeEditorButton/ExpandCodeEditorButton.js'
+);
+
+const CodeEditor$ = include('src/components/codeEditor/CodeEditor.js');
+
+const SmallWidgetBackgroundContainer$ = (...children) => {
+  return div$(...children).setStyle({
+    padding: '20px',
+    width: '360px',
+    height: '240px',
+    display: 'inline-block',
+    boxSizing: 'border-box',
+    verticalAlign: 'top',
+  });
+};
+
+const WidgetForegroundContainer$ = include(
+  'src/components/widgetForegroundContainer/WidgetForegroundContainer.js'
+);
+
+const ValueWidgetLabel$ = ({ label$ }) =>
+  div$(label$).setStyle({
+    fontSize: '20px',
+    marginTop: '20px',
+    textAlign: 'center',
+    position: 'absolute',
+    width: '100%',
+  });
+
+const ValueWidgetValue$ = ({ value$ }) =>
+  div$(toFixed$(value$, 2)).setStyle({
+    fontSize: '60px',
+    textAlign: 'center',
+    width: '100%',
+    position: 'absolute',
+    top: '50%',
+    transform: 'translate(0, -50%)',
+  });
+
+const ValueWidget$ = ({ label$, value$, isEmpty$ }) =>
+  If$(
+    not$(isEmpty$),
+    SmallWidgetBackgroundContainer$(
+      WidgetForegroundContainer$(
+        ValueWidgetLabel$({ label$ }),
+        ValueWidgetValue$({ value$ })
+      ).setStyle({ height: '100%', position: 'relative', color: 'dimgray' })
+    )
+  );
+
+const ValuesView$ = ({ state, currentRoute$ }) => {
+  const codeEditorIsOpen$ = eq$(currentRoute$, '/values/edit');
+  return div$(
+    ExpandCodeEditorButton$({
+      icon: '{}',
+      label$: choose$(codeEditorIsOpen$, 'Hide editor', 'Show editor'),
+      isOpen$: codeEditorIsOpen$,
+    }).onClick(() => {
+      location.hash = codeEditorIsOpen$.value ? '#!/values' : '#!/values/edit';
+    }),
+    div$(
+      CodeEditor$(state.derivedValuesCode$)
+        .onInput(({ value }) => {
+          state.derivedValuesCode$.value = value;
+        })
+        .setStyle({ paddingLeft: '80px' })
+    ).setStyle({
+      display: 'inline-block',
+      width: choose$(codeEditorIsOpen$, '50%', '0'),
+      transition: '0.5s',
+      overflow: 'hidden',
+    }),
+    div$(
+      div$(
+        ...state.derivedValues.map(({ label$, value$, isEmpty$ }) =>
+          ValueWidget$({ label$, value$, isEmpty$ })
+        )
+      ).setStyle({ position: 'relative', top: '0' })
+    ).setStyle({
+      display: 'inline-block',
+      position: 'absolute',
+      paddingLeft: choose$(codeEditorIsOpen$, '0', '80px'),
+      transition: '0.5s',
+    })
+  ).setStyle({ width: '100%' });
+};
+
+const Dashboards$ = include('src/views/dashboards/Dashboards.js');
 
 const App = ({ params, currentRoute$, state }) => {
   const element = div$(
@@ -1352,7 +1537,7 @@ const App = ({ params, currentRoute$, state }) => {
             eq$(currentRoute$, '/dashboards/edit'),
             eq$(currentRoute$, '/dashboards')
           ),
-          DashboardsView$({ state, currentRoute$ })
+          Dashboards$({ state, currentRoute$ })
         ),
         If$(eq$(currentRoute$, '/alerts'), AlertsView$())
       )
