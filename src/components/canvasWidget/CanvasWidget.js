@@ -11,7 +11,7 @@ const TwoDimVisualization$ = include(
   'src/components/visualization/twoDimVisualization/TwoDimVisualization.js'
 );
 const WidgetLabel$ = include('src/components/widgetLabel/WidgetLabel.js');
-const { choose$, not$ } = include('src/libraries/observable/utils.js');
+const { not$ } = include('src/libraries/observable/utils.js');
 const { Choose$, If$ } = include('src/libraries/observableHtml/utils.js');
 
 const CanvasWidget$ = ({

@@ -1,13 +1,6 @@
-// Observable
-
-const Observable = include('src/libraries/observable/Observable.js');
-const { eq$, choose$, or$, not$, toFixed$ } = include(
-  'src/libraries/observable/utils.js'
-);
-const { div$, textArea$, canvas$ } = include(
-  'src/libraries/observableHtml/ObservableHtml.js'
-);
-const { If$, Choose$ } = include('src/libraries/observableHtml/utils.js');
+const { eq$, choose$, or$ } = include('src/libraries/observable/utils.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const { If$ } = include('src/libraries/observableHtml/utils.js');
 
 const TopNavigator$ = include('src/components/topNavigator/TopNavigator.js');
 const LeftNavigatorButton$ = include(
@@ -26,50 +19,7 @@ const ExpandCodeEditorButton$ = include(
 
 const CodeEditor$ = include('src/components/codeEditor/CodeEditor.js');
 
-const SmallWidgetBackgroundContainer$ = (...children) => {
-  return div$(...children).setStyle({
-    padding: '20px',
-    width: '360px',
-    height: '240px',
-    display: 'inline-block',
-    boxSizing: 'border-box',
-    verticalAlign: 'top',
-  });
-};
-
-const WidgetForegroundContainer$ = include(
-  'src/components/widgetForegroundContainer/WidgetForegroundContainer.js'
-);
-
-const ValueWidgetLabel$ = ({ label$ }) =>
-  div$(label$).setStyle({
-    fontSize: '20px',
-    marginTop: '20px',
-    textAlign: 'center',
-    position: 'absolute',
-    width: '100%',
-  });
-
-const ValueWidgetValue$ = ({ value$ }) =>
-  div$(toFixed$(value$, 2)).setStyle({
-    fontSize: '60px',
-    textAlign: 'center',
-    width: '100%',
-    position: 'absolute',
-    top: '50%',
-    transform: 'translate(0, -50%)',
-  });
-
-const ValueWidget$ = ({ label$, value$, isEmpty$ }) =>
-  If$(
-    not$(isEmpty$),
-    SmallWidgetBackgroundContainer$(
-      WidgetForegroundContainer$(
-        ValueWidgetLabel$({ label$ }),
-        ValueWidgetValue$({ value$ })
-      ).setStyle({ height: '100%', position: 'relative', color: 'dimgray' })
-    )
-  );
+const ValueWidget$ = include('src/components/valueWidget/ValueWidget.js');
 
 const ValuesView$ = ({ state, currentRoute$ }) => {
   const codeEditorIsOpen$ = eq$(currentRoute$, '/values/edit');

@@ -1,4 +1,5 @@
 const Observable = include('src/libraries/observable/Observable.js');
+const styled = include('src/libraries/styled/styled.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
 const Choose$ = (observable, element1, element2) => {
@@ -40,7 +41,7 @@ const Switch$ = (statement$, ...clauses) => {
   );
 };
 
-const Nothing$ = () => div$().setStyle({ display: 'none' });
+const Nothing$ = styled(div$, { display: 'none' });
 
 const If$ = (observable, element) => Choose$(observable, element, Nothing$());
 

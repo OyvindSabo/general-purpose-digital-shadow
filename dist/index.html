@@ -603,75 +603,6 @@ module.exports = {
   return module.exports;
 })();
 
-modules['src/libraries/observableHtml/utils.js'] = (() => {
-  const module = { exports: {} };
-  const Observable = include('src/libraries/observable/Observable.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-
-const Choose$ = (observable, element1, element2) => {
-  let element = (observable instanceof Observable
-  ? observable.value
-  : observable)
-    ? element1
-    : element2;
-  if (observable instanceof Observable) {
-    window.addEventListener(observable.id, ({ detail }) => {
-      // TODO: Make it possible to set a specific child of an observable
-      newElement = (observable instanceof Observable
-      ? observable.value
-      : observable)
-        ? element1
-        : element2;
-
-      if (newElement !== element) {
-        element.parentNode.replaceChild(newElement, element);
-        element = newElement;
-      }
-    });
-  }
-  return element;
-};
-
-const Switch$ = (statement$, ...clauses) => {
-  const cases = clauses.filter((_, i) => i % 2 === 0);
-  const elements = clauses.filter((_, i) => i % 2 !== 0);
-  return div$(
-    ...cases.map((theCase, i) => {
-      const element = elements[i];
-      // Warning: Assumes that display is not initially dynamic
-      const display = element.style.display;
-      return element.setStyle({
-        display: choose$(eq$(statement$, theCase), display, 'none'),
-      });
-    })
-  );
-};
-
-const Nothing$ = () => div$().setStyle({ display: 'none' });
-
-const If$ = (observable, element) => Choose$(observable, element, Nothing$());
-
-module.exports = {
-  Choose$,
-  Switch$,
-  Nothing$,
-  If$,
-};
-
-  return module.exports;
-})();
-
-modules['src/components/topNavigator/TopNavigator.js'] = (() => {
-  const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-
-const TopNavigator$ = () => div$().setStyle({ height: '40px' });
-
-module.exports = TopNavigator$;
-
-  return module.exports;
-})();
-
 modules['src/views/home/Home.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
@@ -739,53 +670,83 @@ module.exports = ExpandCodeEditorButton$;
   return module.exports;
 })();
 
-modules['src/components/codeEditor/CodeEditor.js'] = (() => {
-  const module = { exports: {} };
-  const { textArea$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-
-const CodeEditor$ = value$ => {
-  return textArea$(value$).setStyle({
-    width: '100%',
-    height: 'calc(100vh - 40px)',
-    padding: '20px',
-    background: 'black',
-    color: 'white',
-    fontFamily: '"Courier New", Courier, monospace',
-    fontSize: '14px',
-    lineHeight: '20px',
-    whiteSpace: 'nowrap',
-  });
-};
-
-module.exports = CodeEditor$;
-
-  return module.exports;
-})();
-
-modules['src/components/widgetForegroundContainer/WidgetForegroundContainer.js'] = (() => {
-  const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-
-const WidgetForegroundContainer$ = (...children) => {
-  return div$(...children).setStyle({
-    height: '100%',
-    border: '1px solid LightGray',
-    boxSizing: 'border-box',
-    background: 'White',
-  });
-};
-
-module.exports = WidgetForegroundContainer$;
-
-  return module.exports;
-})();
-
 modules['src/libraries/styled/styled.js'] = (() => {
   const module = { exports: {} };
   const styled = (Component, style) => (...children) =>
   Component(...children).setStyle(style);
 
 module.exports = styled;
+
+  return module.exports;
+})();
+
+modules['src/libraries/observableHtml/utils.js'] = (() => {
+  const module = { exports: {} };
+  const Observable = include('src/libraries/observable/Observable.js');
+const styled = include('src/libraries/styled/styled.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const Choose$ = (observable, element1, element2) => {
+  let element = (observable instanceof Observable
+  ? observable.value
+  : observable)
+    ? element1
+    : element2;
+  if (observable instanceof Observable) {
+    window.addEventListener(observable.id, ({ detail }) => {
+      // TODO: Make it possible to set a specific child of an observable
+      newElement = (observable instanceof Observable
+      ? observable.value
+      : observable)
+        ? element1
+        : element2;
+
+      if (newElement !== element) {
+        element.parentNode.replaceChild(newElement, element);
+        element = newElement;
+      }
+    });
+  }
+  return element;
+};
+
+const Switch$ = (statement$, ...clauses) => {
+  const cases = clauses.filter((_, i) => i % 2 === 0);
+  const elements = clauses.filter((_, i) => i % 2 !== 0);
+  return div$(
+    ...cases.map((theCase, i) => {
+      const element = elements[i];
+      // Warning: Assumes that display is not initially dynamic
+      const display = element.style.display;
+      return element.setStyle({
+        display: choose$(eq$(statement$, theCase), display, 'none'),
+      });
+    })
+  );
+};
+
+const Nothing$ = styled(div$, { display: 'none' });
+
+const If$ = (observable, element) => Choose$(observable, element, Nothing$());
+
+module.exports = {
+  Choose$,
+  Switch$,
+  Nothing$,
+  If$,
+};
+
+  return module.exports;
+})();
+
+modules['src/components/topNavigator/TopNavigator.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const TopNavigator$ = styled(div$, { height: '40px' });
+
+module.exports = TopNavigator$;
 
   return module.exports;
 })();
@@ -842,6 +803,28 @@ const MainContainer$ = styled(div$, {
 });
 
 module.exports = MainContainer$;
+
+  return module.exports;
+})();
+
+modules['src/components/codeEditor/CodeEditor.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const { textArea$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const CodeEditor$ = styled(textArea$, {
+  width: '100%',
+  height: 'calc(100vh - 40px)',
+  padding: '20px',
+  background: 'black',
+  color: 'white',
+  fontFamily: '"Courier New", Courier, monospace',
+  fontSize: '14px',
+  lineHeight: '20px',
+  whiteSpace: 'nowrap',
+});
+
+module.exports = CodeEditor$;
 
   return module.exports;
 })();
@@ -914,26 +897,6 @@ module.exports = LeftNavigatorButton$;
   return module.exports;
 })();
 
-modules['src/components/mediumWidgetBackgroundContainer/MediumWidgetBackgroundContainer.js'] = (() => {
-  const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-
-const MediumWidgetBackgroundContainer$ = (...children) => {
-  return div$(...children).setStyle({
-    padding: '20px',
-    width: '480px',
-    height: '320px',
-    display: 'inline-block',
-    boxSizing: 'border-box',
-    verticalAlign: 'top',
-  });
-};
-
-module.exports = MediumWidgetBackgroundContainer$;
-
-  return module.exports;
-})();
-
 modules['src/components/widgetLabel/WidgetLabel.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
@@ -948,6 +911,111 @@ const WidgetLabel$ = ({ label$ }) =>
   });
 
 module.exports = WidgetLabel$;
+
+  return module.exports;
+})();
+
+modules['src/components/widgetValue/WidgetValue.js'] = (() => {
+  const module = { exports: {} };
+  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const { toFixed$ } = include('src/libraries/observable/utils.js');
+
+const WidgetValue$ = ({ value$ }) =>
+  div$(toFixed$(value$, 2)).setStyle({
+    fontSize: '60px',
+    textAlign: 'center',
+    width: '100%',
+    position: 'absolute',
+    top: '50%',
+    transform: 'translate(0, -50%)',
+  });
+
+module.exports = WidgetValue$;
+
+  return module.exports;
+})();
+
+modules['src/components/smallWidgetBackgroundContainer/SmallWidgetBackgroundContainer.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const SmallWidgetBackgroundContainer$ = styled(div$, {
+  padding: '20px',
+  width: '360px',
+  height: '240px',
+  display: 'inline-block',
+  boxSizing: 'border-box',
+  verticalAlign: 'top',
+});
+
+module.exports = SmallWidgetBackgroundContainer$;
+
+  return module.exports;
+})();
+
+modules['src/components/widgetForegroundContainer/WidgetForegroundContainer.js'] = (() => {
+  const module = { exports: {} };
+  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const WidgetForegroundContainer$ = (...children) => {
+  return div$(...children).setStyle({
+    height: '100%',
+    border: '1px solid LightGray',
+    boxSizing: 'border-box',
+    background: 'White',
+  });
+};
+
+module.exports = WidgetForegroundContainer$;
+
+  return module.exports;
+})();
+
+modules['src/components/valueWidget/ValueWidget.js'] = (() => {
+  const module = { exports: {} };
+  const WidgetLabel$ = include('src/components/widgetLabel/WidgetLabel.js');
+const WidgetValue$ = include('src/components/widgetValue/WidgetValue.js');
+const SmallWidgetBackgroundContainer$ = include(
+  'src/components/smallWidgetBackgroundContainer/SmallWidgetBackgroundContainer.js'
+);
+const WidgetForegroundContainer$ = include(
+  'src/components/widgetForegroundContainer/WidgetForegroundContainer.js'
+);
+const { not$ } = include('src/libraries/observable/utils.js');
+const { If$ } = include('src/libraries/observableHtml/utils.js');
+
+const ValueWidget$ = ({ label$, value$, isEmpty$ }) =>
+  If$(
+    not$(isEmpty$),
+    SmallWidgetBackgroundContainer$(
+      WidgetForegroundContainer$(
+        WidgetLabel$({ label$ }),
+        WidgetValue$({ value$ })
+      ).setStyle({ height: '100%', position: 'relative', color: 'dimgray' })
+    )
+  );
+
+module.exports = ValueWidget$;
+
+  return module.exports;
+})();
+
+modules['src/components/mediumWidgetBackgroundContainer/MediumWidgetBackgroundContainer.js'] = (() => {
+  const module = { exports: {} };
+  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const styled = include('src/libraries/styled/styled.js');
+
+const MediumWidgetBackgroundContainer$ = styled(div$, {
+  padding: '20px',
+  width: '480px',
+  height: '320px',
+  display: 'inline-block',
+  boxSizing: 'border-box',
+  verticalAlign: 'top',
+});
+
+module.exports = MediumWidgetBackgroundContainer$;
 
   return module.exports;
 })();
@@ -1271,7 +1339,7 @@ const TwoDimVisualization$ = include(
   'src/components/visualization/twoDimVisualization/TwoDimVisualization.js'
 );
 const WidgetLabel$ = include('src/components/widgetLabel/WidgetLabel.js');
-const { choose$, not$ } = include('src/libraries/observable/utils.js');
+const { not$ } = include('src/libraries/observable/utils.js');
 const { Choose$, If$ } = include('src/libraries/observableHtml/utils.js');
 
 const CanvasWidget$ = ({
@@ -1370,16 +1438,9 @@ module.exports = Dashboards$;
 
 modules['src/App.js'] = (() => {
   const module = { exports: {} };
-  // Observable
-
-const Observable = include('src/libraries/observable/Observable.js');
-const { eq$, choose$, or$, not$, toFixed$ } = include(
-  'src/libraries/observable/utils.js'
-);
-const { div$, textArea$, canvas$ } = include(
-  'src/libraries/observableHtml/ObservableHtml.js'
-);
-const { If$, Choose$ } = include('src/libraries/observableHtml/utils.js');
+  const { eq$, choose$, or$ } = include('src/libraries/observable/utils.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const { If$ } = include('src/libraries/observableHtml/utils.js');
 
 const TopNavigator$ = include('src/components/topNavigator/TopNavigator.js');
 const LeftNavigatorButton$ = include(
@@ -1398,50 +1459,7 @@ const ExpandCodeEditorButton$ = include(
 
 const CodeEditor$ = include('src/components/codeEditor/CodeEditor.js');
 
-const SmallWidgetBackgroundContainer$ = (...children) => {
-  return div$(...children).setStyle({
-    padding: '20px',
-    width: '360px',
-    height: '240px',
-    display: 'inline-block',
-    boxSizing: 'border-box',
-    verticalAlign: 'top',
-  });
-};
-
-const WidgetForegroundContainer$ = include(
-  'src/components/widgetForegroundContainer/WidgetForegroundContainer.js'
-);
-
-const ValueWidgetLabel$ = ({ label$ }) =>
-  div$(label$).setStyle({
-    fontSize: '20px',
-    marginTop: '20px',
-    textAlign: 'center',
-    position: 'absolute',
-    width: '100%',
-  });
-
-const ValueWidgetValue$ = ({ value$ }) =>
-  div$(toFixed$(value$, 2)).setStyle({
-    fontSize: '60px',
-    textAlign: 'center',
-    width: '100%',
-    position: 'absolute',
-    top: '50%',
-    transform: 'translate(0, -50%)',
-  });
-
-const ValueWidget$ = ({ label$, value$, isEmpty$ }) =>
-  If$(
-    not$(isEmpty$),
-    SmallWidgetBackgroundContainer$(
-      WidgetForegroundContainer$(
-        ValueWidgetLabel$({ label$ }),
-        ValueWidgetValue$({ value$ })
-      ).setStyle({ height: '100%', position: 'relative', color: 'dimgray' })
-    )
-  );
+const ValueWidget$ = include('src/components/valueWidget/ValueWidget.js');
 
 const ValuesView$ = ({ state, currentRoute$ }) => {
   const codeEditorIsOpen$ = eq$(currentRoute$, '/values/edit');

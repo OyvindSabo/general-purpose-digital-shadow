@@ -6,6 +6,8 @@ const SmallWidgetBackgroundContainer$ = include(
 const WidgetForegroundContainer$ = include(
   'src/components/widgetForegroundContainer/WidgetForegroundContainer.js'
 );
+const { not$ } = include('src/libraries/observable/utils.js');
+const { If$ } = include('src/libraries/observableHtml/utils.js');
 
 const ValueWidget$ = ({ label$, value$, isEmpty$ }) =>
   If$(

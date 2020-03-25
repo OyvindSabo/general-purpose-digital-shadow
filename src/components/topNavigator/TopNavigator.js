@@ -1,5 +1,6 @@
+const styled = include('src/libraries/styled/styled.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
-const TopNavigator$ = () => div$().setStyle({ height: '40px' });
+const TopNavigator$ = styled(div$, { height: '40px' });
 
 module.exports = TopNavigator$;
