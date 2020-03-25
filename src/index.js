@@ -353,6 +353,7 @@ state.widgetsCode$.value = `
   }
 `;
 
+console.log('router.currentRoute$: ', router.currentRoute$);
 document.body.appendChild(
   App({
     state,

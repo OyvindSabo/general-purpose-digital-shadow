@@ -258,15 +258,10 @@ module.exports = Router;
   return module.exports;
 })();
 
-modules['src/App.js'] = (() => {
+modules['src/libraries/observable/utils.js'] = (() => {
   const module = { exports: {} };
-  // Observable
+  const Observable = include('src/libraries/observable/Observable.js');
 
-const Observable = include('src/libraries/observable/Observable.js');
-
-// Observable utils
-
-// Observable utils
 // Currently needs at least two arguments
 const add$ = (...observables) => {
   const sum = observables
@@ -478,7 +473,25 @@ const toFixed$ = (number$, decimals$) => {
   return formattedNumber$;
 };
 
-// Observable HTML
+module.exports = {
+  add$,
+  subtract$,
+  multiply$,
+  divide$,
+  choose$,
+  eq$,
+  and$,
+  or$,
+  not$,
+  toFixed$,
+};
+
+  return module.exports;
+})();
+
+modules['src/libraries/observableHtml/ObservableHtml.js'] = (() => {
+  const module = { exports: {} };
+  const Observable = include('src/libraries/observable/Observable.js');
 
 const createElement$ = (elementType, ...observables) => {
   const element = document.createElement(elementType);
@@ -568,13 +581,32 @@ const option$ = ({ value, label }) =>
   createElement$('option', label).setProps({ value });
 const input$ = (value = '') => createElement$('input').setProps({ value });
 const canvas$ = ({ width, height }) => {
-  const element = createElement('canvas');
+  const element = createElement$('canvas');
   element.width = width;
   element.height = height;
   return element;
 };
 
-// Observable HTML util components
+module.exports = {
+  createElement$,
+  div$,
+  h1$,
+  textArea$,
+  br$,
+  select$,
+  button$,
+  option$,
+  input$,
+  canvas$,
+};
+
+  return module.exports;
+})();
+
+modules['src/libraries/observableHtml/utils.js'] = (() => {
+  const module = { exports: {} };
+  const Observable = include('src/libraries/observable/Observable.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
 const Choose$ = (observable, element1, element2) => {
   let element = (observable instanceof Observable
@@ -619,9 +651,37 @@ const Nothing$ = () => div$().setStyle({ display: 'none' });
 
 const If$ = (observable, element) => Choose$(observable, element, Nothing$());
 
-// Router
+module.exports = {
+  Choose$,
+  Switch$,
+  Nothing$,
+  If$,
+};
 
-const Router = include('src/libraries/router/Router.js');
+  return module.exports;
+})();
+
+modules['src/App.js'] = (() => {
+  const module = { exports: {} };
+  // Observable
+
+const Observable = include('src/libraries/observable/Observable.js');
+
+const { eq$, choose$, or$, not$, toFixed$ } = include(
+  'src/libraries/observable/utils.js'
+);
+
+// Observable HTML
+
+const { div$, textArea$, canvas$ } = include(
+  'src/libraries/observableHtml/ObservableHtml.js'
+);
+
+// Observable HTML util components
+
+const { If$, Choose$ } = include('src/libraries/observableHtml/utils.js');
+
+// Router
 
 // Utils
 const handleText = textOrNode =>
@@ -696,62 +756,6 @@ const createElement = (elementType, ...children) => {
   };
   return element;
 };
-
-const div = (...children) => createElement('div', ...children);
-const input = (...children) => createElement('input', ...children);
-const textArea = (...children) => createElement('textarea', ...children);
-const button = (...children) => createElement('button', ...children);
-
-// Might not need this
-const propsHaveChanged = (previousProps, newProps) => {
-  for (key of Object.keys(previousProps)) {
-    if (previousProps[key] !== newProps[key]) {
-      return true;
-    }
-  }
-  false;
-};
-
-// functionalComponent returns one node
-const Replaceable = functionalComponent =>
-  div(functionalComponent()).onUpdate(element => {
-    // TODO: Somehow make this not have to update if it doesn't have to
-    // TODO: Accept that functionalComponent returns an array of hildren
-    element.innerHTML = '';
-    appendChild(element, functionalComponent());
-  });
-
-// functionalComponent returns an array of nodes
-const Replaceables = functionalComponent =>
-  div(...functionalComponent())
-    .setStyle({ display: 'inline-block' })
-    .onUpdate(element => {
-      // TODO: Somehow make this not have to update if it doesn't have to
-      // TODO: Accept that functionalComponent returns an array of hildren
-      element.innerHTML = '';
-      functionalComponent().forEach(child => appendChild(element, child));
-    });
-
-const If = (fnCondition, fnThenComponent, fnElseComponent = () => null) => {
-  const condition = fnCondition();
-  return div(condition ? fnThenComponent() : fnElseComponent())
-    .initState({ condition })
-    .onUpdate(element => {
-      const newCondition = fnCondition();
-      if (newCondition === element.state.condition) return;
-      element.setState({ condition: newCondition });
-      element.innerHTML = '';
-      appendChild(
-        element,
-        fnCondition()
-          ? handleText(fnThenComponent())
-          : handleText(fnElseComponent())
-      );
-    });
-};
-
-const Styled = (component, style) => (...children) =>
-  component(...children).setStyle(style);
 
 // Components
 const TopNavigator$ = () => div$().setStyle({ height: '40px' });
@@ -834,10 +838,6 @@ const DataSourcesView$ = () => div$('DataSourcesView');
 const AnalyticsView$ = () => div$('AnalyticsView');
 const AlertsView$ = () => div$('AlertsView');
 
-// Components
-const ValuesViewTopNavigator$ = (...children) =>
-  div$(...children).setStyle({ width: '100%', height: '80px' });
-
 const ExpandCodeEditorButton$ = ({ icon, label$, isOpen$ }) => {
   const isHovered$ = new Observable(false);
   return div$(
@@ -914,14 +914,6 @@ const WidgetForegroundContainer$ = (...children) => {
     border: '1px solid LightGray',
     boxSizing: 'border-box',
     background: 'White',
-  });
-};
-
-const WidgetInnerContainer$ = (...children) => {
-  return div$(...children).setStyle({
-    width: '100%',
-    height: '100%',
-    display: 'flex',
   });
 };
 
@@ -1721,6 +1713,7 @@ state.widgetsCode$.value = `
   }
 `;
 
+console.log('router.currentRoute$: ', router.currentRoute$);
 document.body.appendChild(
   App({
     state,
