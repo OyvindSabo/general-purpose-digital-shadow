@@ -58,16 +58,7 @@ const LeftNavigatorButton = ({ icon, label, route, isActive$ }) => {
 
 const LeftNavigator$ = include('src/components/leftNavigator/LeftNavigator.js');
 const ViewContainer$ = include('src/components/viewContainer/ViewContainer.js');
-
-const MainContainer$ = (...children) =>
-  div$(...children).setStyle({
-    height: 'calc(100% - 40px)',
-    borderRadius: '10px 10px 0 0',
-    background: 'GhostWhite',
-    position: 'absolute',
-    left: '0',
-    right: '0',
-  });
+const MainContainer$ = include('src/components/mainContainer/MainContainer.js');
 
 const HomeView$ = () => div$('HomeView');
 const DataSourcesView$ = () => div$('DataSourcesView');
