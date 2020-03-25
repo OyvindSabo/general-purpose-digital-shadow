@@ -672,20 +672,30 @@ module.exports = TopNavigator$;
   return module.exports;
 })();
 
+modules['src/libraries/styled/Styled.js'] = (() => {
+  const module = { exports: {} };
+  const Styled = (Component, style) => (...children) =>
+  Component(...children).setStyle(style);
+
+module.exports = Styled;
+
+  return module.exports;
+})();
+
 modules['src/components/leftNavigator/LeftNavigator.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const Styled = include('src/libraries/styled/Styled.js');
 
-const LeftNavigator$ = (...children) =>
-  div$(...children).setStyle({
-    height: '100%',
-    width: '80px',
-    borderRadius: '10px 0 0 0',
-    borderRight: '1px solid LightGray',
-    overflow: 'hidden',
-    background: 'White',
-    position: 'absolute',
-  });
+const LeftNavigator$ = Styled(div$, {
+  height: '100%',
+  width: '80px',
+  borderRadius: '10px 0 0 0',
+  borderRight: '1px solid LightGray',
+  overflow: 'hidden',
+  background: 'White',
+  position: 'absolute',
+});
 
 module.exports = LeftNavigator$;
 
