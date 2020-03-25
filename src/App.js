@@ -18,7 +18,6 @@ const ViewContainer$ = include('src/components/viewContainer/ViewContainer.js');
 const MainContainer$ = include('src/components/mainContainer/MainContainer.js');
 const Home$ = include('src/views/home/Home.js');
 const DataSources$ = include('src/views/dataSources/DataSources.js');
-const AnalyticsView$ = () => div$('AnalyticsView');
 const AlertsView$ = () => div$('AlertsView');
 
 const ExpandCodeEditorButton$ = ({ icon, label$, isOpen$ }) => {
@@ -523,11 +522,7 @@ const App = ({ params, currentRoute$, state }) => {
           ),
           DashboardsView$({ state, currentRoute$ })
         ),
-        If$(eq$(currentRoute$, '/alerts'), AlertsView$()),
-        If$(
-          eq$(currentRoute$, '/analytics/<analyticId:string>'),
-          AnalyticsView$()
-        )
+        If$(eq$(currentRoute$, '/alerts'), AlertsView$())
       )
     )
   );
