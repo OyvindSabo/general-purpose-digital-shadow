@@ -1,99 +1,16 @@
 // Observable
 
 const Observable = include('src/libraries/observable/Observable.js');
-
 const { eq$, choose$, or$, not$, toFixed$ } = include(
   'src/libraries/observable/utils.js'
 );
-
-// Observable HTML
-
 const { div$, textArea$, canvas$ } = include(
   'src/libraries/observableHtml/ObservableHtml.js'
 );
-
-// Observable HTML util components
-
 const { If$, Choose$ } = include('src/libraries/observableHtml/utils.js');
 
-// Router
-
-// Utils
-const handleText = textOrNode =>
-  typeof textOrNode === 'string'
-    ? document.createTextNode(textOrNode)
-    : textOrNode;
-
-const appendChild = (element, child) => {
-  if (!child) return;
-  element.appendChild(child);
-};
-
-const createElement = (elementType, ...children) => {
-  const element = document.createElement(elementType);
-  children.forEach(child => {
-    const childNode = handleText(child);
-    appendChild(element, childNode);
-  });
-  element._defaultUpdate = () =>
-    element.childNodes.forEach(childNode => {
-      if (typeof childNode.update !== 'function') return;
-      childNode.update();
-    });
-  element.update = element._defaultUpdate;
-  element.setStyle = styleObject => {
-    Object.assign(element.style, styleObject);
-    return element;
-  };
-  element.state = {};
-  // initState is just like setState, except it does not call element.update
-  element.initState = initialState => {
-    Object.assign(element.state, initialState);
-    return element;
-  };
-  element.initChildren = (...children) => {
-    children.filter(Boolean).forEach(childOrFunction => {
-      const child =
-        typeof childOrFunction === 'function'
-          ? childOrFunction(element)
-          : childOrFunction;
-      const childNode = handleText(child);
-      appendChild(element, childNode);
-    });
-    return element;
-  };
-  element.setState = newState => {
-    Object.assign(element.state, newState);
-    element.update();
-  };
-  element.onUpdate = updateCallback => {
-    element.update = () => {
-      updateCallback(element);
-      element._defaultUpdate();
-    };
-    return element;
-  };
-  element.onInput = inputCallback => {
-    element.oninput = event => inputCallback(element, event);
-    return element;
-  };
-  element.onMouseEnter = mouseEnterCallback => {
-    element.onmouseenter = () => mouseEnterCallback(element);
-    return element;
-  };
-  element.onMouseLeave = mouseLeaveCallback => {
-    element.onmouseleave = () => mouseLeaveCallback(element);
-    return element;
-  };
-  element.onClick = clickCallback => {
-    element.onclick = () => clickCallback(element);
-    return element;
-  };
-  return element;
-};
-
 // Components
-const TopNavigator$ = () => div$().setStyle({ height: '40px' });
+const TopNavigator$ = include('src/components/topNavigator/TopNavigator.js');
 
 const LeftNavigatorButton = ({ icon, label, route, isActive$ }) => {
   const Button = (...children) =>
