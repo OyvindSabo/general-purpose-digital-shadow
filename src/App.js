@@ -13,14 +13,6 @@ const Home$ = include('src/views/home/Home.js');
 const DataSources$ = include('src/views/dataSources/DataSources.js');
 const AlertsView$ = () => div$('AlertsView');
 
-const ExpandCodeEditorButton$ = include(
-  'src/components/expandCodeEditorButton/ExpandCodeEditorButton.js'
-);
-
-const CodeEditor$ = include('src/components/codeEditor/CodeEditor.js');
-
-const ValueWidget$ = include('src/components/valueWidget/ValueWidget.js');
-
 const Values$ = include('src/views/values/Values.js');
 
 const Dashboards$ = include('src/views/dashboards/Dashboards.js');

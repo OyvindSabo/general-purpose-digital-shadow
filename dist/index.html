@@ -625,51 +625,6 @@ module.exports = DataSourcesView$;
   return module.exports;
 })();
 
-modules['src/components/expandCodeEditorButton/ExpandCodeEditorButton.js'] = (() => {
-  const module = { exports: {} };
-  const Observable = include('src/libraries/observable/Observable.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const { choose$ } = include('src/libraries/observable/utils.js');
-
-const ExpandCodeEditorButton$ = ({ icon, label$, isOpen$ }) => {
-  const isHovered$ = new Observable(false);
-  return div$(
-    div$(choose$(isOpen$, '−', '+')).setStyle({
-      fontSize: '30px',
-      textAlign: 'center',
-      marginTop: '15px',
-      pointerEvents: 'none',
-      userSelect: 'none',
-      transform: choose$(isOpen$, 'rotate(180deg)', 'rotate(0deg)'),
-      transition: '0.5s',
-    })
-  )
-    .setStyle({
-      position: 'absolute',
-      background: choose$(isHovered$, 'dodgerblue', 'royalblue'),
-      borderRadius: '50%',
-      color: 'white',
-      height: '60px',
-      width: '60px',
-      margin: '10px',
-      overflow: 'hidden',
-      transition: '0.5s',
-      cursor: 'pointer',
-      zIndex: '1',
-    })
-    .onMouseEnter(element => {
-      isHovered$.value = true;
-    })
-    .onMouseLeave(element => {
-      isHovered$.value = false;
-    });
-};
-
-module.exports = ExpandCodeEditorButton$;
-
-  return module.exports;
-})();
-
 modules['src/libraries/styled/styled.js'] = (() => {
   const module = { exports: {} };
   const styled = (Component, style) => (...children) =>
@@ -807,28 +762,6 @@ module.exports = MainContainer$;
   return module.exports;
 })();
 
-modules['src/components/codeEditor/CodeEditor.js'] = (() => {
-  const module = { exports: {} };
-  const styled = include('src/libraries/styled/styled.js');
-const { textArea$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-
-const CodeEditor$ = styled(textArea$, {
-  width: '100%',
-  height: 'calc(100vh - 40px)',
-  padding: '20px',
-  background: 'black',
-  color: 'white',
-  fontFamily: '"Courier New", Courier, monospace',
-  fontSize: '14px',
-  lineHeight: '20px',
-  whiteSpace: 'nowrap',
-});
-
-module.exports = CodeEditor$;
-
-  return module.exports;
-})();
-
 modules['src/components/leftNavigatorButton/atoms.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
@@ -893,6 +826,73 @@ const LeftNavigatorButton$ = ({ icon, label, route, isActive$ }) => {
 };
 
 module.exports = LeftNavigatorButton$;
+
+  return module.exports;
+})();
+
+modules['src/components/codeEditor/CodeEditor.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const { textArea$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const CodeEditor$ = styled(textArea$, {
+  width: '100%',
+  height: 'calc(100vh - 40px)',
+  padding: '20px',
+  background: 'black',
+  color: 'white',
+  fontFamily: '"Courier New", Courier, monospace',
+  fontSize: '14px',
+  lineHeight: '20px',
+  whiteSpace: 'nowrap',
+});
+
+module.exports = CodeEditor$;
+
+  return module.exports;
+})();
+
+modules['src/components/expandCodeEditorButton/ExpandCodeEditorButton.js'] = (() => {
+  const module = { exports: {} };
+  const Observable = include('src/libraries/observable/Observable.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const { choose$ } = include('src/libraries/observable/utils.js');
+
+const ExpandCodeEditorButton$ = ({ icon, label$, isOpen$ }) => {
+  const isHovered$ = new Observable(false);
+  return div$(
+    div$(choose$(isOpen$, '−', '+')).setStyle({
+      fontSize: '30px',
+      textAlign: 'center',
+      marginTop: '15px',
+      pointerEvents: 'none',
+      userSelect: 'none',
+      transform: choose$(isOpen$, 'rotate(180deg)', 'rotate(0deg)'),
+      transition: '0.5s',
+    })
+  )
+    .setStyle({
+      position: 'absolute',
+      background: choose$(isHovered$, 'dodgerblue', 'royalblue'),
+      borderRadius: '50%',
+      color: 'white',
+      height: '60px',
+      width: '60px',
+      margin: '10px',
+      overflow: 'hidden',
+      transition: '0.5s',
+      cursor: 'pointer',
+      zIndex: '1',
+    })
+    .onMouseEnter(element => {
+      isHovered$.value = true;
+    })
+    .onMouseLeave(element => {
+      isHovered$.value = false;
+    });
+};
+
+module.exports = ExpandCodeEditorButton$;
 
   return module.exports;
 })();
@@ -1504,14 +1504,6 @@ const MainContainer$ = include('src/components/mainContainer/MainContainer.js');
 const Home$ = include('src/views/home/Home.js');
 const DataSources$ = include('src/views/dataSources/DataSources.js');
 const AlertsView$ = () => div$('AlertsView');
-
-const ExpandCodeEditorButton$ = include(
-  'src/components/expandCodeEditorButton/ExpandCodeEditorButton.js'
-);
-
-const CodeEditor$ = include('src/components/codeEditor/CodeEditor.js');
-
-const ValueWidget$ = include('src/components/valueWidget/ValueWidget.js');
 
 const Values$ = include('src/views/values/Values.js');
 
