@@ -9,17 +9,15 @@ const { div$, textArea$, canvas$ } = include(
 );
 const { If$, Choose$ } = include('src/libraries/observableHtml/utils.js');
 
-// Components
 const TopNavigator$ = include('src/components/topNavigator/TopNavigator.js');
 const LeftNavigatorButton$ = include(
   'src/components/leftNavigatorButton/LeftNavigatorButton.js'
 );
-
 const LeftNavigator$ = include('src/components/leftNavigator/LeftNavigator.js');
 const ViewContainer$ = include('src/components/viewContainer/ViewContainer.js');
 const MainContainer$ = include('src/components/mainContainer/MainContainer.js');
-const HomeView$ = include('src/views/home/Home.js');
-const DataSourcesView$ = () => div$('DataSourcesView');
+const Home$ = include('src/views/home/Home.js');
+const DataSources$ = include('src/views/dataSources/DataSources.js');
 const AnalyticsView$ = () => div$('AnalyticsView');
 const AlertsView$ = () => div$('AlertsView');
 
@@ -507,8 +505,8 @@ const App = ({ params, currentRoute$, state }) => {
       ),
       // Not sure I'm happy about this solution
       ViewContainer$(
-        If$(eq$(currentRoute$, '/'), HomeView$()),
-        If$(eq$(currentRoute$, '/data-sources'), DataSourcesView$()),
+        If$(eq$(currentRoute$, '/'), Home$()),
+        If$(eq$(currentRoute$, '/data-sources'), DataSources$()),
         If$(
           or$(
             eq$(currentRoute$, '/values'), // Hack, for some reason the code editor animation doesn't work without this

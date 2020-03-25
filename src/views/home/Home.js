@@ -1,5 +1,5 @@
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
-const HomeView$ = () => div$('HomeView');
+const Home$ = () => div$('HomeView');
 
-module.exports = HomeView$;
+module.exports = Home$;
