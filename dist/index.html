@@ -780,12 +780,12 @@ module.exports = WidgetForegroundContainer$;
   return module.exports;
 })();
 
-modules['src/libraries/styled/Styled.js'] = (() => {
+modules['src/libraries/styled/styled.js'] = (() => {
   const module = { exports: {} };
-  const Styled = (Component, style) => (...children) =>
+  const styled = (Component, style) => (...children) =>
   Component(...children).setStyle(style);
 
-module.exports = Styled;
+module.exports = styled;
 
   return module.exports;
 })();
@@ -793,9 +793,9 @@ module.exports = Styled;
 modules['src/components/leftNavigator/LeftNavigator.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const Styled = include('src/libraries/styled/Styled.js');
+const styled = include('src/libraries/styled/styled.js');
 
-const LeftNavigator$ = Styled(div$, {
+const LeftNavigator$ = styled(div$, {
   height: '100%',
   width: '80px',
   borderRadius: '10px 0 0 0',
@@ -813,9 +813,9 @@ module.exports = LeftNavigator$;
 modules['src/components/viewContainer/ViewContainer.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const Styled = include('src/libraries/styled/Styled.js');
+const styled = include('src/libraries/styled/styled.js');
 
-const ViewContainer$ = Styled(div$, {
+const ViewContainer$ = styled(div$, {
   position: 'absolute',
   top: '0',
   left: '80px',
@@ -830,9 +830,9 @@ module.exports = ViewContainer$;
 modules['src/components/mainContainer/MainContainer.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const Styled = include('src/libraries/styled/Styled.js');
+const styled = include('src/libraries/styled/styled.js');
 
-const MainContainer$ = Styled(div$, {
+const MainContainer$ = styled(div$, {
   height: 'calc(100% - 40px)',
   borderRadius: '10px 10px 0 0',
   background: 'GhostWhite',
@@ -849,23 +849,23 @@ module.exports = MainContainer$;
 modules['src/components/leftNavigatorButton/atoms.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const Styled = include('src/libraries/styled/Styled.js');
+const styled = include('src/libraries/styled/styled.js');
 
-const Button$ = Styled(div$, {
+const Button$ = styled(div$, {
   height: '80px',
   width: '80px',
   overflow: 'hidden',
   transition: '0.5s',
   cursor: 'pointer',
 });
-const Icon$ = Styled(div$, {
+const Icon$ = styled(div$, {
   fontSize: '30px',
   textAlign: 'center',
   marginTop: '15px',
   pointerEvents: 'none',
   userSelect: 'none',
 });
-const Label$ = Styled(div$, {
+const Label$ = styled(div$, {
   fontSize: '15px',
   textAlign: 'center',
   pointerEvents: 'none',

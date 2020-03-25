@@ -1,21 +1,21 @@
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const Styled = include('src/libraries/styled/Styled.js');
+const styled = include('src/libraries/styled/styled.js');
 
-const Button$ = Styled(div$, {
+const Button$ = styled(div$, {
   height: '80px',
   width: '80px',
   overflow: 'hidden',
   transition: '0.5s',
   cursor: 'pointer',
 });
-const Icon$ = Styled(div$, {
+const Icon$ = styled(div$, {
   fontSize: '30px',
   textAlign: 'center',
   marginTop: '15px',
   pointerEvents: 'none',
   userSelect: 'none',
 });
-const Label$ = Styled(div$, {
+const Label$ = styled(div$, {
   fontSize: '15px',
   textAlign: 'center',
   pointerEvents: 'none',

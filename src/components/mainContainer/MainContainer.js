@@ -1,7 +1,7 @@
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const Styled = include('src/libraries/styled/Styled.js');
+const styled = include('src/libraries/styled/styled.js');
 
-const MainContainer$ = Styled(div$, {
+const MainContainer$ = styled(div$, {
   height: 'calc(100% - 40px)',
   borderRadius: '10px 10px 0 0',
   background: 'GhostWhite',

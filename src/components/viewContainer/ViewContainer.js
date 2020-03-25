@@ -1,7 +1,7 @@
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const Styled = include('src/libraries/styled/Styled.js');
+const styled = include('src/libraries/styled/styled.js');
 
-const ViewContainer$ = Styled(div$, {
+const ViewContainer$ = styled(div$, {
   position: 'absolute',
   top: '0',
   left: '80px',
