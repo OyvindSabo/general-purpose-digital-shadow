@@ -1,8 +1,14 @@
 const { canvas$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const render = include('src/components/visualization/render/render.js');
 
-const TwoDimVisualization$ = ({ surfaces$, edges$, center$ }) => {
-  const canvas = canvas$({ height: 280, width: 440 }).setStyle({
+const TwoDimVisualization$ = ({
+  height$,
+  width$,
+  surfaces$,
+  edges$,
+  center$,
+}) => {
+  const canvas = canvas$({ height$, width$ }).setStyle({
     position: 'absolute',
   });
   const ctx = canvas.getContext('2d');

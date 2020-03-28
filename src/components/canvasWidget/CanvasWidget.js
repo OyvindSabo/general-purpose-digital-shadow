@@ -1,6 +1,4 @@
-const MediumWidgetCard$ = include(
-  'src/components/widgetCard/MediumWidgetCard.js'
-);
+const WidgetCard$ = include('src/components/widgetCard/WidgetCard.js');
 const ThreeDimVisualization$ = include(
   'src/components/visualization/threeDimVisualization/ThreeDimVisualization.js'
 );
@@ -22,11 +20,25 @@ const CanvasWidget$ = ({
 }) => {
   return If$(
     not$(isEmpty$),
-    withShadow(MediumWidgetCard$)(
+    // Height + margin = 5 x navigator buttons
+    // Width + margin = 7.5 x navigator buttons
+    withShadow(WidgetCard$({ height$: 288, width$: 448 }))(
       Choose$(
         is3d$,
-        ThreeDimVisualization$({ surfaces$, edges$, center$ }),
-        TwoDimVisualization$({ surfaces$, edges$, center$ })
+        ThreeDimVisualization$({
+          height$: 288,
+          width$: 448,
+          surfaces$,
+          edges$,
+          center$,
+        }),
+        TwoDimVisualization$({
+          height$: 288,
+          width$: 448,
+          surfaces$,
+          edges$,
+          center$,
+        })
       ),
       WidgetLabel$({ label$ })
     ).setStyle({

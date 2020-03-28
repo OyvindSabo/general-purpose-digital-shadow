@@ -5,9 +5,15 @@ const Camera = include(
 );
 const render = include('src/components/visualization/render/render.js');
 
-const ThreeDimVisualization$ = ({ surfaces$, edges$, center$ }) => {
+const ThreeDimVisualization$ = ({
+  height$,
+  width$,
+  surfaces$,
+  edges$,
+  center$,
+}) => {
   const state = { mouseDown: false };
-  const canvas = canvas$({ height: 280, width: 440 }).setStyle({
+  const canvas = canvas$({ height$, width$ }).setStyle({
     position: 'absolute',
   });
   const camera = new Camera({

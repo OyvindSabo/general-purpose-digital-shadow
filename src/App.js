@@ -99,6 +99,7 @@ const App = ({ currentRoute$, model }) => {
         HorizontalNavigator$(ViewTitle$(getViewTitle$(currentRoute$))).setStyle(
           {
             background: 'white',
+            color: 'darkslategray',
           }
         ),
         If$(eq$(currentRoute$, '/'), Home$({ model })),

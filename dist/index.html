@@ -962,12 +962,11 @@ const button$ = (...children) => createElement$('button', ...children);
 const option$ = ({ value, label }) =>
   createElement$('option', label).setProps({ value });
 const input$ = (value = '') => createElement$('input').setProps({ value });
-const canvas$ = ({ width, height }) => {
-  const element = createElement$('canvas');
-  element.width = width;
-  element.height = height;
-  return element;
-};
+const canvas$ = ({ width$, height$ }) =>
+  createElement$('canvas').setProps({
+    width: width$,
+    height: height$,
+  });
 
 module.exports = {
   createElement$,
@@ -1249,16 +1248,22 @@ module.exports = LeftNavigatorButton$;
 modules['src/views/home/projectPreview/ProjectPreview.js'] = (() => {
   const module = { exports: {} };
   const styled = include('src/libraries/styled/styled.js');
+const withShadow = include('src/styleWrappers/withShadow.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
-const ProjectPreview$ = styled({
-  height: '64px',
-  padding: '16px',
-  margin: '16px',
-  fontSize: '16px',
-  background: 'white',
-  boxShadow: 'rgba(0, 0, 0, 0.25) 0px 0px 8px -4px',
-})(div$);
+const ProjectPreview$ = withShadow(
+  styled({
+    color: 'dimgray',
+    margin: '32px',
+    padding: '16px',
+    // Height + margin = 2 x navigator buttons
+    height: '96px',
+    verticalAlign: 'top',
+    background: 'white',
+    fontSize: '16px',
+    boxSizing: 'border-box',
+  })(div$)
+);
 
 module.exports = ProjectPreview$;
 
@@ -1387,18 +1392,16 @@ module.exports = WidgetValue$;
 
 modules['src/components/widgetCard/WidgetCard.js'] = (() => {
   const module = { exports: {} };
-  const withShadow = include('src/styleWrappers/withShadow.js');
-const styled = include('src/libraries/styled/styled.js');
+  const styled = include('src/libraries/styled/styled.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { add$ } = include('src/libraries/observable/utils.js');
 
 const WidgetCard$ = ({ width$, height$ }) =>
   styled({
-    margin: '20px',
+    margin: '32px 0 0 32px',
     width: add$(width$, 'px'),
     height: add$(height$, 'px'),
     display: 'inline-block',
-    boxSizing: 'border-box',
     verticalAlign: 'top',
     background: 'white',
   })(div$);
@@ -1408,24 +1411,11 @@ module.exports = WidgetCard$;
   return module.exports;
 })();
 
-modules['src/components/widgetCard/SmallWidgetCard.js'] = (() => {
-  const module = { exports: {} };
-  const WidgetCard$ = include('src/components/widgetCard/WidgetCard.js');
-
-const SmallWidgetCard$ = WidgetCard$({ height$: 240, width$: 360 });
-
-module.exports = SmallWidgetCard$;
-
-  return module.exports;
-})();
-
 modules['src/components/valueWidget/ValueWidget.js'] = (() => {
   const module = { exports: {} };
   const WidgetLabel$ = include('src/components/widgetLabel/WidgetLabel.js');
 const WidgetValue$ = include('src/components/widgetValue/WidgetValue.js');
-const SmallWidgetCard$ = include(
-  'src/components/widgetCard/SmallWidgetCard.js'
-);
+const WidgetCard$ = include('src/components/widgetCard/WidgetCard.js');
 const { not$ } = include('src/libraries/observable/utils.js');
 const { If$ } = include('src/libraries/observableHtml/utils.js');
 const withShadow = include('src/styleWrappers/withShadow.js');
@@ -1433,7 +1423,9 @@ const withShadow = include('src/styleWrappers/withShadow.js');
 const ValueWidget$ = ({ label$, value$, isEmpty$ }) =>
   If$(
     not$(isEmpty$),
-    withShadow(SmallWidgetCard$)(
+    // Height + margin = 4 x navigator buttons
+    // Width + margin = 6 x navigator buttons
+    withShadow(WidgetCard$({ height$: 224, width$: 352 }))(
       WidgetLabel$({ label$ }),
       WidgetValue$({ value$ })
     ).setStyle({ position: 'relative', color: 'dimgray' })
@@ -1492,17 +1484,6 @@ const Values$ = ({ model, currentRoute$ }) => {
 };
 
 module.exports = Values$;
-
-  return module.exports;
-})();
-
-modules['src/components/widgetCard/MediumWidgetCard.js'] = (() => {
-  const module = { exports: {} };
-  const WidgetCard$ = include('src/components/widgetCard/WidgetCard.js');
-
-const MediumWidgetCard$ = WidgetCard$({ height$: 320, width$: 480 });
-
-module.exports = MediumWidgetCard$;
 
   return module.exports;
 })();
@@ -1722,9 +1703,15 @@ const Camera = include(
 );
 const render = include('src/components/visualization/render/render.js');
 
-const ThreeDimVisualization$ = ({ surfaces$, edges$, center$ }) => {
+const ThreeDimVisualization$ = ({
+  height$,
+  width$,
+  surfaces$,
+  edges$,
+  center$,
+}) => {
   const state = { mouseDown: false };
-  const canvas = canvas$({ height: 280, width: 440 }).setStyle({
+  const canvas = canvas$({ height$, width$ }).setStyle({
     position: 'absolute',
   });
   const camera = new Camera({
@@ -1790,8 +1777,14 @@ modules['src/components/visualization/twoDimVisualization/TwoDimVisualization.js
   const { canvas$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const render = include('src/components/visualization/render/render.js');
 
-const TwoDimVisualization$ = ({ surfaces$, edges$, center$ }) => {
-  const canvas = canvas$({ height: 280, width: 440 }).setStyle({
+const TwoDimVisualization$ = ({
+  height$,
+  width$,
+  surfaces$,
+  edges$,
+  center$,
+}) => {
+  const canvas = canvas$({ height$, width$ }).setStyle({
     position: 'absolute',
   });
   const ctx = canvas.getContext('2d');
@@ -1813,9 +1806,7 @@ module.exports = TwoDimVisualization$;
 
 modules['src/components/canvasWidget/CanvasWidget.js'] = (() => {
   const module = { exports: {} };
-  const MediumWidgetCard$ = include(
-  'src/components/widgetCard/MediumWidgetCard.js'
-);
+  const WidgetCard$ = include('src/components/widgetCard/WidgetCard.js');
 const ThreeDimVisualization$ = include(
   'src/components/visualization/threeDimVisualization/ThreeDimVisualization.js'
 );
@@ -1837,11 +1828,25 @@ const CanvasWidget$ = ({
 }) => {
   return If$(
     not$(isEmpty$),
-    withShadow(MediumWidgetCard$)(
+    // Height + margin = 5 x navigator buttons
+    // Width + margin = 7.5 x navigator buttons
+    withShadow(WidgetCard$({ height$: 288, width$: 448 }))(
       Choose$(
         is3d$,
-        ThreeDimVisualization$({ surfaces$, edges$, center$ }),
-        TwoDimVisualization$({ surfaces$, edges$, center$ })
+        ThreeDimVisualization$({
+          height$: 288,
+          width$: 448,
+          surfaces$,
+          edges$,
+          center$,
+        }),
+        TwoDimVisualization$({
+          height$: 288,
+          width$: 448,
+          surfaces$,
+          edges$,
+          center$,
+        })
       ),
       WidgetLabel$({ label$ })
     ).setStyle({
@@ -2024,6 +2029,7 @@ const App = ({ currentRoute$, model }) => {
         HorizontalNavigator$(ViewTitle$(getViewTitle$(currentRoute$))).setStyle(
           {
             background: 'white',
+            color: 'darkslategray',
           }
         ),
         If$(eq$(currentRoute$, '/'), Home$({ model })),

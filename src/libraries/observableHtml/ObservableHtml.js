@@ -87,12 +87,11 @@ const button$ = (...children) => createElement$('button', ...children);
 const option$ = ({ value, label }) =>
   createElement$('option', label).setProps({ value });
 const input$ = (value = '') => createElement$('input').setProps({ value });
-const canvas$ = ({ width, height }) => {
-  const element = createElement$('canvas');
-  element.width = width;
-  element.height = height;
-  return element;
-};
+const canvas$ = ({ width$, height$ }) =>
+  createElement$('canvas').setProps({
+    width: width$,
+    height: height$,
+  });
 
 module.exports = {
   createElement$,
