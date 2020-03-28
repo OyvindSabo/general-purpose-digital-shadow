@@ -1,11 +1,10 @@
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const styled = include('src/libraries/styled/styled.js');
 
-const ViewContainer$ = styled(div$, {
+const VerticalNavigator$ = styled(div$, {
+  height: '100%',
+  width: '64px',
   position: 'absolute',
-  top: '0',
-  left: '64px',
-  right: '0',
 });
 
-module.exports = ViewContainer$;
+module.exports = VerticalNavigator$;

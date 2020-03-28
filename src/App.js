@@ -2,11 +2,15 @@ const { eq$, or$ } = include('src/libraries/observable/utils.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { If$ } = include('src/libraries/observableHtml/utils.js');
 
-const TopNavigator$ = include('src/components/topNavigator/TopNavigator.js');
+const HorizontalNavigator$ = include(
+  'src/components/horizontalNavigator/HorizontalNavigator.js'
+);
 const LeftNavigatorButton$ = include(
   'src/components/leftNavigatorButton/LeftNavigatorButton.js'
 );
-const LeftNavigator$ = include('src/components/leftNavigator/LeftNavigator.js');
+const VerticalNavigator$ = include(
+  'src/components/verticalNavigator/VerticalNavigator.js'
+);
 const ViewContainer$ = include('src/components/viewContainer/ViewContainer.js');
 const MainContainer$ = include('src/components/mainContainer/MainContainer.js');
 const Home$ = include('src/views/home/Home.js');
@@ -19,15 +23,29 @@ const Dashboards$ = include('src/views/dashboards/Dashboards.js');
 
 const App = ({ params, currentRoute$, state }) => {
   const element = div$(
-    TopNavigator$(),
+    HorizontalNavigator$(),
     MainContainer$(
-      LeftNavigator$(
+      VerticalNavigator$(
         // Add something for home as well
+        LeftNavigatorButton$({
+          icon: '🏠',
+          label: 'Home',
+          route: '/',
+          isActive$: eq$(currentRoute$, '/'),
+          labelColor$: 'whitesmoke',
+          highlightLabelColor$: 'white',
+          backgroundColor$: 'lightslategray',
+          highlightBackgroundColor$: 'slategray',
+        }),
         LeftNavigatorButton$({
           icon: '🏗',
           label: 'Data sources',
           route: '/data-sources',
           isActive$: eq$(currentRoute$, '/data-sources'),
+          labelColor$: 'whitesmoke',
+          highlightLabelColor$: 'white',
+          backgroundColor$: 'lightslategray',
+          highlightBackgroundColor$: 'slategray',
         }),
         LeftNavigatorButton$({
           icon: '🧮',
@@ -37,6 +55,10 @@ const App = ({ params, currentRoute$, state }) => {
             eq$(currentRoute$, '/values'),
             eq$(currentRoute$, '/values/edit')
           ),
+          labelColor$: 'whitesmoke',
+          highlightLabelColor$: 'white',
+          backgroundColor$: 'lightslategray',
+          highlightBackgroundColor$: 'slategray',
         }),
         LeftNavigatorButton$({
           icon: '📊',
@@ -46,14 +68,22 @@ const App = ({ params, currentRoute$, state }) => {
             eq$(currentRoute$, '/dashboards'),
             eq$(currentRoute$, '/dashboards/edit')
           ),
+          labelColor$: 'whitesmoke',
+          highlightLabelColor$: 'white',
+          backgroundColor$: 'lightslategray',
+          highlightBackgroundColor$: 'slategray',
         }),
         LeftNavigatorButton$({
           icon: '⏰',
           label: 'Alerts',
           route: '/alerts',
           isActive$: eq$(currentRoute$, '/alerts'),
+          labelColor$: 'whitesmoke',
+          highlightLabelColor$: 'white',
+          backgroundColor$: 'lightslategray',
+          highlightBackgroundColor$: 'slategray',
         })
-      ),
+      ).setStyle({ background: 'lightslategrey' }),
       // Not sure I'm happy about this solution
       ViewContainer$(
         If$(eq$(currentRoute$, '/'), Home$()),

@@ -2,8 +2,8 @@ const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const styled = include('src/libraries/styled/styled.js');
 
 const Button$ = styled(div$, {
-  height: '80px',
-  width: '80px',
+  height: '64px',
+  width: '64px',
   overflow: 'hidden',
   transition: '0.5s',
   cursor: 'pointer',

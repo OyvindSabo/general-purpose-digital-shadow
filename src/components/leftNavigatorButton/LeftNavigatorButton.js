@@ -3,22 +3,39 @@ const { choose$ } = include('src/libraries/observable/utils.js');
 const { Button$, Icon$, Label$ } = include(
   'src/components/leftNavigatorButton/atoms.js'
 );
-const LeftNavigatorButton$ = ({ icon, label, route, isActive$ }) => {
+const LeftNavigatorButton$ = ({
+  icon,
+  label,
+  route,
+  isActive$,
+  labelColor$,
+  highlightLabelColor$,
+  backgroundColor$,
+  highlightBackgroundColor$,
+}) => {
   return Button$(Icon$(icon), Label$(label))
     .setStyle({
-      background: choose$(isActive$, 'whitesmoke', 'initial'),
-      color: choose$(isActive$, 'dimgray', 'gray'),
+      background: choose$(
+        isActive$,
+        highlightBackgroundColor$,
+        backgroundColor$
+      ),
+      color: choose$(isActive$, highlightLabelColor$, labelColor$),
     })
     .onMouseEnter(element => {
       element.setStyle({
-        background: 'whitesmoke',
-        color: 'dimgray',
+        background: highlightBackgroundColor$,
+        color: highlightLabelColor$,
       });
     })
     .onMouseLeave(element => {
       element.setStyle({
-        background: choose$(isActive$, 'whitesmoke', 'initial'),
-        color: choose$(isActive$, 'dimgray', 'gray'),
+        background: choose$(
+          isActive$,
+          highlightBackgroundColor$,
+          backgroundColor$
+        ),
+        color: choose$(isActive$, highlightLabelColor$, labelColor$),
       });
     })
     .onClick(() => (location.hash = `#!${route}`));

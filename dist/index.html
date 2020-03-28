@@ -694,34 +694,33 @@ module.exports = {
   return module.exports;
 })();
 
-modules['src/components/topNavigator/TopNavigator.js'] = (() => {
+modules['src/components/horizontalNavigator/HorizontalNavigator.js'] = (() => {
   const module = { exports: {} };
   const styled = include('src/libraries/styled/styled.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
-const TopNavigator$ = styled(div$, { height: '40px' });
+const HorizontalNavigator$ = styled(div$, {
+  background: 'black',
+  height: '64px',
+});
 
-module.exports = TopNavigator$;
+module.exports = HorizontalNavigator$;
 
   return module.exports;
 })();
 
-modules['src/components/leftNavigator/LeftNavigator.js'] = (() => {
+modules['src/components/verticalNavigator/VerticalNavigator.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const styled = include('src/libraries/styled/styled.js');
 
-const LeftNavigator$ = styled(div$, {
+const VerticalNavigator$ = styled(div$, {
   height: '100%',
-  width: '80px',
-  borderRadius: '10px 0 0 0',
-  borderRight: '1px solid LightGray',
-  overflow: 'hidden',
-  background: 'White',
+  width: '64px',
   position: 'absolute',
 });
 
-module.exports = LeftNavigator$;
+module.exports = VerticalNavigator$;
 
   return module.exports;
 })();
@@ -734,7 +733,7 @@ const styled = include('src/libraries/styled/styled.js');
 const ViewContainer$ = styled(div$, {
   position: 'absolute',
   top: '0',
-  left: '80px',
+  left: '64px',
   right: '0',
 });
 
@@ -749,8 +748,7 @@ modules['src/components/mainContainer/MainContainer.js'] = (() => {
 const styled = include('src/libraries/styled/styled.js');
 
 const MainContainer$ = styled(div$, {
-  height: 'calc(100% - 40px)',
-  borderRadius: '10px 10px 0 0',
+  height: 'calc(100% - 64px)',
   background: 'GhostWhite',
   position: 'absolute',
   left: '0',
@@ -768,8 +766,8 @@ modules['src/components/leftNavigatorButton/atoms.js'] = (() => {
 const styled = include('src/libraries/styled/styled.js');
 
 const Button$ = styled(div$, {
-  height: '80px',
-  width: '80px',
+  height: '64px',
+  width: '64px',
   overflow: 'hidden',
   transition: '0.5s',
   cursor: 'pointer',
@@ -804,22 +802,39 @@ modules['src/components/leftNavigatorButton/LeftNavigatorButton.js'] = (() => {
 const { Button$, Icon$, Label$ } = include(
   'src/components/leftNavigatorButton/atoms.js'
 );
-const LeftNavigatorButton$ = ({ icon, label, route, isActive$ }) => {
+const LeftNavigatorButton$ = ({
+  icon,
+  label,
+  route,
+  isActive$,
+  labelColor$,
+  highlightLabelColor$,
+  backgroundColor$,
+  highlightBackgroundColor$,
+}) => {
   return Button$(Icon$(icon), Label$(label))
     .setStyle({
-      background: choose$(isActive$, 'whitesmoke', 'initial'),
-      color: choose$(isActive$, 'dimgray', 'gray'),
+      background: choose$(
+        isActive$,
+        highlightBackgroundColor$,
+        backgroundColor$
+      ),
+      color: choose$(isActive$, highlightLabelColor$, labelColor$),
     })
     .onMouseEnter(element => {
       element.setStyle({
-        background: 'whitesmoke',
-        color: 'dimgray',
+        background: highlightBackgroundColor$,
+        color: highlightLabelColor$,
       });
     })
     .onMouseLeave(element => {
       element.setStyle({
-        background: choose$(isActive$, 'whitesmoke', 'initial'),
-        color: choose$(isActive$, 'dimgray', 'gray'),
+        background: choose$(
+          isActive$,
+          highlightBackgroundColor$,
+          backgroundColor$
+        ),
+        color: choose$(isActive$, highlightLabelColor$, labelColor$),
       });
     })
     .onClick(() => (location.hash = `#!${route}`));
@@ -1494,11 +1509,15 @@ modules['src/App.js'] = (() => {
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { If$ } = include('src/libraries/observableHtml/utils.js');
 
-const TopNavigator$ = include('src/components/topNavigator/TopNavigator.js');
+const HorizontalNavigator$ = include(
+  'src/components/horizontalNavigator/HorizontalNavigator.js'
+);
 const LeftNavigatorButton$ = include(
   'src/components/leftNavigatorButton/LeftNavigatorButton.js'
 );
-const LeftNavigator$ = include('src/components/leftNavigator/LeftNavigator.js');
+const VerticalNavigator$ = include(
+  'src/components/verticalNavigator/VerticalNavigator.js'
+);
 const ViewContainer$ = include('src/components/viewContainer/ViewContainer.js');
 const MainContainer$ = include('src/components/mainContainer/MainContainer.js');
 const Home$ = include('src/views/home/Home.js');
@@ -1511,15 +1530,29 @@ const Dashboards$ = include('src/views/dashboards/Dashboards.js');
 
 const App = ({ params, currentRoute$, state }) => {
   const element = div$(
-    TopNavigator$(),
+    HorizontalNavigator$(),
     MainContainer$(
-      LeftNavigator$(
+      VerticalNavigator$(
         // Add something for home as well
+        LeftNavigatorButton$({
+          icon: '🏠',
+          label: 'Home',
+          route: '/',
+          isActive$: eq$(currentRoute$, '/'),
+          labelColor$: 'whitesmoke',
+          highlightLabelColor$: 'white',
+          backgroundColor$: 'lightslategray',
+          highlightBackgroundColor$: 'slategray',
+        }),
         LeftNavigatorButton$({
           icon: '🏗',
           label: 'Data sources',
           route: '/data-sources',
           isActive$: eq$(currentRoute$, '/data-sources'),
+          labelColor$: 'whitesmoke',
+          highlightLabelColor$: 'white',
+          backgroundColor$: 'lightslategray',
+          highlightBackgroundColor$: 'slategray',
         }),
         LeftNavigatorButton$({
           icon: '🧮',
@@ -1529,6 +1562,10 @@ const App = ({ params, currentRoute$, state }) => {
             eq$(currentRoute$, '/values'),
             eq$(currentRoute$, '/values/edit')
           ),
+          labelColor$: 'whitesmoke',
+          highlightLabelColor$: 'white',
+          backgroundColor$: 'lightslategray',
+          highlightBackgroundColor$: 'slategray',
         }),
         LeftNavigatorButton$({
           icon: '📊',
@@ -1538,14 +1575,22 @@ const App = ({ params, currentRoute$, state }) => {
             eq$(currentRoute$, '/dashboards'),
             eq$(currentRoute$, '/dashboards/edit')
           ),
+          labelColor$: 'whitesmoke',
+          highlightLabelColor$: 'white',
+          backgroundColor$: 'lightslategray',
+          highlightBackgroundColor$: 'slategray',
         }),
         LeftNavigatorButton$({
           icon: '⏰',
           label: 'Alerts',
           route: '/alerts',
           isActive$: eq$(currentRoute$, '/alerts'),
+          labelColor$: 'whitesmoke',
+          highlightLabelColor$: 'white',
+          backgroundColor$: 'lightslategray',
+          highlightBackgroundColor$: 'slategray',
         })
-      ),
+      ).setStyle({ background: 'lightslategrey' }),
       // Not sure I'm happy about this solution
       ViewContainer$(
         If$(eq$(currentRoute$, '/'), Home$()),
@@ -1585,7 +1630,6 @@ const Observable = include('src/libraries/observable/Observable.js');
 const App = include('src/App.js');
 
 Object.assign(document.body.style, {
-  background: 'black',
   margin: 0,
   height: '100%',
 });

@@ -2,8 +2,7 @@ const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const styled = include('src/libraries/styled/styled.js');
 
 const MainContainer$ = styled(div$, {
-  height: 'calc(100% - 40px)',
-  borderRadius: '10px 10px 0 0',
+  height: 'calc(100% - 64px)',
   background: 'GhostWhite',
   position: 'absolute',
   left: '0',

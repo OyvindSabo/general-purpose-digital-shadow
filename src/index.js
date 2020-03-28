@@ -3,7 +3,6 @@ const Observable = include('src/libraries/observable/Observable.js');
 const App = include('src/App.js');
 
 Object.assign(document.body.style, {
-  background: 'black',
   margin: 0,
   height: '100%',
 });
