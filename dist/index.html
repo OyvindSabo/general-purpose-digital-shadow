@@ -903,7 +903,7 @@ const { textArea$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
 const CodeEditor$ = styled(textArea$, {
   width: '100%',
-  height: 'calc(100vh - 40px)',
+  height: 'calc(100vh - 128px)',
   padding: '20px',
   background: 'black',
   color: 'white',
@@ -1077,7 +1077,7 @@ const ValueWidget$ = include('src/components/valueWidget/ValueWidget.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { eq$, choose$ } = include('src/libraries/observable/utils.js');
 
-const Values$ = ({ state, currentRoute$ }) => {
+const Values$ = ({ model, currentRoute$ }) => {
   const codeEditorIsOpen$ = eq$(currentRoute$, '/values/edit');
   return div$(
     ExpandCodeEditorButton$({
@@ -1088,9 +1088,9 @@ const Values$ = ({ state, currentRoute$ }) => {
       location.hash = codeEditorIsOpen$.value ? '#!/values' : '#!/values/edit';
     }),
     div$(
-      CodeEditor$(state.derivedValuesCode$)
+      CodeEditor$(model.derivedValuesCode$)
         .onInput(({ value }) => {
-          state.derivedValuesCode$.value = value;
+          model.derivedValuesCode$.value = value;
         })
         .setStyle({ paddingLeft: '80px' })
     ).setStyle({
@@ -1101,7 +1101,7 @@ const Values$ = ({ state, currentRoute$ }) => {
     }),
     div$(
       div$(
-        ...state.derivedValues.map(({ label$, value$, isEmpty$ }) =>
+        ...model.derivedValues.map(({ label$, value$, isEmpty$ }) =>
           ValueWidget$({ label$, value$, isEmpty$ })
         )
       ).setStyle({ position: 'relative', top: '0' })
@@ -1502,7 +1502,7 @@ const CanvasWidget$ = include('src/components/canvasWidget/CanvasWidget.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { eq$, choose$ } = include('src/libraries/observable/utils.js');
 
-const Dashboards$ = ({ state, currentRoute$ }) => {
+const Dashboards$ = ({ model, currentRoute$ }) => {
   const codeEditorIsOpen$ = eq$(currentRoute$, '/dashboards/edit');
   return div$(
     ExpandCodeEditorButton$({
@@ -1515,9 +1515,9 @@ const Dashboards$ = ({ state, currentRoute$ }) => {
         : '#!/dashboards/edit';
     }),
     div$(
-      CodeEditor$(state.widgetsCode$)
+      CodeEditor$(model.widgetsCode$)
         .onInput(({ value }) => {
-          state.widgetsCode$.value = value;
+          model.widgetsCode$.value = value;
         })
         .setStyle({ paddingLeft: '80px' })
     ).setStyle({
@@ -1528,7 +1528,7 @@ const Dashboards$ = ({ state, currentRoute$ }) => {
     }),
     div$(
       div$(
-        ...state.widgets.map(
+        ...model.widgets.map(
           ({ label$, surfaces$, edges$, is3d$, center$, isEmpty$ }) =>
             CanvasWidget$({
               label$,
@@ -1582,15 +1582,15 @@ const Dashboards$ = include('src/views/dashboards/Dashboards.js');
 
 const getViewTitle$ = currentRoute$ =>
   cond$(
-    [eq$(currentRoute$, '/'), 'Home'],
+    [eq$(currentRoute$, '/'), 'Projects'],
     [eq$(currentRoute$, '/data-sources'), 'Data sources'],
     [eq$(currentRoute$, '/values'), 'Values'],
     [eq$(currentRoute$, '/dashboards'), 'Dashboards'],
-    [eq$(currentRoute$, '/dashboards/edit'), 'Edit dashboard'],
+    [eq$(currentRoute$, '/dashboards/edit'), 'Edit dashboards'],
     [eq$(currentRoute$, '/alerts'), 'Alerts']
   );
 
-const App = ({ params, currentRoute$, state }) => {
+const App = ({ params, currentRoute$, model }) => {
   const element = div$(
     HorizontalNavigator$().setStyle({ background: 'black' }),
     MainContainer$(
@@ -1667,7 +1667,7 @@ const App = ({ params, currentRoute$, state }) => {
             eq$(currentRoute$, '/values/edit'),
             eq$(currentRoute$, '/values')
           ),
-          Values$({ state, currentRoute$ })
+          Values$({ model, currentRoute$ })
         ),
         If$(
           or$(
@@ -1675,7 +1675,7 @@ const App = ({ params, currentRoute$, state }) => {
             eq$(currentRoute$, '/dashboards/edit'),
             eq$(currentRoute$, '/dashboards')
           ),
-          Dashboards$({ state, currentRoute$ })
+          Dashboards$({ model, currentRoute$ })
         ),
         If$(eq$(currentRoute$, '/alerts'), AlertsView$())
       )
@@ -1697,6 +1697,7 @@ const App = include('src/App.js');
 
 Object.assign(document.body.style, {
   margin: 0,
+  fontFamily: 'sans-serif',
   height: '100%',
 });
 //const FIREBASE_API_KEY = 'AIzaSyCeGXLqw0MEwiSFHG1Wks1HfQHXRZoOuFY';
@@ -1705,7 +1706,7 @@ const MAX_AMOUNT_OF_WIDGETS = 100;
 
 // Create router
 const router = new Router({
-  '/': 'Home',
+  '/': 'Projects',
   '/data-sources': 'Data sources',
   '/values': 'Values',
   '/values/edit': 'Edit values',
@@ -1736,7 +1737,7 @@ const evaluateCode = (valuesCode, derivedValuesCode, widgetsCode) => {
 const buyPrice$ = new Observable(100);
 const sellPrice$ = new Observable(100);
 
-const state = {
+const model = {
   derivedValuesEditorIsOpen$: new Observable(false),
 
   valuesCode$: new Observable(''),
@@ -1765,22 +1766,22 @@ const state = {
   })),
 };
 
-window.addEventListener(state.valuesCode$.id, () => {
+window.addEventListener(model.valuesCode$.id, () => {
   const evaluatedCode = evaluateCode(
-    state.valuesCode$.value,
-    state.derivedValuesCode$.value,
-    state.widgetsCode$.value
+    model.valuesCode$.value,
+    model.derivedValuesCode$.value,
+    model.widgetsCode$.value
   );
 
   const valuesEntries = Object.entries(evaluatedCode.values);
-  state.values.forEach(({ label$, value$, isEmpty$ }, index) => {
+  model.values.forEach(({ label$, value$, isEmpty$ }, index) => {
     label$.value = valuesEntries[index] ? valuesEntries[index][0] : '';
     value$.value = valuesEntries[index] ? valuesEntries[index][1] : 0;
     isEmpty$.value = !Boolean(valuesEntries[index]);
   });
 
   const derivedValuesEntries = Object.entries(evaluatedCode.derivedValues);
-  state.derivedValues.forEach(({ label$, value$, isEmpty$ }, index) => {
+  model.derivedValues.forEach(({ label$, value$, isEmpty$ }, index) => {
     label$.value = derivedValuesEntries[index]
       ? derivedValuesEntries[index][0]
       : '';
@@ -1791,7 +1792,7 @@ window.addEventListener(state.valuesCode$.id, () => {
   });
 
   const widgetsEntries = Object.entries(evaluatedCode.widgets);
-  state.widgets.forEach(
+  model.widgets.forEach(
     ({ label$, edges$, surfaces$, is3d$, center$, isEmpty$ }, index) => {
       label$.value = widgetsEntries[index] ? widgetsEntries[index][0] : '';
       edges$.value = widgetsEntries[index]
@@ -1822,7 +1823,7 @@ const updateValues = () => {
       Math.floor(Math.random() * 2) == 1
         ? sellPrice$.value * 1.01
         : sellPrice$.value / 1.01;
-    state.valuesCode$.value = `
+    model.valuesCode$.value = `
       values.buyPrice = ${buyPrice$.value};
       values.sellPrice = ${sellPrice$.value};
     `;
@@ -1831,13 +1832,13 @@ const updateValues = () => {
 };
 updateValues();
 
-state.derivedValuesCode$.value = `
+model.derivedValuesCode$.value = `
   derivedValues['A constant value'] = 45;
   derivedValues['Profit']           = values.sellPrice - values.buyPrice;
   derivedValues['Dollar Profit']    = derivedValues.Profit / 8;
   derivedValues['Compression (cm)'] = Math.random() * 10;
 `;
-state.widgetsCode$.value = `
+model.widgetsCode$.value = `
   /*******************************************************************************
   DOUBLE WISHBONE SUSPENSION
   *******************************************************************************/
@@ -2047,7 +2048,7 @@ state.widgetsCode$.value = `
 
 document.body.appendChild(
   App({
-    state,
+    model,
     params: router.getParams,
     currentRoute$: router.currentRoute$,
   })

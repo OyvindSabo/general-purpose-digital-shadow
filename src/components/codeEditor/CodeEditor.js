@@ -3,7 +3,7 @@ const { textArea$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
 const CodeEditor$ = styled(textArea$, {
   width: '100%',
-  height: 'calc(100vh - 40px)',
+  height: 'calc(100vh - 128px)',
   padding: '20px',
   background: 'black',
   color: 'white',

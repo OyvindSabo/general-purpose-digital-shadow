@@ -6,7 +6,7 @@ const ValueWidget$ = include('src/components/valueWidget/ValueWidget.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { eq$, choose$ } = include('src/libraries/observable/utils.js');
 
-const Values$ = ({ state, currentRoute$ }) => {
+const Values$ = ({ model, currentRoute$ }) => {
   const codeEditorIsOpen$ = eq$(currentRoute$, '/values/edit');
   return div$(
     ExpandCodeEditorButton$({
@@ -17,9 +17,9 @@ const Values$ = ({ state, currentRoute$ }) => {
       location.hash = codeEditorIsOpen$.value ? '#!/values' : '#!/values/edit';
     }),
     div$(
-      CodeEditor$(state.derivedValuesCode$)
+      CodeEditor$(model.derivedValuesCode$)
         .onInput(({ value }) => {
-          state.derivedValuesCode$.value = value;
+          model.derivedValuesCode$.value = value;
         })
         .setStyle({ paddingLeft: '80px' })
     ).setStyle({
@@ -30,7 +30,7 @@ const Values$ = ({ state, currentRoute$ }) => {
     }),
     div$(
       div$(
-        ...state.derivedValues.map(({ label$, value$, isEmpty$ }) =>
+        ...model.derivedValues.map(({ label$, value$, isEmpty$ }) =>
           ValueWidget$({ label$, value$, isEmpty$ })
         )
       ).setStyle({ position: 'relative', top: '0' })

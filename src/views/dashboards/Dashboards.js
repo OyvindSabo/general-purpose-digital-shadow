@@ -6,7 +6,7 @@ const CanvasWidget$ = include('src/components/canvasWidget/CanvasWidget.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { eq$, choose$ } = include('src/libraries/observable/utils.js');
 
-const Dashboards$ = ({ state, currentRoute$ }) => {
+const Dashboards$ = ({ model, currentRoute$ }) => {
   const codeEditorIsOpen$ = eq$(currentRoute$, '/dashboards/edit');
   return div$(
     ExpandCodeEditorButton$({
@@ -19,9 +19,9 @@ const Dashboards$ = ({ state, currentRoute$ }) => {
         : '#!/dashboards/edit';
     }),
     div$(
-      CodeEditor$(state.widgetsCode$)
+      CodeEditor$(model.widgetsCode$)
         .onInput(({ value }) => {
-          state.widgetsCode$.value = value;
+          model.widgetsCode$.value = value;
         })
         .setStyle({ paddingLeft: '80px' })
     ).setStyle({
@@ -32,7 +32,7 @@ const Dashboards$ = ({ state, currentRoute$ }) => {
     }),
     div$(
       div$(
-        ...state.widgets.map(
+        ...model.widgets.map(
           ({ label$, surfaces$, edges$, is3d$, center$, isEmpty$ }) =>
             CanvasWidget$({
               label$,

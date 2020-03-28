@@ -24,15 +24,15 @@ const Dashboards$ = include('src/views/dashboards/Dashboards.js');
 
 const getViewTitle$ = currentRoute$ =>
   cond$(
-    [eq$(currentRoute$, '/'), 'Home'],
+    [eq$(currentRoute$, '/'), 'Projects'],
     [eq$(currentRoute$, '/data-sources'), 'Data sources'],
     [eq$(currentRoute$, '/values'), 'Values'],
     [eq$(currentRoute$, '/dashboards'), 'Dashboards'],
-    [eq$(currentRoute$, '/dashboards/edit'), 'Edit dashboard'],
+    [eq$(currentRoute$, '/dashboards/edit'), 'Edit dashboards'],
     [eq$(currentRoute$, '/alerts'), 'Alerts']
   );
 
-const App = ({ params, currentRoute$, state }) => {
+const App = ({ params, currentRoute$, model }) => {
   const element = div$(
     HorizontalNavigator$().setStyle({ background: 'black' }),
     MainContainer$(
@@ -109,7 +109,7 @@ const App = ({ params, currentRoute$, state }) => {
             eq$(currentRoute$, '/values/edit'),
             eq$(currentRoute$, '/values')
           ),
-          Values$({ state, currentRoute$ })
+          Values$({ model, currentRoute$ })
         ),
         If$(
           or$(
@@ -117,7 +117,7 @@ const App = ({ params, currentRoute$, state }) => {
             eq$(currentRoute$, '/dashboards/edit'),
             eq$(currentRoute$, '/dashboards')
           ),
-          Dashboards$({ state, currentRoute$ })
+          Dashboards$({ model, currentRoute$ })
         ),
         If$(eq$(currentRoute$, '/alerts'), AlertsView$())
       )

@@ -4,6 +4,7 @@ const App = include('src/App.js');
 
 Object.assign(document.body.style, {
   margin: 0,
+  fontFamily: 'sans-serif',
   height: '100%',
 });
 //const FIREBASE_API_KEY = 'AIzaSyCeGXLqw0MEwiSFHG1Wks1HfQHXRZoOuFY';
@@ -12,7 +13,7 @@ const MAX_AMOUNT_OF_WIDGETS = 100;
 
 // Create router
 const router = new Router({
-  '/': 'Home',
+  '/': 'Projects',
   '/data-sources': 'Data sources',
   '/values': 'Values',
   '/values/edit': 'Edit values',
@@ -43,7 +44,7 @@ const evaluateCode = (valuesCode, derivedValuesCode, widgetsCode) => {
 const buyPrice$ = new Observable(100);
 const sellPrice$ = new Observable(100);
 
-const state = {
+const model = {
   derivedValuesEditorIsOpen$: new Observable(false),
 
   valuesCode$: new Observable(''),
@@ -72,22 +73,22 @@ const state = {
   })),
 };
 
-window.addEventListener(state.valuesCode$.id, () => {
+window.addEventListener(model.valuesCode$.id, () => {
   const evaluatedCode = evaluateCode(
-    state.valuesCode$.value,
-    state.derivedValuesCode$.value,
-    state.widgetsCode$.value
+    model.valuesCode$.value,
+    model.derivedValuesCode$.value,
+    model.widgetsCode$.value
   );
 
   const valuesEntries = Object.entries(evaluatedCode.values);
-  state.values.forEach(({ label$, value$, isEmpty$ }, index) => {
+  model.values.forEach(({ label$, value$, isEmpty$ }, index) => {
     label$.value = valuesEntries[index] ? valuesEntries[index][0] : '';
     value$.value = valuesEntries[index] ? valuesEntries[index][1] : 0;
     isEmpty$.value = !Boolean(valuesEntries[index]);
   });
 
   const derivedValuesEntries = Object.entries(evaluatedCode.derivedValues);
-  state.derivedValues.forEach(({ label$, value$, isEmpty$ }, index) => {
+  model.derivedValues.forEach(({ label$, value$, isEmpty$ }, index) => {
     label$.value = derivedValuesEntries[index]
       ? derivedValuesEntries[index][0]
       : '';
@@ -98,7 +99,7 @@ window.addEventListener(state.valuesCode$.id, () => {
   });
 
   const widgetsEntries = Object.entries(evaluatedCode.widgets);
-  state.widgets.forEach(
+  model.widgets.forEach(
     ({ label$, edges$, surfaces$, is3d$, center$, isEmpty$ }, index) => {
       label$.value = widgetsEntries[index] ? widgetsEntries[index][0] : '';
       edges$.value = widgetsEntries[index]
@@ -129,7 +130,7 @@ const updateValues = () => {
       Math.floor(Math.random() * 2) == 1
         ? sellPrice$.value * 1.01
         : sellPrice$.value / 1.01;
-    state.valuesCode$.value = `
+    model.valuesCode$.value = `
       values.buyPrice = ${buyPrice$.value};
       values.sellPrice = ${sellPrice$.value};
     `;
@@ -138,13 +139,13 @@ const updateValues = () => {
 };
 updateValues();
 
-state.derivedValuesCode$.value = `
+model.derivedValuesCode$.value = `
   derivedValues['A constant value'] = 45;
   derivedValues['Profit']           = values.sellPrice - values.buyPrice;
   derivedValues['Dollar Profit']    = derivedValues.Profit / 8;
   derivedValues['Compression (cm)'] = Math.random() * 10;
 `;
-state.widgetsCode$.value = `
+model.widgetsCode$.value = `
   /*******************************************************************************
   DOUBLE WISHBONE SUSPENSION
   *******************************************************************************/
@@ -354,7 +355,7 @@ state.widgetsCode$.value = `
 
 document.body.appendChild(
   App({
-    state,
+    model,
     params: router.getParams,
     currentRoute$: router.currentRoute$,
   })
