@@ -7,7 +7,10 @@ const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { eq$, choose$ } = include('src/libraries/observable/utils.js');
 
 const Dashboards$ = ({ model, currentRoute$ }) => {
-  const codeEditorIsOpen$ = eq$(currentRoute$, '/dashboards/edit');
+  const codeEditorIsOpen$ = eq$(
+    currentRoute$,
+    '/projects/<projectId:string>/dashboards/edit'
+  );
   return div$(
     ExpandCodeEditorButton$({
       icon: '+',
@@ -15,8 +18,8 @@ const Dashboards$ = ({ model, currentRoute$ }) => {
       isOpen$: codeEditorIsOpen$,
     }).onClick(() => {
       location.hash = codeEditorIsOpen$.value
-        ? '#!/dashboards'
-        : '#!/dashboards/edit';
+        ? '#!/projects/<projectId:string>/dashboards'
+        : '#!/projects/<projectId:string>/dashboards/edit';
     }),
     div$(
       CodeEditor$(model.widgetsCode$)

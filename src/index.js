@@ -12,15 +12,12 @@ Object.assign(document.body.style, {
 // Create router
 const router = new Router({
   '/': 'Projects',
-  '/data-sources': 'Data sources',
-  '/values': 'Values',
-  '/values/edit': 'Edit values',
-  '/analytics/<analyticId:string>': 'Analytics',
-  // TODO: It should be possible to have multiple dashboards
-  '/dashboards': 'Dashboards',
-  '/dashboards/edit': 'Edit dashboards',
-  '/dashboards/<widgetId:string>/edit': 'Edit widget',
-  '/alerts': 'Alerts',
+  '/projects/<projectId:string>': 'Data sources',
+  '/projects/<projectId:string>/data-sources': 'Data sources',
+  '/projects/<projectId:string>/values': 'Values',
+  '/projects/<projectId:string>/values/edit': 'Edit values',
+  '/projects/<projectId:string>/dashboards': 'Dashboards',
+  '/projects/<projectId:string>/dashboards/edit': 'Edit dashboards',
 });
 
 document.body.appendChild(

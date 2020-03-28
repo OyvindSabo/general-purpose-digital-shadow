@@ -16,7 +16,6 @@ const MainContainer$ = include('src/components/mainContainer/MainContainer.js');
 const ViewTitle$ = include('src/components/viewTitle/ViewTitle.js');
 const Home$ = include('src/views/home/Home.js');
 const DataSources$ = include('src/views/dataSources/DataSources.js');
-const AlertsView$ = () => div$('AlertsView');
 
 const Values$ = include('src/views/values/Values.js');
 
@@ -25,11 +24,24 @@ const Dashboards$ = include('src/views/dashboards/Dashboards.js');
 const getViewTitle$ = currentRoute$ =>
   cond$(
     [eq$(currentRoute$, '/'), 'Projects'],
-    [eq$(currentRoute$, '/data-sources'), 'Data sources'],
-    [eq$(currentRoute$, '/values'), 'Values'],
-    [eq$(currentRoute$, '/dashboards'), 'Dashboards'],
-    [eq$(currentRoute$, '/dashboards/edit'), 'Edit dashboards'],
-    [eq$(currentRoute$, '/alerts'), 'Alerts']
+    [eq$(currentRoute$, '/projects/<projectId:string>'), 'Data sources'],
+    [
+      eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
+      'Data sources',
+    ],
+    [eq$(currentRoute$, '/projects/<projectId:string>/values'), 'Values'],
+    [
+      eq$(currentRoute$, '/projects/<projectId:string>/values/edit'),
+      'Edit values',
+    ],
+    [
+      eq$(currentRoute$, '/projects/<projectId:string>/dashboards'),
+      'Dashboards',
+    ],
+    [
+      eq$(currentRoute$, '/projects/<projectId:string>/dashboards/edit'),
+      'Edit dashboards',
+    ]
   );
 
 const App = ({ currentRoute$, model }) => {
@@ -49,9 +61,12 @@ const App = ({ currentRoute$, model }) => {
         }),
         LeftNavigatorButton$({
           icon: '🏗',
-          label: getViewTitle$('/data-sources'),
-          route: '/data-sources',
-          isActive$: eq$(currentRoute$, '/data-sources'),
+          label: getViewTitle$('/projects/<projectId:string>/data-sources'),
+          route: '/projects/<projectId:string>/data-sources',
+          isActive$: or$(
+            eq$(currentRoute$, '/projects/<projectId:string>'),
+            eq$(currentRoute$, '/projects/<projectId:string>/data-sources')
+          ),
           labelColor$: 'whitesmoke',
           highlightLabelColor$: 'white',
           backgroundColor$: 'lightslategray',
@@ -59,11 +74,11 @@ const App = ({ currentRoute$, model }) => {
         }),
         LeftNavigatorButton$({
           icon: '🧮',
-          label: getViewTitle$('/values'),
-          route: '/values',
+          label: getViewTitle$('/projects/<projectId:string>/values'),
+          route: '/projects/<projectId:string>/values',
           isActive$: or$(
-            eq$(currentRoute$, '/values'),
-            eq$(currentRoute$, '/values/edit')
+            eq$(currentRoute$, '/projects/<projectId:string>/values'),
+            eq$(currentRoute$, '/projects/<projectId:string>/values/edit')
           ),
           labelColor$: 'whitesmoke',
           highlightLabelColor$: 'white',
@@ -72,22 +87,12 @@ const App = ({ currentRoute$, model }) => {
         }),
         LeftNavigatorButton$({
           icon: '📊',
-          label: getViewTitle$('/dashboards'),
-          route: '/dashboards',
+          label: getViewTitle$('/projects/<projectId:string>/dashboards'),
+          route: '/projects/<projectId:string>/dashboards',
           isActive$: or$(
-            eq$(currentRoute$, '/dashboards'),
-            eq$(currentRoute$, '/dashboards/edit')
+            eq$(currentRoute$, '/projects/<projectId:string>/dashboards'),
+            eq$(currentRoute$, '/projects/<projectId:string>/dashboards/edit')
           ),
-          labelColor$: 'whitesmoke',
-          highlightLabelColor$: 'white',
-          backgroundColor$: 'lightslategray',
-          highlightBackgroundColor$: 'slategray',
-        }),
-        LeftNavigatorButton$({
-          icon: '⏰',
-          label: getViewTitle$('/alerts'),
-          route: '/alerts',
-          isActive$: eq$(currentRoute$, '/alerts'),
           labelColor$: 'whitesmoke',
           highlightLabelColor$: 'white',
           backgroundColor$: 'lightslategray',
@@ -103,24 +108,26 @@ const App = ({ currentRoute$, model }) => {
           }
         ),
         If$(eq$(currentRoute$, '/'), Home$({ model })),
-        If$(eq$(currentRoute$, '/data-sources'), DataSources$()),
+        If$(
+          eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
+          DataSources$()
+        ),
         If$(
           or$(
-            eq$(currentRoute$, '/values'), // Hack, for some reason the code editor animation doesn't work without this
-            eq$(currentRoute$, '/values/edit'),
-            eq$(currentRoute$, '/values')
+            eq$(currentRoute$, '/projects/<projectId:string>/values'), // Hack, for some reason the code editor animation doesn't work without this
+            eq$(currentRoute$, '/projects/<projectId:string>/values/edit'),
+            eq$(currentRoute$, '/projects/<projectId:string>/values')
           ),
           Values$({ model, currentRoute$ })
         ),
         If$(
           or$(
-            eq$(currentRoute$, '/dashboards'), // Hack, for some reason the code editor animation doesn't work without this
-            eq$(currentRoute$, '/dashboards/edit'),
-            eq$(currentRoute$, '/dashboards')
+            eq$(currentRoute$, '/projects/<projectId:string>/dashboards'), // Hack, for some reason the code editor animation doesn't work without this
+            eq$(currentRoute$, '/projects/<projectId:string>/dashboards/edit'),
+            eq$(currentRoute$, '/projects/<projectId:string>/dashboards')
           ),
           Dashboards$({ model, currentRoute$ })
-        ),
-        If$(eq$(currentRoute$, '/alerts'), AlertsView$())
+        )
       )
     )
   );

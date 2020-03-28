@@ -4,6 +4,10 @@ const ProjectPreview$ = include(
 );
 
 const Home$ = ({ model }) =>
-  div$(...model.projects.value.map(({ name }) => ProjectPreview$(name)));
+  div$(
+    ...model.projects.value.map(({ name, id }) =>
+      ProjectPreview$(name).onClick(() => (location.hash = `#!/projects/${id}`))
+    )
+  );
 
 module.exports = Home$;

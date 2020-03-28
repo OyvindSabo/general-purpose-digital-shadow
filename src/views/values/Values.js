@@ -7,14 +7,19 @@ const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { eq$, choose$ } = include('src/libraries/observable/utils.js');
 
 const Values$ = ({ model, currentRoute$ }) => {
-  const codeEditorIsOpen$ = eq$(currentRoute$, '/values/edit');
+  const codeEditorIsOpen$ = eq$(
+    currentRoute$,
+    '/projects/<projectId:string>/values/edit'
+  );
   return div$(
     ExpandCodeEditorButton$({
       icon: '{}',
       label$: choose$(codeEditorIsOpen$, 'Hide editor', 'Show editor'),
       isOpen$: codeEditorIsOpen$,
     }).onClick(() => {
-      location.hash = codeEditorIsOpen$.value ? '#!/values' : '#!/values/edit';
+      location.hash = codeEditorIsOpen$.value
+        ? '#!/projects/<projectId:string>/values'
+        : '#!/projects/<projectId:string>/values/edit';
     }),
     div$(
       CodeEditor$(model.derivedValuesCode$)
