@@ -1,4 +1,4 @@
-const { eq$, or$ } = include('src/libraries/observable/utils.js');
+const { cond$, eq$, or$ } = include('src/libraries/observable/utils.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { If$ } = include('src/libraries/observableHtml/utils.js');
 
@@ -13,6 +13,7 @@ const VerticalNavigator$ = include(
 );
 const ViewContainer$ = include('src/components/viewContainer/ViewContainer.js');
 const MainContainer$ = include('src/components/mainContainer/MainContainer.js');
+const ViewTitle$ = include('src/components/viewTitle/ViewTitle.js');
 const Home$ = include('src/views/home/Home.js');
 const DataSources$ = include('src/views/dataSources/DataSources.js');
 const AlertsView$ = () => div$('AlertsView');
@@ -21,15 +22,24 @@ const Values$ = include('src/views/values/Values.js');
 
 const Dashboards$ = include('src/views/dashboards/Dashboards.js');
 
+const getViewTitle$ = currentRoute$ =>
+  cond$(
+    [eq$(currentRoute$, '/'), 'Home'],
+    [eq$(currentRoute$, '/data-sources'), 'Data sources'],
+    [eq$(currentRoute$, '/values'), 'Values'],
+    [eq$(currentRoute$, '/dashboards'), 'Dashboards'],
+    [eq$(currentRoute$, '/dashboards/edit'), 'Edit dashboard'],
+    [eq$(currentRoute$, '/alerts'), 'Alerts']
+  );
+
 const App = ({ params, currentRoute$, state }) => {
   const element = div$(
-    HorizontalNavigator$(),
+    HorizontalNavigator$().setStyle({ background: 'black' }),
     MainContainer$(
       VerticalNavigator$(
-        // Add something for home as well
         LeftNavigatorButton$({
           icon: '🏠',
-          label: 'Home',
+          label: getViewTitle$('/'),
           route: '/',
           isActive$: eq$(currentRoute$, '/'),
           labelColor$: 'whitesmoke',
@@ -39,7 +49,7 @@ const App = ({ params, currentRoute$, state }) => {
         }),
         LeftNavigatorButton$({
           icon: '🏗',
-          label: 'Data sources',
+          label: getViewTitle$('/data-sources'),
           route: '/data-sources',
           isActive$: eq$(currentRoute$, '/data-sources'),
           labelColor$: 'whitesmoke',
@@ -49,7 +59,7 @@ const App = ({ params, currentRoute$, state }) => {
         }),
         LeftNavigatorButton$({
           icon: '🧮',
-          label: 'Values',
+          label: getViewTitle$('/values'),
           route: '/values',
           isActive$: or$(
             eq$(currentRoute$, '/values'),
@@ -62,7 +72,7 @@ const App = ({ params, currentRoute$, state }) => {
         }),
         LeftNavigatorButton$({
           icon: '📊',
-          label: 'Dashboards',
+          label: getViewTitle$('/dashboards'),
           route: '/dashboards',
           isActive$: or$(
             eq$(currentRoute$, '/dashboards'),
@@ -75,7 +85,7 @@ const App = ({ params, currentRoute$, state }) => {
         }),
         LeftNavigatorButton$({
           icon: '⏰',
-          label: 'Alerts',
+          label: getViewTitle$('/alerts'),
           route: '/alerts',
           isActive$: eq$(currentRoute$, '/alerts'),
           labelColor$: 'whitesmoke',
@@ -86,6 +96,11 @@ const App = ({ params, currentRoute$, state }) => {
       ).setStyle({ background: 'lightslategrey' }),
       // Not sure I'm happy about this solution
       ViewContainer$(
+        HorizontalNavigator$(ViewTitle$(getViewTitle$(currentRoute$))).setStyle(
+          {
+            background: 'white',
+          }
+        ),
         If$(eq$(currentRoute$, '/'), Home$()),
         If$(eq$(currentRoute$, '/data-sources'), DataSources$()),
         If$(

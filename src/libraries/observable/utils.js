@@ -117,6 +117,42 @@ const choose$ = (observable, option1, option2) => {
   return result$;
 };
 
+const cond$ = (...clauses) => {
+  const result = clauses
+    .map(([test, expression]) => [
+      test instanceof Observable ? test.value : test,
+      expression instanceof Observable ? expression.value : expression,
+    ])
+    .reduce((result, [test, expression]) => {
+      if (result !== null) return result;
+      if (test) return expression;
+      return null;
+    }, null);
+
+  const result$ = new Observable(result);
+
+  clauses
+    .flat()
+    .filter(testOrExpression => testOrExpression instanceof Observable)
+    .forEach(testOrExpression => {
+      window.addEventListener(testOrExpression.id, ({ detail }) => {
+        const result = clauses
+          .map(([test, expression]) => [
+            test instanceof Observable ? test.value : test,
+            expression instanceof Observable ? expression.value : expression,
+          ])
+          .reduce((result, [test, expression]) => {
+            if (result !== null) return result;
+            if (test) return expression;
+            return null;
+          }, null);
+        result$.value = result;
+      });
+    });
+
+  return result$;
+};
+
 const eq$ = (...observables) => {
   const equality = observables
     .map(observable =>
@@ -217,6 +253,7 @@ module.exports = {
   multiply$,
   divide$,
   choose$,
+  cond$,
   eq$,
   and$,
   or$,
