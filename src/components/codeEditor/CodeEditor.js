@@ -1,7 +1,7 @@
 const styled = include('src/libraries/styled/styled.js');
 const { textArea$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
-const CodeEditor$ = styled(textArea$, {
+const CodeEditor$ = styled({
   width: '100%',
   height: 'calc(100vh - 128px)',
   padding: '20px',
@@ -11,6 +11,6 @@ const CodeEditor$ = styled(textArea$, {
   fontSize: '14px',
   lineHeight: '20px',
   whiteSpace: 'nowrap',
-});
+})(textArea$);
 
 module.exports = CodeEditor$;

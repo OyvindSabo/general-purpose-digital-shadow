@@ -43,7 +43,10 @@ const Dashboards$ = ({ model, currentRoute$ }) => {
               isEmpty$,
             })
         )
-      ).setStyle({ position: 'relative', top: '0' })
+      ).setStyle({
+        position: 'relative',
+        top: '0',
+      })
     ).setStyle({
       display: 'inline-block',
       position: 'absolute',

@@ -32,7 +32,7 @@ const getViewTitle$ = currentRoute$ =>
     [eq$(currentRoute$, '/alerts'), 'Alerts']
   );
 
-const App = ({ params, currentRoute$, model }) => {
+const App = ({ currentRoute$, model }) => {
   const element = div$(
     HorizontalNavigator$().setStyle({ background: 'black' }),
     MainContainer$(
@@ -101,7 +101,7 @@ const App = ({ params, currentRoute$, model }) => {
             background: 'white',
           }
         ),
-        If$(eq$(currentRoute$, '/'), Home$()),
+        If$(eq$(currentRoute$, '/'), Home$({ model })),
         If$(eq$(currentRoute$, '/data-sources'), DataSources$()),
         If$(
           or$(

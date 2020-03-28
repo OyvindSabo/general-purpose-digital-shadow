@@ -41,7 +41,7 @@ const Switch$ = (statement$, ...clauses) => {
   );
 };
 
-const Nothing$ = styled(div$, { display: 'none' });
+const Nothing$ = styled({ display: 'none' })(div$);
 
 const If$ = (observable, element) => Choose$(observable, element, Nothing$());
 

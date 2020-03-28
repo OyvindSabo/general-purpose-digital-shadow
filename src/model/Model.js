@@ -23,6 +23,11 @@ const buyPrice$ = new Observable(100);
 const sellPrice$ = new Observable(100);
 
 const model = {
+  projects: new Observable([
+    { id: '0', name: 'Double wishbone suspension' },
+    { id: '1', name: 'Bar charts' },
+  ]),
+
   derivedValuesEditorIsOpen$: new Observable(false),
 
   valuesCode$: new Observable(''),

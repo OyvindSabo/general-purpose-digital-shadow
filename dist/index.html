@@ -285,6 +285,11 @@ const buyPrice$ = new Observable(100);
 const sellPrice$ = new Observable(100);
 
 const model = {
+  projects: new Observable([
+    { id: '0', name: 'Double wishbone suspension' },
+    { id: '1', name: 'Bar charts' },
+  ]),
+
   derivedValuesEditorIsOpen$: new Observable(false),
 
   valuesCode$: new Observable(''),
@@ -980,17 +985,6 @@ module.exports = {
   return module.exports;
 })();
 
-modules['src/views/home/Home.js'] = (() => {
-  const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-
-const Home$ = () => div$('HomeView');
-
-module.exports = Home$;
-
-  return module.exports;
-})();
-
 modules['src/views/dataSources/DataSources.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
@@ -1004,7 +998,7 @@ module.exports = DataSourcesView$;
 
 modules['src/libraries/styled/styled.js'] = (() => {
   const module = { exports: {} };
-  const styled = (Component, style) => (...children) =>
+  const styled = style => Component => (...children) =>
   Component(...children).setStyle(style);
 
 module.exports = styled;
@@ -1057,7 +1051,7 @@ const Switch$ = (statement$, ...clauses) => {
   );
 };
 
-const Nothing$ = styled(div$, { display: 'none' });
+const Nothing$ = styled({ display: 'none' })(div$);
 
 const If$ = (observable, element) => Choose$(observable, element, Nothing$());
 
@@ -1071,47 +1065,17 @@ module.exports = {
   return module.exports;
 })();
 
-modules['src/components/horizontalNavigator/HorizontalNavigator.js'] = (() => {
-  const module = { exports: {} };
-  const styled = include('src/libraries/styled/styled.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-
-const HorizontalNavigator$ = styled(div$, {
-  height: '64px',
-});
-
-module.exports = HorizontalNavigator$;
-
-  return module.exports;
-})();
-
-modules['src/components/verticalNavigator/VerticalNavigator.js'] = (() => {
-  const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const styled = include('src/libraries/styled/styled.js');
-
-const VerticalNavigator$ = styled(div$, {
-  height: '100%',
-  width: '64px',
-  position: 'absolute',
-});
-
-module.exports = VerticalNavigator$;
-
-  return module.exports;
-})();
-
 modules['src/components/viewContainer/ViewContainer.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const styled = include('src/libraries/styled/styled.js');
 
-const ViewContainer$ = styled(div$, {
+const ViewContainer$ = styled({
   position: 'absolute',
   top: '0',
   left: '64px',
   right: '0',
-});
+})(div$);
 
 module.exports = ViewContainer$;
 
@@ -1123,13 +1087,13 @@ modules['src/components/mainContainer/MainContainer.js'] = (() => {
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const styled = include('src/libraries/styled/styled.js');
 
-const MainContainer$ = styled(div$, {
+const MainContainer$ = styled({
   height: 'calc(100% - 64px)',
   background: 'GhostWhite',
   position: 'absolute',
   left: '0',
   right: '0',
-});
+})(div$);
 
 module.exports = MainContainer$;
 
@@ -1141,12 +1105,57 @@ modules['src/components/viewTitle/ViewTitle.js'] = (() => {
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const styled = include('src/libraries/styled/styled.js');
 
-const ViewTitle$ = styled(div$, {
+const ViewTitle$ = styled({
   fontSize: '32px',
   padding: '16px',
-});
+})(div$);
 
 module.exports = ViewTitle$;
+
+  return module.exports;
+})();
+
+modules['src/styleWrappers/withShadow.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+
+const withShadow = styled({
+  boxShadow: 'rgba(0, 0, 0, 0.25) 0px 0px 8px -4px',
+});
+
+module.exports = withShadow;
+
+  return module.exports;
+})();
+
+modules['src/components/horizontalNavigator/HorizontalNavigator.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const withShadow = include('src/styleWrappers/withShadow.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const HorizontalNavigator$ = withShadow(styled({ height: '64px' })(div$));
+
+module.exports = HorizontalNavigator$;
+
+  return module.exports;
+})();
+
+modules['src/components/verticalNavigator/VerticalNavigator.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const withShadow = include('src/styleWrappers/withShadow.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const VerticalNavigator$ = withShadow(
+  styled({
+    height: '100%',
+    width: '64px',
+    position: 'absolute',
+  })(div$)
+);
+
+module.exports = VerticalNavigator$;
 
   return module.exports;
 })();
@@ -1156,26 +1165,27 @@ modules['src/components/leftNavigatorButton/atoms.js'] = (() => {
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const styled = include('src/libraries/styled/styled.js');
 
-const Button$ = styled(div$, {
+const Button$ = styled({
   height: '64px',
   width: '64px',
   overflow: 'hidden',
   transition: '0.5s',
   cursor: 'pointer',
-});
-const Icon$ = styled(div$, {
+})(div$);
+const Icon$ = styled({
+  ///TODO: continue
   fontSize: '30px',
   textAlign: 'center',
   marginTop: '15px',
   pointerEvents: 'none',
   userSelect: 'none',
-});
-const Label$ = styled(div$, {
+})(div$);
+const Label$ = styled({
   fontSize: '15px',
   textAlign: 'center',
   pointerEvents: 'none',
   userSelect: 'none',
-});
+})(div$);
 
 module.exports = {
   Button$,
@@ -1236,12 +1246,46 @@ module.exports = LeftNavigatorButton$;
   return module.exports;
 })();
 
+modules['src/views/home/projectPreview/ProjectPreview.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const ProjectPreview$ = styled({
+  height: '64px',
+  padding: '16px',
+  margin: '16px',
+  fontSize: '16px',
+  background: 'white',
+  boxShadow: 'rgba(0, 0, 0, 0.25) 0px 0px 8px -4px',
+})(div$);
+
+module.exports = ProjectPreview$;
+
+  return module.exports;
+})();
+
+modules['src/views/home/Home.js'] = (() => {
+  const module = { exports: {} };
+  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const ProjectPreview$ = include(
+  'src/views/home/projectPreview/ProjectPreview.js'
+);
+
+const Home$ = ({ model }) =>
+  div$(...model.projects.value.map(({ name }) => ProjectPreview$(name)));
+
+module.exports = Home$;
+
+  return module.exports;
+})();
+
 modules['src/components/codeEditor/CodeEditor.js'] = (() => {
   const module = { exports: {} };
   const styled = include('src/libraries/styled/styled.js');
 const { textArea$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
-const CodeEditor$ = styled(textArea$, {
+const CodeEditor$ = styled({
   width: '100%',
   height: 'calc(100vh - 128px)',
   padding: '20px',
@@ -1251,7 +1295,7 @@ const CodeEditor$ = styled(textArea$, {
   fontSize: '14px',
   lineHeight: '20px',
   whiteSpace: 'nowrap',
-});
+})(textArea$);
 
 module.exports = CodeEditor$;
 
@@ -1341,39 +1385,36 @@ module.exports = WidgetValue$;
   return module.exports;
 })();
 
-modules['src/components/smallWidgetBackgroundContainer/SmallWidgetBackgroundContainer.js'] = (() => {
+modules['src/components/widgetCard/WidgetCard.js'] = (() => {
   const module = { exports: {} };
-  const styled = include('src/libraries/styled/styled.js');
+  const withShadow = include('src/styleWrappers/withShadow.js');
+const styled = include('src/libraries/styled/styled.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const { add$ } = include('src/libraries/observable/utils.js');
 
-const SmallWidgetBackgroundContainer$ = styled(div$, {
-  padding: '20px',
-  width: '360px',
-  height: '240px',
-  display: 'inline-block',
-  boxSizing: 'border-box',
-  verticalAlign: 'top',
-});
+const WidgetCard$ = ({ width$, height$ }) =>
+  styled({
+    margin: '20px',
+    width: add$(width$, 'px'),
+    height: add$(height$, 'px'),
+    display: 'inline-block',
+    boxSizing: 'border-box',
+    verticalAlign: 'top',
+    background: 'white',
+  })(div$);
 
-module.exports = SmallWidgetBackgroundContainer$;
+module.exports = WidgetCard$;
 
   return module.exports;
 })();
 
-modules['src/components/widgetForegroundContainer/WidgetForegroundContainer.js'] = (() => {
+modules['src/components/widgetCard/SmallWidgetCard.js'] = (() => {
   const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+  const WidgetCard$ = include('src/components/widgetCard/WidgetCard.js');
 
-const WidgetForegroundContainer$ = (...children) => {
-  return div$(...children).setStyle({
-    height: '100%',
-    border: '1px solid LightGray',
-    boxSizing: 'border-box',
-    background: 'White',
-  });
-};
+const SmallWidgetCard$ = WidgetCard$({ height$: 240, width$: 360 });
 
-module.exports = WidgetForegroundContainer$;
+module.exports = SmallWidgetCard$;
 
   return module.exports;
 })();
@@ -1382,24 +1423,20 @@ modules['src/components/valueWidget/ValueWidget.js'] = (() => {
   const module = { exports: {} };
   const WidgetLabel$ = include('src/components/widgetLabel/WidgetLabel.js');
 const WidgetValue$ = include('src/components/widgetValue/WidgetValue.js');
-const SmallWidgetBackgroundContainer$ = include(
-  'src/components/smallWidgetBackgroundContainer/SmallWidgetBackgroundContainer.js'
-);
-const WidgetForegroundContainer$ = include(
-  'src/components/widgetForegroundContainer/WidgetForegroundContainer.js'
+const SmallWidgetCard$ = include(
+  'src/components/widgetCard/SmallWidgetCard.js'
 );
 const { not$ } = include('src/libraries/observable/utils.js');
 const { If$ } = include('src/libraries/observableHtml/utils.js');
+const withShadow = include('src/styleWrappers/withShadow.js');
 
 const ValueWidget$ = ({ label$, value$, isEmpty$ }) =>
   If$(
     not$(isEmpty$),
-    SmallWidgetBackgroundContainer$(
-      WidgetForegroundContainer$(
-        WidgetLabel$({ label$ }),
-        WidgetValue$({ value$ })
-      ).setStyle({ height: '100%', position: 'relative', color: 'dimgray' })
-    )
+    withShadow(SmallWidgetCard$)(
+      WidgetLabel$({ label$ }),
+      WidgetValue$({ value$ })
+    ).setStyle({ position: 'relative', color: 'dimgray' })
   );
 
 module.exports = ValueWidget$;
@@ -1459,21 +1496,13 @@ module.exports = Values$;
   return module.exports;
 })();
 
-modules['src/components/mediumWidgetBackgroundContainer/MediumWidgetBackgroundContainer.js'] = (() => {
+modules['src/components/widgetCard/MediumWidgetCard.js'] = (() => {
   const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const styled = include('src/libraries/styled/styled.js');
+  const WidgetCard$ = include('src/components/widgetCard/WidgetCard.js');
 
-const MediumWidgetBackgroundContainer$ = styled(div$, {
-  padding: '20px',
-  width: '480px',
-  height: '320px',
-  display: 'inline-block',
-  boxSizing: 'border-box',
-  verticalAlign: 'top',
-});
+const MediumWidgetCard$ = WidgetCard$({ height$: 320, width$: 480 });
 
-module.exports = MediumWidgetBackgroundContainer$;
+module.exports = MediumWidgetCard$;
 
   return module.exports;
 })();
@@ -1784,11 +1813,8 @@ module.exports = TwoDimVisualization$;
 
 modules['src/components/canvasWidget/CanvasWidget.js'] = (() => {
   const module = { exports: {} };
-  const MediumWidgetBackgroundContainer$ = include(
-  'src/components/mediumWidgetBackgroundContainer/MediumWidgetBackgroundContainer.js'
-);
-const WidgetForegroundContainer$ = include(
-  'src/components/widgetForegroundContainer/WidgetForegroundContainer.js'
+  const MediumWidgetCard$ = include(
+  'src/components/widgetCard/MediumWidgetCard.js'
 );
 const ThreeDimVisualization$ = include(
   'src/components/visualization/threeDimVisualization/ThreeDimVisualization.js'
@@ -1797,6 +1823,7 @@ const TwoDimVisualization$ = include(
   'src/components/visualization/twoDimVisualization/TwoDimVisualization.js'
 );
 const WidgetLabel$ = include('src/components/widgetLabel/WidgetLabel.js');
+const withShadow = include('src/styleWrappers/withShadow.js');
 const { not$ } = include('src/libraries/observable/utils.js');
 const { Choose$, If$ } = include('src/libraries/observableHtml/utils.js');
 
@@ -1810,20 +1837,17 @@ const CanvasWidget$ = ({
 }) => {
   return If$(
     not$(isEmpty$),
-    MediumWidgetBackgroundContainer$(
-      WidgetForegroundContainer$(
-        Choose$(
-          is3d$,
-          ThreeDimVisualization$({ surfaces$, edges$, center$ }),
-          TwoDimVisualization$({ surfaces$, edges$, center$ })
-        ),
-        WidgetLabel$({ label$ })
-      ).setStyle({
-        height: '100%',
-        position: 'relative',
-        color: 'dimgray',
-      })
-    )
+    withShadow(MediumWidgetCard$)(
+      Choose$(
+        is3d$,
+        ThreeDimVisualization$({ surfaces$, edges$, center$ }),
+        TwoDimVisualization$({ surfaces$, edges$, center$ })
+      ),
+      WidgetLabel$({ label$ })
+    ).setStyle({
+      position: 'relative',
+      color: 'dimgray',
+    })
   );
 };
 
@@ -1879,7 +1903,10 @@ const Dashboards$ = ({ model, currentRoute$ }) => {
               isEmpty$,
             })
         )
-      ).setStyle({ position: 'relative', top: '0' })
+      ).setStyle({
+        position: 'relative',
+        top: '0',
+      })
     ).setStyle({
       display: 'inline-block',
       position: 'absolute',
@@ -1930,7 +1957,7 @@ const getViewTitle$ = currentRoute$ =>
     [eq$(currentRoute$, '/alerts'), 'Alerts']
   );
 
-const App = ({ params, currentRoute$, model }) => {
+const App = ({ currentRoute$, model }) => {
   const element = div$(
     HorizontalNavigator$().setStyle({ background: 'black' }),
     MainContainer$(
@@ -1999,7 +2026,7 @@ const App = ({ params, currentRoute$, model }) => {
             background: 'white',
           }
         ),
-        If$(eq$(currentRoute$, '/'), Home$()),
+        If$(eq$(currentRoute$, '/'), Home$({ model })),
         If$(eq$(currentRoute$, '/data-sources'), DataSources$()),
         If$(
           or$(
