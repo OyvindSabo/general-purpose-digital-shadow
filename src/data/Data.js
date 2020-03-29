@@ -1,3 +1,18 @@
+const getDerivedValuesCodeByProjectId = id =>
+  ({
+    0: `
+  derivedValues['Compression (cm)'] = Math.random() * 10;
+  `,
+    1: `
+  derivedValues['Pyramid Width (cm)' ] = 100 + Math.random() * 10;
+  derivedValues['Pyramid Height (cm)'] = 100 + Math.random() * 10;
+  derivedValues['Pyramid Depth (cm)' ] = 100 + Math.random() * 10;
+  `,
+    2: `
+  derivedValues['Profit']           = values.sellPrice - values.buyPrice;
+  `,
+  }[id]);
+
 const getWidgetsCodeByProjectId = id =>
   ({
     0: `
@@ -118,12 +133,15 @@ const getWidgetsCodeByProjectId = id =>
   3D PYRAMID
   *******************************************************************************/
   
+  const height = derivedValues['Pyramid Height (cm)'];
+  const width = derivedValues['Pyramid Width (cm)'];
+  const depth = derivedValues['Pyramid Depth (cm)'];
   const profit = 100 + derivedValues.Profit;
 
-  const point0 = [     0,      0,      0];
-  const point1 = [     0,      0, profit];
-  const point2 = [     0, profit,      0];
-  const point3 = [profit,      0,      0];
+  const point0 = [    0,      0,     0];
+  const point1 = [    0,      0, depth];
+  const point2 = [    0, height,     0];
+  const point3 = [width,      0,     0];
 
   const surfaceColor = 'rgba(128, 128, 255, 0.5)';
   const edgeColor = 'blue';
@@ -214,5 +232,6 @@ const getWidgetsCodeByProjectId = id =>
   }[id]);
 
 module.exports = {
+  getDerivedValuesCodeByProjectId,
   getWidgetsCodeByProjectId,
 };

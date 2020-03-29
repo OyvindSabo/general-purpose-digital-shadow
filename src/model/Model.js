@@ -1,5 +1,7 @@
 const Observable = include('src/libraries/observable/Observable.js');
-const { getWidgetsCodeByProjectId } = include('src/data/Data.js');
+const { getDerivedValuesCodeByProjectId, getWidgetsCodeByProjectId } = include(
+  'src/data/Data.js'
+);
 
 const MAX_AMOUNT_OF_DERIVED_VALUES = 100;
 const MAX_AMOUNT_OF_WIDGETS = 100;
@@ -135,7 +137,9 @@ const Model = ({ router }) => {
       `;
 
   window.addEventListener(model.selectedProjectId$.id, ({ detail }) => {
+    // This could also just be inserted into the syncSelectedProjectWIthRouter method
     model.widgetsCode$.value = getWidgetsCodeByProjectId(detail);
+    model.derivedValuesCode$.value = getDerivedValuesCodeByProjectId(detail);
   });
 
   const syncSelectedProjectWithRouter = ({ params, currentRoute$ }) => {
