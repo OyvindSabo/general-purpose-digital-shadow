@@ -1,9 +1,9 @@
 const { choose$ } = include('src/libraries/observable/utils.js');
 
 const { Button$, Icon$, Label$ } = include(
-  'src/components/leftNavigatorButton/atoms.js'
+  'src/components/navigatorButton/atoms.js'
 );
-const LeftNavigatorButton$ = ({
+const NavigatorButton$ = ({
   icon,
   label,
   route,
@@ -41,4 +41,4 @@ const LeftNavigatorButton$ = ({
     .onClick(() => (location.hash = `#!${route}`));
 };
 
-module.exports = LeftNavigatorButton$;
+module.exports = NavigatorButton$;

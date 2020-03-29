@@ -1426,7 +1426,7 @@ module.exports = ExpandCodeEditorButton$;
   return module.exports;
 })();
 
-modules['src/components/leftNavigatorButton/atoms.js'] = (() => {
+modules['src/components/navigatorButton/atoms.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const styled = include('src/libraries/styled/styled.js');
@@ -1462,14 +1462,14 @@ module.exports = {
   return module.exports;
 })();
 
-modules['src/components/leftNavigatorButton/LeftNavigatorButton.js'] = (() => {
+modules['src/components/navigatorButton/NavigatorButton.js'] = (() => {
   const module = { exports: {} };
   const { choose$ } = include('src/libraries/observable/utils.js');
 
 const { Button$, Icon$, Label$ } = include(
-  'src/components/leftNavigatorButton/atoms.js'
+  'src/components/navigatorButton/atoms.js'
 );
-const LeftNavigatorButton$ = ({
+const NavigatorButton$ = ({
   icon,
   label,
   route,
@@ -1507,15 +1507,15 @@ const LeftNavigatorButton$ = ({
     .onClick(() => (location.hash = `#!${route}`));
 };
 
-module.exports = LeftNavigatorButton$;
+module.exports = NavigatorButton$;
 
   return module.exports;
 })();
 
 modules['src/views/project/projectNavigator/ProjectNavigator.js'] = (() => {
   const module = { exports: {} };
-  const LeftNavigatorButton$ = include(
-  'src/components/leftNavigatorButton/LeftNavigatorButton.js'
+  const NavigatorButton$ = include(
+  'src/components/navigatorButton/NavigatorButton.js'
 );
 const VerticalNavigator$ = include(
   'src/components/verticalNavigator/VerticalNavigator.js'
@@ -1525,7 +1525,7 @@ const { getViewTitle$ } = include('src/app/utils.js');
 
 const ProjectNavigator$ = ({ currentRoute$ }) =>
   VerticalNavigator$(
-    LeftNavigatorButton$({
+    NavigatorButton$({
       icon: '🏗',
       label: getViewTitle$('/projects/<projectId:string>/data-sources'),
       route: '/projects/<projectId:string>/data-sources',
@@ -1538,7 +1538,7 @@ const ProjectNavigator$ = ({ currentRoute$ }) =>
       backgroundColor$: 'white',
       highlightBackgroundColor$: 'whitesmoke',
     }),
-    LeftNavigatorButton$({
+    NavigatorButton$({
       icon: '🧮',
       label: getViewTitle$('/projects/<projectId:string>/values'),
       route: '/projects/<projectId:string>/values',
@@ -1551,7 +1551,7 @@ const ProjectNavigator$ = ({ currentRoute$ }) =>
       backgroundColor$: 'white',
       highlightBackgroundColor$: 'whitesmoke',
     }),
-    LeftNavigatorButton$({
+    NavigatorButton$({
       icon: '📊',
       label: getViewTitle$('/projects/<projectId:string>/dashboards'),
       route: '/projects/<projectId:string>/dashboards',
@@ -1573,8 +1573,8 @@ module.exports = ProjectNavigator$;
 
 modules['src/app/appNavigator/AppNavigator.js'] = (() => {
   const module = { exports: {} };
-  const LeftNavigatorButton$ = include(
-  'src/components/leftNavigatorButton/LeftNavigatorButton.js'
+  const NavigatorButton$ = include(
+  'src/components/navigatorButton/NavigatorButton.js'
 );
 const VerticalNavigator$ = include(
   'src/components/verticalNavigator/VerticalNavigator.js'
@@ -1584,7 +1584,7 @@ const { getViewTitle$ } = include('src/app/utils.js');
 
 const AppNavigator$ = ({ currentRoute$ }) =>
   VerticalNavigator$(
-    LeftNavigatorButton$({
+    NavigatorButton$({
       icon: '🏠',
       label: getViewTitle$('/'),
       route: '/',

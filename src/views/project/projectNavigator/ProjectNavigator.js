@@ -1,5 +1,5 @@
-const LeftNavigatorButton$ = include(
-  'src/components/leftNavigatorButton/LeftNavigatorButton.js'
+const NavigatorButton$ = include(
+  'src/components/navigatorButton/NavigatorButton.js'
 );
 const VerticalNavigator$ = include(
   'src/components/verticalNavigator/VerticalNavigator.js'
@@ -9,7 +9,7 @@ const { getViewTitle$ } = include('src/app/utils.js');
 
 const ProjectNavigator$ = ({ currentRoute$ }) =>
   VerticalNavigator$(
-    LeftNavigatorButton$({
+    NavigatorButton$({
       icon: '🏗',
       label: getViewTitle$('/projects/<projectId:string>/data-sources'),
       route: '/projects/<projectId:string>/data-sources',
@@ -22,7 +22,7 @@ const ProjectNavigator$ = ({ currentRoute$ }) =>
       backgroundColor$: 'white',
       highlightBackgroundColor$: 'whitesmoke',
     }),
-    LeftNavigatorButton$({
+    NavigatorButton$({
       icon: '🧮',
       label: getViewTitle$('/projects/<projectId:string>/values'),
       route: '/projects/<projectId:string>/values',
@@ -35,7 +35,7 @@ const ProjectNavigator$ = ({ currentRoute$ }) =>
       backgroundColor$: 'white',
       highlightBackgroundColor$: 'whitesmoke',
     }),
-    LeftNavigatorButton$({
+    NavigatorButton$({
       icon: '📊',
       label: getViewTitle$('/projects/<projectId:string>/dashboards'),
       route: '/projects/<projectId:string>/dashboards',
