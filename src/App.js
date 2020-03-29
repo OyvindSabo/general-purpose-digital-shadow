@@ -1,4 +1,6 @@
-const { cond$, eq$, or$ } = include('src/libraries/observable/utils.js');
+const { cond$, eq$, or$, slice$ } = include(
+  'src/libraries/observable/utils.js'
+);
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { If$ } = include('src/libraries/observableHtml/utils.js');
 
@@ -108,8 +110,12 @@ const App = ({ currentRoute$, model }) => {
           }
         ),
         If$(eq$(currentRoute$, '/'), Home$({ model })),
+        //If$(eq$(currentRoute$,))
         If$(
-          eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
+          or$(
+            eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
+            eq$(currentRoute$, '/projects/<projectId:string>')
+          ),
           DataSources$()
         ),
         If$(

@@ -854,6 +854,30 @@ const toFixed$ = (number$, decimals$) => {
   return formattedNumber$;
 };
 
+const slice$ = (stringOrArray$, start$, stop$) => {
+  const stringOrArray =
+    stringOrArray$ instanceof Observable
+      ? stringOrArray$.value
+      : stringOrArray$;
+  const start = start$ instanceof Observable ? start$.value : start$;
+  const stop = stop$ instanceof Observable ? stop$.value : stop$;
+  const slicedStringOrArray$ = new Observable(stringOrArray.slice(start, stop));
+  [stringOrArray$, start$, stop$]
+    .filter(observable => observable instanceof Observable)
+    .forEach(observable => {
+      window.addEventListener(observable.id, ({ detail }) => {
+        const stringOrArray =
+          stringOrArray$ instanceof Observable
+            ? stringOrArray$.value
+            : stringOrArray$;
+        const start = start$ instanceof Observable ? start$.value : start$;
+        const stop = stop$ instanceof Observable ? stop$.value : stop$;
+        slicedStringOrArray$.value = stringOrArray.slice(start, stop);
+      });
+    });
+  return slicedStringOrArray$;
+};
+
 module.exports = {
   add$,
   subtract$,
@@ -866,6 +890,7 @@ module.exports = {
   or$,
   not$,
   toFixed$,
+  slice$,
 };
 
   return module.exports;
@@ -1940,7 +1965,9 @@ module.exports = Dashboards$;
 
 modules['src/App.js'] = (() => {
   const module = { exports: {} };
-  const { cond$, eq$, or$ } = include('src/libraries/observable/utils.js');
+  const { cond$, eq$, or$, slice$ } = include(
+  'src/libraries/observable/utils.js'
+);
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { If$ } = include('src/libraries/observableHtml/utils.js');
 
@@ -2050,8 +2077,12 @@ const App = ({ currentRoute$, model }) => {
           }
         ),
         If$(eq$(currentRoute$, '/'), Home$({ model })),
+        //If$(eq$(currentRoute$,))
         If$(
-          eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
+          or$(
+            eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
+            eq$(currentRoute$, '/projects/<projectId:string>')
+          ),
           DataSources$()
         ),
         If$(

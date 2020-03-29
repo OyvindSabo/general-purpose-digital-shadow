@@ -247,6 +247,30 @@ const toFixed$ = (number$, decimals$) => {
   return formattedNumber$;
 };
 
+const slice$ = (stringOrArray$, start$, stop$) => {
+  const stringOrArray =
+    stringOrArray$ instanceof Observable
+      ? stringOrArray$.value
+      : stringOrArray$;
+  const start = start$ instanceof Observable ? start$.value : start$;
+  const stop = stop$ instanceof Observable ? stop$.value : stop$;
+  const slicedStringOrArray$ = new Observable(stringOrArray.slice(start, stop));
+  [stringOrArray$, start$, stop$]
+    .filter(observable => observable instanceof Observable)
+    .forEach(observable => {
+      window.addEventListener(observable.id, ({ detail }) => {
+        const stringOrArray =
+          stringOrArray$ instanceof Observable
+            ? stringOrArray$.value
+            : stringOrArray$;
+        const start = start$ instanceof Observable ? start$.value : start$;
+        const stop = stop$ instanceof Observable ? stop$.value : stop$;
+        slicedStringOrArray$.value = stringOrArray.slice(start, stop);
+      });
+    });
+  return slicedStringOrArray$;
+};
+
 module.exports = {
   add$,
   subtract$,
@@ -259,4 +283,5 @@ module.exports = {
   or$,
   not$,
   toFixed$,
+  slice$,
 };
