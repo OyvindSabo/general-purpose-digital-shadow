@@ -8,6 +8,7 @@ const WidgetLabel$ = ({ label$ }) =>
     position: 'absolute',
     width: '100%',
     pointerEvents: 'none',
+    userSelect: 'none',
   });
 
 module.exports = WidgetLabel$;
