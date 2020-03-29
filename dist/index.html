@@ -258,141 +258,11 @@ module.exports = Router;
   return module.exports;
 })();
 
-modules['src/model/Model.js'] = (() => {
+modules['src/data/Data.js'] = (() => {
   const module = { exports: {} };
-  const Observable = include('src/libraries/observable/Observable.js');
-
-const MAX_AMOUNT_OF_DERIVED_VALUES = 100;
-const MAX_AMOUNT_OF_WIDGETS = 100;
-
-const evaluateCode = (valuesCode, derivedValuesCode, widgetsCode) => {
-  return eval(`
-    const values = {};
-    const derivedValues = {};
-    const widgets = {};
-    ${valuesCode}
-    ${derivedValuesCode}
-    ${widgetsCode}
-    result = {
-      values,
-      derivedValues,
-      widgets,
-    };
-  `);
-};
-
-const buyPrice$ = new Observable(100);
-const sellPrice$ = new Observable(100);
-
-const model = {
-  projects: new Observable([
-    { id: '0', name: 'Double wishbone suspension' },
-    { id: '1', name: 'Bar charts' },
-  ]),
-
-  selectedProjectId$: new Observable(null),
-
-  derivedValuesEditorIsOpen$: new Observable(false),
-
-  valuesCode$: new Observable(''),
-  derivedValuesCode$: new Observable(''),
-  widgetsCode$: new Observable(''),
-
-  values: [...new Array(MAX_AMOUNT_OF_DERIVED_VALUES).keys()].map(() => ({
-    label$: new Observable(''),
-    value$: new Observable(0),
-    isEmpty$: new Observable(true),
-  })),
-  derivedValues: [...new Array(MAX_AMOUNT_OF_DERIVED_VALUES).keys()].map(
-    () => ({
-      label$: new Observable(''),
-      value$: new Observable(0),
-      isEmpty$: new Observable(true),
-    })
-  ),
-  widgets: [...new Array(MAX_AMOUNT_OF_DERIVED_VALUES).keys()].map(() => ({
-    label$: new Observable(''),
-    edges$: new Observable([]),
-    surfaces$: new Observable([]),
-    center$: new Observable([0, 0, 0]),
-    isEmpty$: new Observable(true),
-    is3d$: new Observable(false),
-  })),
-};
-
-window.addEventListener(model.valuesCode$.id, () => {
-  const evaluatedCode = evaluateCode(
-    model.valuesCode$.value,
-    model.derivedValuesCode$.value,
-    model.widgetsCode$.value
-  );
-
-  const valuesEntries = Object.entries(evaluatedCode.values);
-  model.values.forEach(({ label$, value$, isEmpty$ }, index) => {
-    label$.value = valuesEntries[index] ? valuesEntries[index][0] : '';
-    value$.value = valuesEntries[index] ? valuesEntries[index][1] : 0;
-    isEmpty$.value = !Boolean(valuesEntries[index]);
-  });
-
-  const derivedValuesEntries = Object.entries(evaluatedCode.derivedValues);
-  model.derivedValues.forEach(({ label$, value$, isEmpty$ }, index) => {
-    label$.value = derivedValuesEntries[index]
-      ? derivedValuesEntries[index][0]
-      : '';
-    value$.value = derivedValuesEntries[index]
-      ? derivedValuesEntries[index][1]
-      : 0;
-    isEmpty$.value = !derivedValuesEntries[index];
-  });
-
-  const widgetsEntries = Object.entries(evaluatedCode.widgets);
-  model.widgets.forEach(
-    ({ label$, edges$, surfaces$, is3d$, center$, isEmpty$ }, index) => {
-      label$.value = widgetsEntries[index] ? widgetsEntries[index][0] : '';
-      edges$.value = widgetsEntries[index]
-        ? widgetsEntries[index][1].edges || []
-        : [];
-      surfaces$.value = widgetsEntries[index]
-        ? widgetsEntries[index][1].surfaces || []
-        : [];
-      center$.value = widgetsEntries[index]
-        ? widgetsEntries[index][1].center || [0, 0, 0]
-        : [0, 0, 0]; // TODO
-      is3d$.value = widgetsEntries[index]
-        ? widgetsEntries[index][1].is3d || false
-        : false; // TODO
-      isEmpty$.value = !widgetsEntries[index];
-    }
-  );
-});
-
-// We can pretend we are fetching data from an api here
-const updateValues = () => {
-  setTimeout(() => {
-    buyPrice$.value =
-      Math.floor(Math.random() * 2) == 1
-        ? buyPrice$.value * 1.01
-        : buyPrice$.value / 1.01;
-    sellPrice$.value =
-      Math.floor(Math.random() * 2) == 1
-        ? sellPrice$.value * 1.01
-        : sellPrice$.value / 1.01;
-    model.valuesCode$.value = `
-      values.buyPrice = ${buyPrice$.value};
-      values.sellPrice = ${sellPrice$.value};
-    `;
-    updateValues();
-  }, 100);
-};
-updateValues();
-
-model.derivedValuesCode$.value = `
-  derivedValues['A constant value'] = 45;
-  derivedValues['Profit']           = values.sellPrice - values.buyPrice;
-  derivedValues['Dollar Profit']    = derivedValues.Profit / 8;
-  derivedValues['Compression (cm)'] = Math.random() * 10;
-`;
-model.widgetsCode$.value = `
+  const getWidgetsCodeByProjectId = id =>
+  ({
+    0: `
   /*******************************************************************************
   DOUBLE WISHBONE SUSPENSION
   *******************************************************************************/
@@ -504,7 +374,8 @@ model.widgetsCode$.value = `
     center: [0, 20, 125],
     is3d: true,
   }
-
+  `,
+    1: `
   /*******************************************************************************
   3D PYRAMID
   *******************************************************************************/
@@ -539,10 +410,13 @@ model.widgetsCode$.value = `
     edges: [edge0, edge1, edge2, edge3, edge4, edge5],
     is3d: true,
   };
-
+  `,
+    2: `
   /*******************************************************************************
   2D BAR CHART
   *******************************************************************************/
+ const profit = 100 + derivedValues.Profit;
+  
   widgets['Bar Chart'] = {
     surfaces: [{
       color: \`rgba(0, 255, 0, 0.5)\`,
@@ -598,9 +472,170 @@ model.widgetsCode$.value = `
     center: [15, 50, 0],
     is3d: true,
   }
-`;
+  `,
+  }[id]);
 
-module.exports = model;
+module.exports = {
+  getWidgetsCodeByProjectId,
+};
+
+  return module.exports;
+})();
+
+modules['src/model/Model.js'] = (() => {
+  const module = { exports: {} };
+  const Observable = include('src/libraries/observable/Observable.js');
+const { getWidgetsCodeByProjectId } = include('src/data/Data.js');
+
+const MAX_AMOUNT_OF_DERIVED_VALUES = 100;
+const MAX_AMOUNT_OF_WIDGETS = 100;
+
+const evaluateCode = (valuesCode, derivedValuesCode, widgetsCode) => {
+  return eval(`
+    const values = {};
+    const derivedValues = {};
+    const widgets = {};
+    ${valuesCode}
+    ${derivedValuesCode}
+    ${widgetsCode}
+    result = {
+      values,
+      derivedValues,
+      widgets,
+    };
+  `);
+};
+
+const buyPrice$ = new Observable(100);
+const sellPrice$ = new Observable(100);
+
+const Model = ({ router }) => {
+  const model = {
+    projects: new Observable([
+      { id: '0', name: 'Double wishbone suspension' },
+      { id: '1', name: '3D pyramid' },
+      { id: '2', name: 'Bar charts' },
+    ]),
+
+    selectedProjectId$: new Observable(null),
+
+    derivedValuesEditorIsOpen$: new Observable(false),
+
+    valuesCode$: new Observable(''),
+    derivedValuesCode$: new Observable(''),
+    widgetsCode$: new Observable(''),
+
+    values: [...new Array(MAX_AMOUNT_OF_DERIVED_VALUES).keys()].map(() => ({
+      label$: new Observable(''),
+      value$: new Observable(0),
+      isEmpty$: new Observable(true),
+    })),
+    derivedValues: [...new Array(MAX_AMOUNT_OF_DERIVED_VALUES).keys()].map(
+      () => ({
+        label$: new Observable(''),
+        value$: new Observable(0),
+        isEmpty$: new Observable(true),
+      })
+    ),
+    widgets: [...new Array(MAX_AMOUNT_OF_DERIVED_VALUES).keys()].map(() => ({
+      label$: new Observable(''),
+      edges$: new Observable([]),
+      surfaces$: new Observable([]),
+      center$: new Observable([0, 0, 0]),
+      isEmpty$: new Observable(true),
+      is3d$: new Observable(false),
+    })),
+  };
+
+  window.addEventListener(model.valuesCode$.id, () => {
+    const evaluatedCode = evaluateCode(
+      model.valuesCode$.value,
+      model.derivedValuesCode$.value,
+      model.widgetsCode$.value
+    );
+
+    const valuesEntries = Object.entries(evaluatedCode.values);
+    model.values.forEach(({ label$, value$, isEmpty$ }, index) => {
+      label$.value = valuesEntries[index] ? valuesEntries[index][0] : '';
+      value$.value = valuesEntries[index] ? valuesEntries[index][1] : 0;
+      isEmpty$.value = !Boolean(valuesEntries[index]);
+    });
+
+    const derivedValuesEntries = Object.entries(evaluatedCode.derivedValues);
+    model.derivedValues.forEach(({ label$, value$, isEmpty$ }, index) => {
+      label$.value = derivedValuesEntries[index]
+        ? derivedValuesEntries[index][0]
+        : '';
+      value$.value = derivedValuesEntries[index]
+        ? derivedValuesEntries[index][1]
+        : 0;
+      isEmpty$.value = !derivedValuesEntries[index];
+    });
+
+    const widgetsEntries = Object.entries(evaluatedCode.widgets);
+    model.widgets.forEach(
+      ({ label$, edges$, surfaces$, is3d$, center$, isEmpty$ }, index) => {
+        label$.value = widgetsEntries[index] ? widgetsEntries[index][0] : '';
+        edges$.value = widgetsEntries[index]
+          ? widgetsEntries[index][1].edges || []
+          : [];
+        surfaces$.value = widgetsEntries[index]
+          ? widgetsEntries[index][1].surfaces || []
+          : [];
+        center$.value = widgetsEntries[index]
+          ? widgetsEntries[index][1].center || [0, 0, 0]
+          : [0, 0, 0]; // TODO
+        is3d$.value = widgetsEntries[index]
+          ? widgetsEntries[index][1].is3d || false
+          : false; // TODO
+        isEmpty$.value = !widgetsEntries[index];
+      }
+    );
+  });
+
+  // We can pretend we are fetching data from an api here
+  const updateValues = () => {
+    setTimeout(() => {
+      buyPrice$.value =
+        Math.floor(Math.random() * 2) == 1
+          ? buyPrice$.value * 1.01
+          : buyPrice$.value / 1.01;
+      sellPrice$.value =
+        Math.floor(Math.random() * 2) == 1
+          ? sellPrice$.value * 1.01
+          : sellPrice$.value / 1.01;
+      model.valuesCode$.value = `
+          values.buyPrice = ${buyPrice$.value};
+          values.sellPrice = ${sellPrice$.value};
+          `;
+      updateValues();
+    }, 100);
+  };
+  updateValues();
+
+  model.derivedValuesCode$.value = `
+      derivedValues['A constant value'] = 45;
+      derivedValues['Profit']           = values.sellPrice - values.buyPrice;
+      derivedValues['Dollar Profit']    = derivedValues.Profit / 8;
+      derivedValues['Compression (cm)'] = Math.random() * 10;
+      `;
+
+  window.addEventListener(model.selectedProjectId$.id, ({ detail }) => {
+    model.widgetsCode$.value = getWidgetsCodeByProjectId(detail);
+  });
+
+  const syncSelectedProjectWithRouter = ({ params, currentRoute$ }) => {
+    if (currentRoute$.value.indexOf('/projects/<projectId:string>') === 0) {
+      model.selectedProjectId$.value = params.projectId;
+      return;
+    }
+  };
+  syncSelectedProjectWithRouter(router);
+  router.onHashChange(syncSelectedProjectWithRouter);
+
+  return model;
+};
+module.exports = Model;
 
   return module.exports;
 })();
@@ -1712,8 +1747,8 @@ const Values$ = ({ model, currentRoute$ }) => {
       isOpen$: codeEditorIsOpen$,
     }).onClick(() => {
       location.hash = codeEditorIsOpen$.value
-        ? '#!/projects/<projectId:string>/values'
-        : '#!/projects/<projectId:string>/values/edit';
+        ? `#!/projects/${model.selectedProjectId$.value}/values`
+        : `#!/projects/${model.selectedProjectId$.value}/values/edit`;
     }),
     div$(
       CodeEditor$(model.derivedValuesCode$)
@@ -2142,8 +2177,8 @@ const Dashboards$ = ({ model, currentRoute$ }) => {
       isOpen$: codeEditorIsOpen$,
     }).onClick(() => {
       location.hash = codeEditorIsOpen$.value
-        ? '#!/projects/<projectId:string>/dashboards'
-        : '#!/projects/<projectId:string>/dashboards/edit';
+        ? `#!/projects/${model.selectedProjectId$.value}/dashboards`
+        : `#!/projects/${model.selectedProjectId$.value}/dashboards/edit`;
     }),
     div$(
       CodeEditor$(model.widgetsCode$)
@@ -2271,7 +2306,7 @@ module.exports = App;
 
 window.addEventListener('load', () => {
 const Router = include('src/libraries/router/Router.js');
-const model = include('src/model/Model.js');
+const Model = include('src/model/Model.js');
 const App = include('src/app/App.js');
 
 Object.assign(document.body.style, {
@@ -2293,13 +2328,7 @@ const router = new Router({
   '/projects/<projectId:string>/dashboards/edit': 'Edit dashboards',
 });
 
-router.onHashChange(({ params, currentRoute$ }) => {
-  if (currentRoute$.value === '/projects/<projectId:string>') {
-    console.log('params.projectId: ', params.projectId);
-    model.selectedProjectId$.value = params.projectId;
-    return;
-  }
-});
+const model = Model({ router });
 
 document.body.appendChild(
   App({

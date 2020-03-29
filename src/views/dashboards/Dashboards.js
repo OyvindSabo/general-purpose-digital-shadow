@@ -18,8 +18,8 @@ const Dashboards$ = ({ model, currentRoute$ }) => {
       isOpen$: codeEditorIsOpen$,
     }).onClick(() => {
       location.hash = codeEditorIsOpen$.value
-        ? '#!/projects/<projectId:string>/dashboards'
-        : '#!/projects/<projectId:string>/dashboards/edit';
+        ? `#!/projects/${model.selectedProjectId$.value}/dashboards`
+        : `#!/projects/${model.selectedProjectId$.value}/dashboards/edit`;
     }),
     div$(
       CodeEditor$(model.widgetsCode$)

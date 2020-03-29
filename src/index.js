@@ -1,5 +1,5 @@
 const Router = include('src/libraries/router/Router.js');
-const model = include('src/model/Model.js');
+const Model = include('src/model/Model.js');
 const App = include('src/app/App.js');
 
 Object.assign(document.body.style, {
@@ -21,13 +21,7 @@ const router = new Router({
   '/projects/<projectId:string>/dashboards/edit': 'Edit dashboards',
 });
 
-router.onHashChange(({ params, currentRoute$ }) => {
-  if (currentRoute$.value === '/projects/<projectId:string>') {
-    console.log('params.projectId: ', params.projectId);
-    model.selectedProjectId$.value = params.projectId;
-    return;
-  }
-});
+const model = Model({ router });
 
 document.body.appendChild(
   App({

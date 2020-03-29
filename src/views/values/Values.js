@@ -18,8 +18,8 @@ const Values$ = ({ model, currentRoute$ }) => {
       isOpen$: codeEditorIsOpen$,
     }).onClick(() => {
       location.hash = codeEditorIsOpen$.value
-        ? '#!/projects/<projectId:string>/values'
-        : '#!/projects/<projectId:string>/values/edit';
+        ? `#!/projects/${model.selectedProjectId$.value}/values`
+        : `#!/projects/${model.selectedProjectId$.value}/values/edit`;
     }),
     div$(
       CodeEditor$(model.derivedValuesCode$)
