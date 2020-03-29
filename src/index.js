@@ -1,6 +1,6 @@
 const Router = include('src/libraries/router/Router.js');
 const model = include('src/model/Model.js');
-const App = include('src/App.js');
+const App = include('src/app/App.js');
 
 Object.assign(document.body.style, {
   margin: 0,
