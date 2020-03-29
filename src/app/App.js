@@ -36,7 +36,7 @@ const App = ({ currentRoute$, model }) => {
         If$(
           startsWith$(currentRoute$, '/projects/<projectId:string>'),
           ProjectContainer$(
-            ProjectNavigator$({ currentRoute$ }),
+            ProjectNavigator$({ currentRoute$, model }),
             ProjectContentContainer$(
               If$(
                 or$(

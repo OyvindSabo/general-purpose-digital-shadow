@@ -28,6 +28,8 @@ const model = {
     { id: '1', name: 'Bar charts' },
   ]),
 
+  selectedProjectId$: new Observable(null),
+
   derivedValuesEditorIsOpen$: new Observable(false),
 
   valuesCode$: new Observable(''),

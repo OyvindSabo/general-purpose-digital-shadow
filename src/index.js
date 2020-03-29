@@ -21,6 +21,14 @@ const router = new Router({
   '/projects/<projectId:string>/dashboards/edit': 'Edit dashboards',
 });
 
+router.onHashChange(({ params, currentRoute$ }) => {
+  if (currentRoute$.value === '/projects/<projectId:string>') {
+    console.log('params.projectId: ', params.projectId);
+    model.selectedProjectId$.value = params.projectId;
+    return;
+  }
+});
+
 document.body.appendChild(
   App({
     model,

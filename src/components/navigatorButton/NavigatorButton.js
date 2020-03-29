@@ -1,4 +1,4 @@
-const { choose$ } = include('src/libraries/observable/utils.js');
+const { add$, choose$ } = include('src/libraries/observable/utils.js');
 
 const { Button$, Icon$, Label$ } = include(
   'src/components/navigatorButton/atoms.js'
@@ -6,7 +6,7 @@ const { Button$, Icon$, Label$ } = include(
 const NavigatorButton$ = ({
   icon,
   label,
-  route,
+  route$,
   isActive$,
   labelColor$,
   highlightLabelColor$,
@@ -38,7 +38,7 @@ const NavigatorButton$ = ({
         color: choose$(isActive$, highlightLabelColor$, labelColor$),
       });
     })
-    .onClick(() => (location.hash = `#!${route}`));
+    .onClick(() => (location.hash = add$('#!', route$).value));
 };
 
 module.exports = NavigatorButton$;

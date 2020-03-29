@@ -290,6 +290,8 @@ const model = {
     { id: '1', name: 'Bar charts' },
   ]),
 
+  selectedProjectId$: new Observable(null),
+
   derivedValuesEditorIsOpen$: new Observable(false),
 
   valuesCode$: new Observable(''),
@@ -1464,7 +1466,7 @@ module.exports = {
 
 modules['src/components/navigatorButton/NavigatorButton.js'] = (() => {
   const module = { exports: {} };
-  const { choose$ } = include('src/libraries/observable/utils.js');
+  const { add$, choose$ } = include('src/libraries/observable/utils.js');
 
 const { Button$, Icon$, Label$ } = include(
   'src/components/navigatorButton/atoms.js'
@@ -1472,7 +1474,7 @@ const { Button$, Icon$, Label$ } = include(
 const NavigatorButton$ = ({
   icon,
   label,
-  route,
+  route$,
   isActive$,
   labelColor$,
   highlightLabelColor$,
@@ -1504,7 +1506,7 @@ const NavigatorButton$ = ({
         color: choose$(isActive$, highlightLabelColor$, labelColor$),
       });
     })
-    .onClick(() => (location.hash = `#!${route}`));
+    .onClick(() => (location.hash = add$('#!', route$).value));
 };
 
 module.exports = NavigatorButton$;
@@ -1520,15 +1522,17 @@ modules['src/views/project/projectNavigator/ProjectNavigator.js'] = (() => {
 const VerticalNavigator$ = include(
   'src/components/verticalNavigator/VerticalNavigator.js'
 );
-const { eq$, or$, startsWith$ } = include('src/libraries/observable/utils.js');
+const { eq$, or$, startsWith$, add$ } = include(
+  'src/libraries/observable/utils.js'
+);
 const { getViewTitle$ } = include('src/app/utils.js');
 
-const ProjectNavigator$ = ({ currentRoute$ }) =>
+const ProjectNavigator$ = ({ currentRoute$, model }) =>
   VerticalNavigator$(
     NavigatorButton$({
       icon: '🏗',
       label: getViewTitle$('/projects/<projectId:string>/data-sources'),
-      route: '/projects/<projectId:string>/data-sources',
+      route$: add$('/projects/', model.selectedProjectId$, '/data-sources'),
       isActive$: or$(
         eq$(currentRoute$, '/projects/<projectId:string>'),
         eq$(currentRoute$, '/projects/<projectId:string>/data-sources')
@@ -1541,7 +1545,7 @@ const ProjectNavigator$ = ({ currentRoute$ }) =>
     NavigatorButton$({
       icon: '🧮',
       label: getViewTitle$('/projects/<projectId:string>/values'),
-      route: '/projects/<projectId:string>/values',
+      route$: add$('/projects/', model.selectedProjectId$, '/values'),
       isActive$: startsWith$(
         currentRoute$,
         '/projects/<projectId:string>/values'
@@ -1554,7 +1558,7 @@ const ProjectNavigator$ = ({ currentRoute$ }) =>
     NavigatorButton$({
       icon: '📊',
       label: getViewTitle$('/projects/<projectId:string>/dashboards'),
-      route: '/projects/<projectId:string>/dashboards',
+      route$: add$('/projects/', model.selectedProjectId$, '/dashboards'),
       isActive$: startsWith$(
         currentRoute$,
         '/projects/<projectId:string>/dashboards'
@@ -1587,7 +1591,7 @@ const AppNavigator$ = ({ currentRoute$ }) =>
     NavigatorButton$({
       icon: '🏠',
       label: getViewTitle$('/'),
-      route: '/',
+      route$: '/',
       isActive$: eq$(currentRoute$, '/'),
       labelColor$: 'whitesmoke',
       highlightLabelColor$: 'white',
@@ -2224,7 +2228,7 @@ const App = ({ currentRoute$, model }) => {
         If$(
           startsWith$(currentRoute$, '/projects/<projectId:string>'),
           ProjectContainer$(
-            ProjectNavigator$({ currentRoute$ }),
+            ProjectNavigator$({ currentRoute$, model }),
             ProjectContentContainer$(
               If$(
                 or$(
@@ -2287,6 +2291,14 @@ const router = new Router({
   '/projects/<projectId:string>/values/edit': 'Edit values',
   '/projects/<projectId:string>/dashboards': 'Dashboards',
   '/projects/<projectId:string>/dashboards/edit': 'Edit dashboards',
+});
+
+router.onHashChange(({ params, currentRoute$ }) => {
+  if (currentRoute$.value === '/projects/<projectId:string>') {
+    console.log('params.projectId: ', params.projectId);
+    model.selectedProjectId$.value = params.projectId;
+    return;
+  }
 });
 
 document.body.appendChild(

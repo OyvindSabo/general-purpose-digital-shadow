@@ -12,7 +12,7 @@ const AppNavigator$ = ({ currentRoute$ }) =>
     NavigatorButton$({
       icon: '🏠',
       label: getViewTitle$('/'),
-      route: '/',
+      route$: '/',
       isActive$: eq$(currentRoute$, '/'),
       labelColor$: 'whitesmoke',
       highlightLabelColor$: 'white',
