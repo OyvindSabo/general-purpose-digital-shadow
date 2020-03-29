@@ -7,6 +7,7 @@ const WidgetLabel$ = ({ label$ }) =>
     textAlign: 'center',
     position: 'absolute',
     width: '100%',
+    pointerEvents: 'none',
   });
 
 module.exports = WidgetLabel$;
