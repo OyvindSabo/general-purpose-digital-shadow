@@ -271,6 +271,47 @@ const slice$ = (stringOrArray$, start$, stop$) => {
   return slicedStringOrArray$;
 };
 
+const startsWith$ = (includingString$, includedString$) => {
+  const includingString =
+    includingString$ instanceof Observable
+      ? includingString$.value
+      : includingString$;
+
+  const includedString =
+    includedString$ instanceof Observable
+      ? includedString$.value
+      : includedString$;
+
+  const includingStringIncludesIncludedString =
+    includingString.indexOf(includedString) === 0;
+
+  const includingStringIncludesIncludedString$ = new Observable(
+    includingStringIncludesIncludedString
+  );
+
+  [includingString$, includedString$]
+    .filter(string => string instanceof Observable)
+    .forEach(string => {
+      window.addEventListener(string.id, ({ detail }) => {
+        const includingString =
+          includingString$ instanceof Observable
+            ? includingString$.value
+            : includingString$;
+
+        const includedString =
+          includedString$ instanceof Observable
+            ? includedString$.value
+            : includedString$;
+
+        const includingStringIncludesIncludedString =
+          includingString.indexOf(includedString) === 0;
+
+        includingStringIncludesIncludedString$.value = includingStringIncludesIncludedString;
+      });
+    });
+  return includingStringIncludesIncludedString$;
+};
+
 module.exports = {
   add$,
   subtract$,
@@ -284,4 +325,5 @@ module.exports = {
   not$,
   toFixed$,
   slice$,
+  startsWith$,
 };

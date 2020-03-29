@@ -1,4 +1,4 @@
-const { eq$, or$, slice$ } = include('src/libraries/observable/utils.js');
+const { eq$, or$, startsWith$ } = include('src/libraries/observable/utils.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { If$ } = include('src/libraries/observableHtml/utils.js');
 
@@ -19,9 +19,7 @@ const TitleBar$ = include('src/app/titleBar/TitleBar.js');
 const Projects$ = include('src/views/projects/Projects.js');
 const DataSources$ = include('src/views/dataSources/DataSources.js');
 const MainNavigator$ = include('src/app/mainNavigator/MainNavigator.js');
-
 const Values$ = include('src/views/values/Values.js');
-
 const Dashboards$ = include('src/views/dashboards/Dashboards.js');
 
 const App = ({ currentRoute$, model }) => {
@@ -33,31 +31,28 @@ const App = ({ currentRoute$, model }) => {
         TitleBar$({ currentRoute$ }),
         If$(eq$(currentRoute$, '/'), Projects$({ model })),
         If$(
-          eq$(slice$(currentRoute$, 0, 28), '/projects/<projectId:string>'),
-          ProjectContainer$(VerticalNavigator$())
-        ),
-        If$(
-          or$(
-            eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
-            eq$(currentRoute$, '/projects/<projectId:string>')
-          ),
-          DataSources$()
-        ),
-        If$(
-          or$(
-            eq$(currentRoute$, '/projects/<projectId:string>/values'), // Hack, for some reason the code editor animation doesn't work without this
-            eq$(currentRoute$, '/projects/<projectId:string>/values/edit'),
-            eq$(currentRoute$, '/projects/<projectId:string>/values')
-          ),
-          Values$({ model, currentRoute$ })
-        ),
-        If$(
-          or$(
-            eq$(currentRoute$, '/projects/<projectId:string>/dashboards'), // Hack, for some reason the code editor animation doesn't work without this
-            eq$(currentRoute$, '/projects/<projectId:string>/dashboards/edit'),
-            eq$(currentRoute$, '/projects/<projectId:string>/dashboards')
-          ),
-          Dashboards$({ model, currentRoute$ })
+          startsWith$(currentRoute$, '/projects/<projectId:string>'),
+          ProjectContainer$(
+            VerticalNavigator$(),
+            If$(
+              or$(
+                eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
+                eq$(currentRoute$, '/projects/<projectId:string>')
+              ),
+              DataSources$()
+            ),
+            If$(
+              startsWith$(currentRoute$, '/projects/<projectId:string>/values'),
+              Values$({ model, currentRoute$ })
+            ),
+            If$(
+              startsWith$(
+                currentRoute$,
+                '/projects/<projectId:string>/dashboards'
+              ),
+              Dashboards$({ model, currentRoute$ })
+            )
+          )
         )
       )
     )
