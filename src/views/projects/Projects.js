@@ -1,13 +1,13 @@
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const ProjectPreview$ = include(
-  'src/views/home/projectPreview/ProjectPreview.js'
+  'src/views/projects/projectPreview/ProjectPreview.js'
 );
 
-const Home$ = ({ model }) =>
+const Projects$ = ({ model }) =>
   div$(
     ...model.projects.value.map(({ name, id }) =>
       ProjectPreview$(name).onClick(() => (location.hash = `#!/projects/${id}`))
     )
   );
 
-module.exports = Home$;
+module.exports = Projects$;

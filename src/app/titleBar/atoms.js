@@ -6,4 +6,4 @@ const ViewTitle$ = styled({
   padding: '16px',
 })(div$);
 
-module.exports = ViewTitle$;
+module.exports = { ViewTitle$ };

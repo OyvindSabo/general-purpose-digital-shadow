@@ -1020,40 +1020,6 @@ module.exports = DataSourcesView$;
   return module.exports;
 })();
 
-modules['src/app/utils.js'] = (() => {
-  const module = { exports: {} };
-  const { cond$, eq$ } = include('src/libraries/observable/utils.js');
-
-const getViewTitle$ = currentRoute$ =>
-  cond$(
-    [eq$(currentRoute$, '/'), 'Projects'],
-    [eq$(currentRoute$, '/projects/<projectId:string>'), 'Data sources'],
-    [
-      eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
-      'Data sources',
-    ],
-    [eq$(currentRoute$, '/projects/<projectId:string>/values'), 'Values'],
-    [
-      eq$(currentRoute$, '/projects/<projectId:string>/values/edit'),
-      'Edit values',
-    ],
-    [
-      eq$(currentRoute$, '/projects/<projectId:string>/dashboards'),
-      'Dashboards',
-    ],
-    [
-      eq$(currentRoute$, '/projects/<projectId:string>/dashboards/edit'),
-      'Edit dashboards',
-    ]
-  );
-
-module.exports = {
-  getViewTitle$,
-};
-
-  return module.exports;
-})();
-
 modules['src/libraries/styled/styled.js'] = (() => {
   const module = { exports: {} };
   const styled = style => Component => (...children) =>
@@ -1123,23 +1089,6 @@ module.exports = {
   return module.exports;
 })();
 
-modules['src/components/viewContainer/ViewContainer.js'] = (() => {
-  const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const styled = include('src/libraries/styled/styled.js');
-
-const ViewContainer$ = styled({
-  position: 'absolute',
-  top: '0',
-  left: '64px',
-  right: '0',
-})(div$);
-
-module.exports = ViewContainer$;
-
-  return module.exports;
-})();
-
 modules['src/app/mainContainer/MainContainer.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
@@ -1147,7 +1096,6 @@ const styled = include('src/libraries/styled/styled.js');
 
 const MainContainer$ = styled({
   height: 'calc(100% - 64px)',
-  background: 'GhostWhite',
   position: 'absolute',
   left: '0',
   right: '0',
@@ -1168,6 +1116,7 @@ const MainContentContainer$ = styled({
   top: '0',
   left: '64px',
   right: '0',
+  bottom: '0',
 })(div$);
 
 module.exports = MainContentContainer$;
@@ -1175,17 +1124,19 @@ module.exports = MainContentContainer$;
   return module.exports;
 })();
 
-modules['src/components/viewTitle/ViewTitle.js'] = (() => {
+modules['src/views/project/projectContainer/ProjectContainer.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const styled = include('src/libraries/styled/styled.js');
 
-const ViewTitle$ = styled({
-  fontSize: '32px',
-  padding: '16px',
+const ProjectContainer$ = styled({
+  height: 'calc(100% - 64px)',
+  position: 'absolute',
+  left: '0',
+  right: '0',
 })(div$);
 
-module.exports = ViewTitle$;
+module.exports = ProjectContainer$;
 
   return module.exports;
 })();
@@ -1235,7 +1186,75 @@ module.exports = VerticalNavigator$;
   return module.exports;
 })();
 
-modules['src/views/home/projectPreview/ProjectPreview.js'] = (() => {
+modules['src/app/titleBar/atoms.js'] = (() => {
+  const module = { exports: {} };
+  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const styled = include('src/libraries/styled/styled.js');
+
+const ViewTitle$ = styled({
+  fontSize: '32px',
+  padding: '16px',
+})(div$);
+
+module.exports = { ViewTitle$ };
+
+  return module.exports;
+})();
+
+modules['src/app/utils.js'] = (() => {
+  const module = { exports: {} };
+  const { cond$, eq$ } = include('src/libraries/observable/utils.js');
+
+const getViewTitle$ = currentRoute$ =>
+  cond$(
+    [eq$(currentRoute$, '/'), 'Projects'],
+    [eq$(currentRoute$, '/projects/<projectId:string>'), 'Data sources'],
+    [
+      eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
+      'Data sources',
+    ],
+    [eq$(currentRoute$, '/projects/<projectId:string>/values'), 'Values'],
+    [
+      eq$(currentRoute$, '/projects/<projectId:string>/values/edit'),
+      'Edit values',
+    ],
+    [
+      eq$(currentRoute$, '/projects/<projectId:string>/dashboards'),
+      'Dashboards',
+    ],
+    [
+      eq$(currentRoute$, '/projects/<projectId:string>/dashboards/edit'),
+      'Edit dashboards',
+    ]
+  );
+
+module.exports = {
+  getViewTitle$,
+};
+
+  return module.exports;
+})();
+
+modules['src/app/titleBar/TitleBar.js'] = (() => {
+  const module = { exports: {} };
+  const HorizontalNavigator$ = include(
+  'src/components/horizontalNavigator/HorizontalNavigator.js'
+);
+const { ViewTitle$ } = include('src/app/titleBar/atoms.js');
+const { getViewTitle$ } = include('src/app/utils.js');
+
+const TitleBar$ = ({ currentRoute$ }) =>
+  HorizontalNavigator$(ViewTitle$(getViewTitle$(currentRoute$))).setStyle({
+    background: 'white',
+    color: 'darkslategray',
+  });
+
+module.exports = TitleBar$;
+
+  return module.exports;
+})();
+
+modules['src/views/projects/projectPreview/ProjectPreview.js'] = (() => {
   const module = { exports: {} };
   const styled = include('src/libraries/styled/styled.js');
 const withShadow = include('src/styleWrappers/withShadow.js');
@@ -1260,21 +1279,21 @@ module.exports = ProjectPreview$;
   return module.exports;
 })();
 
-modules['src/views/home/Home.js'] = (() => {
+modules['src/views/projects/Projects.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const ProjectPreview$ = include(
-  'src/views/home/projectPreview/ProjectPreview.js'
+  'src/views/projects/projectPreview/ProjectPreview.js'
 );
 
-const Home$ = ({ model }) =>
+const Projects$ = ({ model }) =>
   div$(
     ...model.projects.value.map(({ name, id }) =>
       ProjectPreview$(name).onClick(() => (location.hash = `#!/projects/${id}`))
     )
   );
 
-module.exports = Home$;
+module.exports = Projects$;
 
   return module.exports;
 })();
@@ -2095,13 +2114,15 @@ const HorizontalNavigator$ = include(
 const VerticalNavigator$ = include(
   'src/components/verticalNavigator/VerticalNavigator.js'
 );
-const ViewContainer$ = include('src/components/viewContainer/ViewContainer.js');
 const MainContainer$ = include('src/app/mainContainer/MainContainer.js');
 const MainContentContainer$ = include(
   'src/app/mainContentContainer/MainContentContainer.js'
 );
-const ViewTitle$ = include('src/components/viewTitle/ViewTitle.js');
-const Home$ = include('src/views/home/Home.js');
+const ProjectContainer$ = include(
+  'src/views/project/projectContainer/ProjectContainer.js'
+);
+const TitleBar$ = include('src/app/titleBar/TitleBar.js');
+const Projects$ = include('src/views/projects/Projects.js');
 const DataSources$ = include('src/views/dataSources/DataSources.js');
 const MainNavigator$ = include('src/app/mainNavigator/MainNavigator.js');
 
@@ -2109,25 +2130,17 @@ const Values$ = include('src/views/values/Values.js');
 
 const Dashboards$ = include('src/views/dashboards/Dashboards.js');
 
-const { getViewTitle$ } = include('src/app/utils.js');
-
 const App = ({ currentRoute$, model }) => {
   const element = div$(
     HorizontalNavigator$().setStyle({ background: 'black' }),
     MainContainer$(
       MainNavigator$({ currentRoute$ }),
-      // Not sure I'm happy about this solution
       MainContentContainer$(
-        HorizontalNavigator$(ViewTitle$(getViewTitle$(currentRoute$))).setStyle(
-          {
-            background: 'white',
-            color: 'darkslategray',
-          }
-        ),
-        If$(eq$(currentRoute$, '/'), Home$({ model })),
+        TitleBar$({ currentRoute$ }),
+        If$(eq$(currentRoute$, '/'), Projects$({ model })),
         If$(
           eq$(slice$(currentRoute$, 0, 28), '/projects/<projectId:string>'),
-          VerticalNavigator$()
+          ProjectContainer$(VerticalNavigator$())
         ),
         If$(
           or$(
@@ -2172,6 +2185,7 @@ const App = include('src/app/App.js');
 Object.assign(document.body.style, {
   margin: 0,
   fontFamily: 'sans-serif',
+  background: 'GhostWhite',
   height: '100%',
 });
 //const FIREBASE_API_KEY = 'AIzaSyCeGXLqw0MEwiSFHG1Wks1HfQHXRZoOuFY';

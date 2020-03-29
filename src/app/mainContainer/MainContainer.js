@@ -3,7 +3,6 @@ const styled = include('src/libraries/styled/styled.js');
 
 const MainContainer$ = styled({
   height: 'calc(100% - 64px)',
-  background: 'GhostWhite',
   position: 'absolute',
   left: '0',
   right: '0',

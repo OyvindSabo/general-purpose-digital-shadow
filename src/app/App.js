@@ -8,13 +8,15 @@ const HorizontalNavigator$ = include(
 const VerticalNavigator$ = include(
   'src/components/verticalNavigator/VerticalNavigator.js'
 );
-const ViewContainer$ = include('src/components/viewContainer/ViewContainer.js');
 const MainContainer$ = include('src/app/mainContainer/MainContainer.js');
 const MainContentContainer$ = include(
   'src/app/mainContentContainer/MainContentContainer.js'
 );
-const ViewTitle$ = include('src/components/viewTitle/ViewTitle.js');
-const Home$ = include('src/views/home/Home.js');
+const ProjectContainer$ = include(
+  'src/views/project/projectContainer/ProjectContainer.js'
+);
+const TitleBar$ = include('src/app/titleBar/TitleBar.js');
+const Projects$ = include('src/views/projects/Projects.js');
 const DataSources$ = include('src/views/dataSources/DataSources.js');
 const MainNavigator$ = include('src/app/mainNavigator/MainNavigator.js');
 
@@ -22,25 +24,17 @@ const Values$ = include('src/views/values/Values.js');
 
 const Dashboards$ = include('src/views/dashboards/Dashboards.js');
 
-const { getViewTitle$ } = include('src/app/utils.js');
-
 const App = ({ currentRoute$, model }) => {
   const element = div$(
     HorizontalNavigator$().setStyle({ background: 'black' }),
     MainContainer$(
       MainNavigator$({ currentRoute$ }),
-      // Not sure I'm happy about this solution
       MainContentContainer$(
-        HorizontalNavigator$(ViewTitle$(getViewTitle$(currentRoute$))).setStyle(
-          {
-            background: 'white',
-            color: 'darkslategray',
-          }
-        ),
-        If$(eq$(currentRoute$, '/'), Home$({ model })),
+        TitleBar$({ currentRoute$ }),
+        If$(eq$(currentRoute$, '/'), Projects$({ model })),
         If$(
           eq$(slice$(currentRoute$, 0, 28), '/projects/<projectId:string>'),
-          VerticalNavigator$()
+          ProjectContainer$(VerticalNavigator$())
         ),
         If$(
           or$(

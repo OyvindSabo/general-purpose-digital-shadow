@@ -5,6 +5,7 @@ const App = include('src/app/App.js');
 Object.assign(document.body.style, {
   margin: 0,
   fontFamily: 'sans-serif',
+  background: 'GhostWhite',
   height: '100%',
 });
 //const FIREBASE_API_KEY = 'AIzaSyCeGXLqw0MEwiSFHG1Wks1HfQHXRZoOuFY';
