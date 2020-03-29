@@ -4,10 +4,10 @@ const LeftNavigatorButton$ = include(
 const VerticalNavigator$ = include(
   'src/components/verticalNavigator/VerticalNavigator.js'
 );
-const { eq$, or$ } = include('src/libraries/observable/utils.js');
+const { eq$ } = include('src/libraries/observable/utils.js');
 const { getViewTitle$ } = include('src/app/utils.js');
 
-const MainNavigator$ = ({ currentRoute$ }) =>
+const AppNavigator$ = ({ currentRoute$ }) =>
   VerticalNavigator$(
     LeftNavigatorButton$({
       icon: '🏠',
@@ -21,4 +21,4 @@ const MainNavigator$ = ({ currentRoute$ }) =>
     })
   ).setStyle({ background: 'lightslategrey' });
 
-module.exports = MainNavigator$;
+module.exports = AppNavigator$;

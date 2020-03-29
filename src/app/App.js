@@ -8,9 +8,9 @@ const HorizontalNavigator$ = include(
 const ProjectNavigator$ = include(
   'src/views/project/projectNavigator/ProjectNavigator.js'
 );
-const MainContainer$ = include('src/app/mainContainer/MainContainer.js');
-const MainContentContainer$ = include(
-  'src/app/mainContentContainer/MainContentContainer.js'
+const AppContainer$ = include('src/app/appContainer/AppContainer.js');
+const AppContentContainer$ = include(
+  'src/app/appContentContainer/AppContentContainer.js'
 );
 const ProjectContainer$ = include(
   'src/views/project/projectContainer/ProjectContainer.js'
@@ -21,16 +21,16 @@ const ProjectContentContainer$ = include(
 const TitleBar$ = include('src/app/titleBar/TitleBar.js');
 const Projects$ = include('src/views/projects/Projects.js');
 const DataSources$ = include('src/views/dataSources/DataSources.js');
-const MainNavigator$ = include('src/app/mainNavigator/MainNavigator.js');
+const AppNavigator$ = include('src/app/appNavigator/AppNavigator.js');
 const Values$ = include('src/views/values/Values.js');
 const Dashboards$ = include('src/views/dashboards/Dashboards.js');
 
 const App = ({ currentRoute$, model }) => {
   const element = div$(
     HorizontalNavigator$().setStyle({ background: 'black' }),
-    MainContainer$(
-      MainNavigator$({ currentRoute$ }),
-      MainContentContainer$(
+    AppContainer$(
+      AppNavigator$({ currentRoute$ }),
+      AppContentContainer$(
         TitleBar$({ currentRoute$ }),
         If$(eq$(currentRoute$, '/'), Projects$({ model })),
         If$(
