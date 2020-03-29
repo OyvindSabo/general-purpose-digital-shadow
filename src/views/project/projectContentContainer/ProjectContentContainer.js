@@ -7,6 +7,7 @@ const ProjectContentContainer$ = styled({
   left: '64px',
   right: '0',
   bottom: '0',
+  overflowY: 'scroll',
 })(div$);
 
 module.exports = ProjectContentContainer$;
