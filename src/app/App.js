@@ -5,8 +5,8 @@ const { If$ } = include('src/libraries/observableHtml/utils.js');
 const HorizontalNavigator$ = include(
   'src/components/horizontalNavigator/HorizontalNavigator.js'
 );
-const VerticalNavigator$ = include(
-  'src/components/verticalNavigator/VerticalNavigator.js'
+const ProjectNavigator$ = include(
+  'src/views/project/projectNavigator/ProjectNavigator.js'
 );
 const MainContainer$ = include('src/app/mainContainer/MainContainer.js');
 const MainContentContainer$ = include(
@@ -14,6 +14,9 @@ const MainContentContainer$ = include(
 );
 const ProjectContainer$ = include(
   'src/views/project/projectContainer/ProjectContainer.js'
+);
+const ProjectContentContainer$ = include(
+  'src/views/project/projectContentContainer/ProjectContentContainer.js'
 );
 const TitleBar$ = include('src/app/titleBar/TitleBar.js');
 const Projects$ = include('src/views/projects/Projects.js');
@@ -33,24 +36,32 @@ const App = ({ currentRoute$, model }) => {
         If$(
           startsWith$(currentRoute$, '/projects/<projectId:string>'),
           ProjectContainer$(
-            VerticalNavigator$(),
-            If$(
-              or$(
-                eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
-                eq$(currentRoute$, '/projects/<projectId:string>')
+            ProjectNavigator$({ currentRoute$ }),
+            ProjectContentContainer$(
+              If$(
+                or$(
+                  eq$(
+                    currentRoute$,
+                    '/projects/<projectId:string>/data-sources'
+                  ),
+                  eq$(currentRoute$, '/projects/<projectId:string>')
+                ),
+                DataSources$()
               ),
-              DataSources$()
-            ),
-            If$(
-              startsWith$(currentRoute$, '/projects/<projectId:string>/values'),
-              Values$({ model, currentRoute$ })
-            ),
-            If$(
-              startsWith$(
-                currentRoute$,
-                '/projects/<projectId:string>/dashboards'
+              If$(
+                startsWith$(
+                  currentRoute$,
+                  '/projects/<projectId:string>/values'
+                ),
+                Values$({ model, currentRoute$ })
               ),
-              Dashboards$({ model, currentRoute$ })
+              If$(
+                startsWith$(
+                  currentRoute$,
+                  '/projects/<projectId:string>/dashboards'
+                ),
+                Dashboards$({ model, currentRoute$ })
+              )
             )
           )
         )

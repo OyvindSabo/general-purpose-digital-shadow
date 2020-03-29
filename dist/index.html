@@ -1183,6 +1183,24 @@ module.exports = ProjectContainer$;
   return module.exports;
 })();
 
+modules['src/views/project/projectContentContainer/ProjectContentContainer.js'] = (() => {
+  const module = { exports: {} };
+  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const styled = include('src/libraries/styled/styled.js');
+
+const ProjectContentContainer$ = styled({
+  position: 'absolute',
+  top: '0',
+  left: '64px',
+  right: '0',
+  bottom: '0',
+})(div$);
+
+module.exports = ProjectContentContainer$;
+
+  return module.exports;
+})();
+
 modules['src/styleWrappers/withShadow.js'] = (() => {
   const module = { exports: {} };
   const styled = include('src/libraries/styled/styled.js');
@@ -1228,21 +1246,6 @@ module.exports = VerticalNavigator$;
   return module.exports;
 })();
 
-modules['src/app/titleBar/atoms.js'] = (() => {
-  const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const styled = include('src/libraries/styled/styled.js');
-
-const ViewTitle$ = styled({
-  fontSize: '32px',
-  padding: '16px',
-})(div$);
-
-module.exports = { ViewTitle$ };
-
-  return module.exports;
-})();
-
 modules['src/app/utils.js'] = (() => {
   const module = { exports: {} };
   const { cond$, eq$ } = include('src/libraries/observable/utils.js');
@@ -1273,6 +1276,21 @@ const getViewTitle$ = currentRoute$ =>
 module.exports = {
   getViewTitle$,
 };
+
+  return module.exports;
+})();
+
+modules['src/app/titleBar/atoms.js'] = (() => {
+  const module = { exports: {} };
+  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const styled = include('src/libraries/styled/styled.js');
+
+const ViewTitle$ = styled({
+  fontSize: '32px',
+  padding: '16px',
+})(div$);
+
+module.exports = { ViewTitle$ };
 
   return module.exports;
 })();
@@ -1493,6 +1511,65 @@ module.exports = LeftNavigatorButton$;
   return module.exports;
 })();
 
+modules['src/views/project/projectNavigator/ProjectNavigator.js'] = (() => {
+  const module = { exports: {} };
+  const LeftNavigatorButton$ = include(
+  'src/components/leftNavigatorButton/LeftNavigatorButton.js'
+);
+const VerticalNavigator$ = include(
+  'src/components/verticalNavigator/VerticalNavigator.js'
+);
+const { eq$, or$, startsWith$ } = include('src/libraries/observable/utils.js');
+const { getViewTitle$ } = include('src/app/utils.js');
+
+const ProjectNavigator$ = ({ currentRoute$ }) =>
+  VerticalNavigator$(
+    LeftNavigatorButton$({
+      icon: '🏗',
+      label: getViewTitle$('/projects/<projectId:string>/data-sources'),
+      route: '/projects/<projectId:string>/data-sources',
+      isActive$: or$(
+        eq$(currentRoute$, '/projects/<projectId:string>'),
+        eq$(currentRoute$, '/projects/<projectId:string>/data-sources')
+      ),
+      labelColor$: 'lightslategray',
+      highlightLabelColor$: 'slategray',
+      backgroundColor$: 'white',
+      highlightBackgroundColor$: 'whitesmoke',
+    }),
+    LeftNavigatorButton$({
+      icon: '🧮',
+      label: getViewTitle$('/projects/<projectId:string>/values'),
+      route: '/projects/<projectId:string>/values',
+      isActive$: startsWith$(
+        currentRoute$,
+        '/projects/<projectId:string>/values'
+      ),
+      labelColor$: 'lightslategray',
+      highlightLabelColor$: 'slategray',
+      backgroundColor$: 'white',
+      highlightBackgroundColor$: 'whitesmoke',
+    }),
+    LeftNavigatorButton$({
+      icon: '📊',
+      label: getViewTitle$('/projects/<projectId:string>/dashboards'),
+      route: '/projects/<projectId:string>/dashboards',
+      isActive$: startsWith$(
+        currentRoute$,
+        '/projects/<projectId:string>/dashboards'
+      ),
+      labelColor$: 'lightslategray',
+      highlightLabelColor$: 'slategray',
+      backgroundColor$: 'white',
+      highlightBackgroundColor$: 'whitesmoke',
+    })
+  );
+
+module.exports = ProjectNavigator$;
+
+  return module.exports;
+})();
+
 modules['src/app/mainNavigator/MainNavigator.js'] = (() => {
   const module = { exports: {} };
   const LeftNavigatorButton$ = include(
@@ -1511,45 +1588,6 @@ const MainNavigator$ = ({ currentRoute$ }) =>
       label: getViewTitle$('/'),
       route: '/',
       isActive$: eq$(currentRoute$, '/'),
-      labelColor$: 'whitesmoke',
-      highlightLabelColor$: 'white',
-      backgroundColor$: 'lightslategray',
-      highlightBackgroundColor$: 'slategray',
-    }),
-    LeftNavigatorButton$({
-      icon: '🏗',
-      label: getViewTitle$('/projects/<projectId:string>/data-sources'),
-      route: '/projects/<projectId:string>/data-sources',
-      isActive$: or$(
-        eq$(currentRoute$, '/projects/<projectId:string>'),
-        eq$(currentRoute$, '/projects/<projectId:string>/data-sources')
-      ),
-      labelColor$: 'whitesmoke',
-      highlightLabelColor$: 'white',
-      backgroundColor$: 'lightslategray',
-      highlightBackgroundColor$: 'slategray',
-    }),
-    LeftNavigatorButton$({
-      icon: '🧮',
-      label: getViewTitle$('/projects/<projectId:string>/values'),
-      route: '/projects/<projectId:string>/values',
-      isActive$: or$(
-        eq$(currentRoute$, '/projects/<projectId:string>/values'),
-        eq$(currentRoute$, '/projects/<projectId:string>/values/edit')
-      ),
-      labelColor$: 'whitesmoke',
-      highlightLabelColor$: 'white',
-      backgroundColor$: 'lightslategray',
-      highlightBackgroundColor$: 'slategray',
-    }),
-    LeftNavigatorButton$({
-      icon: '📊',
-      label: getViewTitle$('/projects/<projectId:string>/dashboards'),
-      route: '/projects/<projectId:string>/dashboards',
-      isActive$: or$(
-        eq$(currentRoute$, '/projects/<projectId:string>/dashboards'),
-        eq$(currentRoute$, '/projects/<projectId:string>/dashboards/edit')
-      ),
       labelColor$: 'whitesmoke',
       highlightLabelColor$: 'white',
       backgroundColor$: 'lightslategray',
@@ -2153,8 +2191,8 @@ const { If$ } = include('src/libraries/observableHtml/utils.js');
 const HorizontalNavigator$ = include(
   'src/components/horizontalNavigator/HorizontalNavigator.js'
 );
-const VerticalNavigator$ = include(
-  'src/components/verticalNavigator/VerticalNavigator.js'
+const ProjectNavigator$ = include(
+  'src/views/project/projectNavigator/ProjectNavigator.js'
 );
 const MainContainer$ = include('src/app/mainContainer/MainContainer.js');
 const MainContentContainer$ = include(
@@ -2162,6 +2200,9 @@ const MainContentContainer$ = include(
 );
 const ProjectContainer$ = include(
   'src/views/project/projectContainer/ProjectContainer.js'
+);
+const ProjectContentContainer$ = include(
+  'src/views/project/projectContentContainer/ProjectContentContainer.js'
 );
 const TitleBar$ = include('src/app/titleBar/TitleBar.js');
 const Projects$ = include('src/views/projects/Projects.js');
@@ -2181,24 +2222,32 @@ const App = ({ currentRoute$, model }) => {
         If$(
           startsWith$(currentRoute$, '/projects/<projectId:string>'),
           ProjectContainer$(
-            VerticalNavigator$(),
-            If$(
-              or$(
-                eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
-                eq$(currentRoute$, '/projects/<projectId:string>')
+            ProjectNavigator$({ currentRoute$ }),
+            ProjectContentContainer$(
+              If$(
+                or$(
+                  eq$(
+                    currentRoute$,
+                    '/projects/<projectId:string>/data-sources'
+                  ),
+                  eq$(currentRoute$, '/projects/<projectId:string>')
+                ),
+                DataSources$()
               ),
-              DataSources$()
-            ),
-            If$(
-              startsWith$(currentRoute$, '/projects/<projectId:string>/values'),
-              Values$({ model, currentRoute$ })
-            ),
-            If$(
-              startsWith$(
-                currentRoute$,
-                '/projects/<projectId:string>/dashboards'
+              If$(
+                startsWith$(
+                  currentRoute$,
+                  '/projects/<projectId:string>/values'
+                ),
+                Values$({ model, currentRoute$ })
               ),
-              Dashboards$({ model, currentRoute$ })
+              If$(
+                startsWith$(
+                  currentRoute$,
+                  '/projects/<projectId:string>/dashboards'
+                ),
+                Dashboards$({ model, currentRoute$ })
+              )
             )
           )
         )
