@@ -6,7 +6,11 @@ const ProjectPreview$ = include(
 const Projects$ = ({ model }) => {
   return div$(
     ...Array.from(model.projects.entries()).map(([id, name]) =>
-      ProjectPreview$(name).onClick(() => (location.hash = `#!/projects/${id}`))
+      ProjectPreview$(name).onClick(
+        () =>
+          (location.hash = `#!/projects/${id}/${model.lastVisitedProjectView$
+            .value || ''}`)
+      )
     )
   );
 };

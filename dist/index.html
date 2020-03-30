@@ -541,6 +541,8 @@ const Model = ({ router }) => {
     selectedProjectId$: new Observable(null),
     selectedProjectName$: new Observable(null),
 
+    lastVisitedProjectView$: new Observable(null),
+
     derivedValuesEditorIsOpen$: new Observable(false),
 
     valuesCode$: new Observable(''),
@@ -643,8 +645,31 @@ const Model = ({ router }) => {
         params.projectId
       );
       model.widgetsCode$.value = getWidgetsCodeByProjectId(params.projectId);
-      return;
+      if (
+        currentRoute$.value.indexOf(
+          '/projects/<projectId:string>/data-sources'
+        ) === 0
+      ) {
+        model.lastVisitedProjectView$.value = 'data-sources';
+      }
+      if (
+        currentRoute$.value.indexOf('/projects/<projectId:string>/values') === 0
+      ) {
+        model.lastVisitedProjectView$.value = 'values';
+      }
+      if (
+        currentRoute$.value.indexOf(
+          '/projects/<projectId:string>/dashboards'
+        ) === 0
+      ) {
+        model.lastVisitedProjectView$.value = 'dashboards';
+      }
     }
+    console.log('currentRoute$.value: ', currentRoute$.value);
+    console.log(
+      'model.lastVisitedProjectView$.value: ',
+      model.lastVisitedProjectView$.value
+    );
   };
   syncSelectedProjectWithRouter(router);
   router.onHashChange(syncSelectedProjectWithRouter);
@@ -1439,7 +1464,9 @@ const TitleBar$ = ({ currentRoute$, model }) => {
         })
         .onClick(
           () =>
-            (location.hash = `#!/projects/${model.selectedProjectId$.value}`)
+            (location.hash = `#!/projects/${
+              model.selectedProjectId$.value
+            }/${model.lastVisitedProjectView$.value || ''}`)
         )
     )
   ).setStyle({
@@ -1488,7 +1515,11 @@ const ProjectPreview$ = include(
 const Projects$ = ({ model }) => {
   return div$(
     ...Array.from(model.projects.entries()).map(([id, name]) =>
-      ProjectPreview$(name).onClick(() => (location.hash = `#!/projects/${id}`))
+      ProjectPreview$(name).onClick(
+        () =>
+          (location.hash = `#!/projects/${id}/${model.lastVisitedProjectView$
+            .value || ''}`)
+      )
     )
   );
 };

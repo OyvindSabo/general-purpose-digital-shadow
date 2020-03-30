@@ -28,7 +28,9 @@ const TitleBar$ = ({ currentRoute$, model }) => {
         })
         .onClick(
           () =>
-            (location.hash = `#!/projects/${model.selectedProjectId$.value}`)
+            (location.hash = `#!/projects/${
+              model.selectedProjectId$.value
+            }/${model.lastVisitedProjectView$.value || ''}`)
         )
     )
   ).setStyle({
