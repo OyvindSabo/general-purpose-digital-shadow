@@ -1,8 +1,5 @@
 const { add$, choose$ } = include('src/libraries/observable/utils.js');
 
-const { Button$, Label$ } = include(
-  'src/components/horizontalNavigatorButton/atoms.js'
-);
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const HorizontalNavigatorButton$ = ({
   label,
@@ -35,33 +32,6 @@ const HorizontalNavigatorButton$ = ({
       });
     })
     .onClick(() => (location.hash = add$('#!', route$).value));
-
-  /*return Button$(Label$(label))
-    .setStyle({
-      background: choose$(
-        isActive$,
-        highlightBackgroundColor$,
-        backgroundColor$
-      ),
-      color: choose$(isActive$, highlightLabelColor$, labelColor$),
-    })
-    .onMouseEnter(element => {
-      element.setStyle({
-        background: highlightBackgroundColor$,
-        color: highlightLabelColor$,
-      });
-    })
-    .onMouseLeave(element => {
-      element.setStyle({
-        background: choose$(
-          isActive$,
-          highlightBackgroundColor$,
-          backgroundColor$
-        ),
-        color: choose$(isActive$, highlightLabelColor$, labelColor$),
-      });
-    })
-    .onClick(() => (location.hash = add$('#!', route$).value));*/
 };
 
 module.exports = HorizontalNavigatorButton$;

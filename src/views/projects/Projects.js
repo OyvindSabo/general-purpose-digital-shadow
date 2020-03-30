@@ -3,11 +3,12 @@ const ProjectPreview$ = include(
   'src/views/projects/projectPreview/ProjectPreview.js'
 );
 
-const Projects$ = ({ model }) =>
-  div$(
-    ...model.projects.value.map(({ name, id }) =>
+const Projects$ = ({ model }) => {
+  return div$(
+    ...Array.from(model.projects.entries()).map(([id, name]) =>
       ProjectPreview$(name).onClick(() => (location.hash = `#!/projects/${id}`))
     )
   );
+};
 
 module.exports = Projects$;

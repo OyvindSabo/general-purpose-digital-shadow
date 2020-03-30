@@ -27,13 +27,14 @@ const sellPrice$ = new Observable(100);
 
 const Model = ({ router }) => {
   const model = {
-    projects: new Observable([
-      { id: '0', name: 'Double wishbone suspension' },
-      { id: '1', name: '3D pyramid' },
-      { id: '2', name: 'Bar charts' },
+    projects: new Map([
+      ['0', 'Double wishbone suspension'],
+      ['1', '3D pyramid'],
+      ['2', 'Bar charts'],
     ]),
 
     selectedProjectId$: new Observable(null),
+    selectedProjectName$: new Observable(null),
 
     derivedValuesEditorIsOpen$: new Observable(false),
 
@@ -129,22 +130,14 @@ const Model = ({ router }) => {
   };
   updateValues();
 
-  model.derivedValuesCode$.value = `
-      derivedValues['A constant value'] = 45;
-      derivedValues['Profit']           = values.sellPrice - values.buyPrice;
-      derivedValues['Dollar Profit']    = derivedValues.Profit / 8;
-      derivedValues['Compression (cm)'] = Math.random() * 10;
-      `;
-
-  window.addEventListener(model.selectedProjectId$.id, ({ detail }) => {
-    // This could also just be inserted into the syncSelectedProjectWIthRouter method
-    model.widgetsCode$.value = getWidgetsCodeByProjectId(detail);
-    model.derivedValuesCode$.value = getDerivedValuesCodeByProjectId(detail);
-  });
-
   const syncSelectedProjectWithRouter = ({ params, currentRoute$ }) => {
     if (currentRoute$.value.indexOf('/projects/<projectId:string>') === 0) {
       model.selectedProjectId$.value = params.projectId;
+      model.selectedProjectName$.value = model.projects.get(params.projectId);
+      model.derivedValuesCode$.value = getDerivedValuesCodeByProjectId(
+        params.projectId
+      );
+      model.widgetsCode$.value = getWidgetsCodeByProjectId(params.projectId);
       return;
     }
   };

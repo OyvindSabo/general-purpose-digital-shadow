@@ -78,6 +78,7 @@ const createElement$ = (elementType, ...observables) => {
   return element;
 };
 const div$ = (...children) => createElement$('div', ...children);
+const span$ = (...children) => createElement$('span', ...children);
 const h1$ = (...children) => createElement$('h1', ...children);
 const textArea$ = (value = '') =>
   createElement$('textarea').setProps({ value });
@@ -96,6 +97,7 @@ const canvas$ = ({ width$, height$ }) =>
 module.exports = {
   createElement$,
   div$,
+  span$,
   h1$,
   textArea$,
   br$,

@@ -23,12 +23,13 @@ const Values$ = include('src/views/values/Values.js');
 const Dashboards$ = include('src/views/dashboards/Dashboards.js');
 
 const App = ({ currentRoute$, model }) => {
+  console.log('model.selectedProjectName$: ', model.selectedProjectName$);
   const element = div$(
     HorizontalNavigator$().setStyle({ background: 'black' }),
     AppContainer$(
       AppNavigator$({ currentRoute$ }),
       AppContentContainer$(
-        TitleBar$({ currentRoute$ }),
+        TitleBar$({ currentRoute$, model }),
         If$(eq$(currentRoute$, '/'), Projects$({ model })),
         If$(
           startsWith$(currentRoute$, '/projects/<projectId:string>'),

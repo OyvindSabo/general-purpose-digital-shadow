@@ -532,13 +532,14 @@ const sellPrice$ = new Observable(100);
 
 const Model = ({ router }) => {
   const model = {
-    projects: new Observable([
-      { id: '0', name: 'Double wishbone suspension' },
-      { id: '1', name: '3D pyramid' },
-      { id: '2', name: 'Bar charts' },
+    projects: new Map([
+      ['0', 'Double wishbone suspension'],
+      ['1', '3D pyramid'],
+      ['2', 'Bar charts'],
     ]),
 
     selectedProjectId$: new Observable(null),
+    selectedProjectName$: new Observable(null),
 
     derivedValuesEditorIsOpen$: new Observable(false),
 
@@ -634,22 +635,14 @@ const Model = ({ router }) => {
   };
   updateValues();
 
-  model.derivedValuesCode$.value = `
-      derivedValues['A constant value'] = 45;
-      derivedValues['Profit']           = values.sellPrice - values.buyPrice;
-      derivedValues['Dollar Profit']    = derivedValues.Profit / 8;
-      derivedValues['Compression (cm)'] = Math.random() * 10;
-      `;
-
-  window.addEventListener(model.selectedProjectId$.id, ({ detail }) => {
-    // This could also just be inserted into the syncSelectedProjectWIthRouter method
-    model.widgetsCode$.value = getWidgetsCodeByProjectId(detail);
-    model.derivedValuesCode$.value = getDerivedValuesCodeByProjectId(detail);
-  });
-
   const syncSelectedProjectWithRouter = ({ params, currentRoute$ }) => {
     if (currentRoute$.value.indexOf('/projects/<projectId:string>') === 0) {
       model.selectedProjectId$.value = params.projectId;
+      model.selectedProjectName$.value = model.projects.get(params.projectId);
+      model.derivedValuesCode$.value = getDerivedValuesCodeByProjectId(
+        params.projectId
+      );
+      model.widgetsCode$.value = getWidgetsCodeByProjectId(params.projectId);
       return;
     }
   };
@@ -1080,6 +1073,7 @@ const createElement$ = (elementType, ...observables) => {
   return element;
 };
 const div$ = (...children) => createElement$('div', ...children);
+const span$ = (...children) => createElement$('span', ...children);
 const h1$ = (...children) => createElement$('h1', ...children);
 const textArea$ = (value = '') =>
   createElement$('textarea').setProps({ value });
@@ -1098,6 +1092,7 @@ const canvas$ = ({ width$, height$ }) =>
 module.exports = {
   createElement$,
   div$,
+  span$,
   h1$,
   textArea$,
   br$,
@@ -1255,6 +1250,49 @@ module.exports = ProjectContainer$;
   return module.exports;
 })();
 
+modules['src/components/horizontalNavigatorButton/HorizontalNavigatorButton.js'] = (() => {
+  const module = { exports: {} };
+  const { add$, choose$ } = include('src/libraries/observable/utils.js');
+
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const HorizontalNavigatorButton$ = ({
+  label,
+  route$,
+  isActive$,
+  labelColor$,
+  highlightLabelColor$,
+}) => {
+  return div$(label)
+    .setStyle({
+      height: '64px',
+      width: '192px',
+      display: 'inline-block',
+      textAlign: 'center',
+      lineHeight: '64px',
+      boxSizing: 'border-box',
+      borderBottom: choose$(isActive$, '2px solid deepskyblue', 'none'),
+      color: choose$(isActive$, highlightLabelColor$, labelColor$),
+      userSelect: 'none',
+    })
+    .onMouseEnter(element => {
+      element.setStyle({
+        color: highlightLabelColor$,
+      });
+    })
+    .onMouseLeave(element => {
+      element.setStyle({
+        borderBottom: choose$(isActive$, '2px solid deepskyblue', 'none'),
+        color: choose$(isActive$, highlightLabelColor$, labelColor$),
+      });
+    })
+    .onClick(() => (location.hash = add$('#!', route$).value));
+};
+
+module.exports = HorizontalNavigatorButton$;
+
+  return module.exports;
+})();
+
 modules['src/app/utils.js'] = (() => {
   const module = { exports: {} };
   const { cond$, eq$ } = include('src/libraries/observable/utils.js');
@@ -1285,6 +1323,58 @@ const getViewTitle$ = currentRoute$ =>
 module.exports = {
   getViewTitle$,
 };
+
+  return module.exports;
+})();
+
+modules['src/views/project/projectNavigator/ProjectNavigator.js'] = (() => {
+  const module = { exports: {} };
+  const HorizontalNavigatorButton$ = include(
+  'src/components/horizontalNavigatorButton/HorizontalNavigatorButton.js'
+);
+const HorizontalNavigator$ = include(
+  'src/components/horizontalNavigator/HorizontalNavigator.js'
+);
+const { eq$, or$, startsWith$, add$ } = include(
+  'src/libraries/observable/utils.js'
+);
+const { getViewTitle$ } = include('src/app/utils.js');
+
+const ProjectNavigator$ = ({ currentRoute$, model }) =>
+  HorizontalNavigator$(
+    HorizontalNavigatorButton$({
+      label: getViewTitle$('/projects/<projectId:string>/data-sources'),
+      route$: add$('/projects/', model.selectedProjectId$, '/data-sources'),
+      isActive$: or$(
+        eq$(currentRoute$, '/projects/<projectId:string>'),
+        eq$(currentRoute$, '/projects/<projectId:string>/data-sources')
+      ),
+      labelColor$: 'slategray',
+      highlightLabelColor$: 'darkslategray',
+    }),
+    HorizontalNavigatorButton$({
+      label: getViewTitle$('/projects/<projectId:string>/values'),
+      route$: add$('/projects/', model.selectedProjectId$, '/values'),
+      isActive$: startsWith$(
+        currentRoute$,
+        '/projects/<projectId:string>/values'
+      ),
+      labelColor$: 'slategray',
+      highlightLabelColor$: 'darkslategray',
+    }),
+    HorizontalNavigatorButton$({
+      label: getViewTitle$('/projects/<projectId:string>/dashboards'),
+      route$: add$('/projects/', model.selectedProjectId$, '/dashboards'),
+      isActive$: startsWith$(
+        currentRoute$,
+        '/projects/<projectId:string>/dashboards'
+      ),
+      labelColor$: 'slategray',
+      highlightLabelColor$: 'darkslategray',
+    })
+  );
+
+module.exports = ProjectNavigator$;
 
   return module.exports;
 })();
@@ -1323,16 +1413,40 @@ modules['src/app/titleBar/TitleBar.js'] = (() => {
   'src/components/horizontalNavigator/HorizontalNavigator.js'
 );
 const { ViewTitle$ } = include('src/app/titleBar/atoms.js');
-const { getViewTitle$ } = include('src/app/utils.js');
 const withShadow = include('src/styleWrappers/withShadow.js');
+const { add$, startsWith$, choose$ } = include(
+  'src/libraries/observable/utils.js'
+);
+const { span$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
-const TitleBar$ = ({ currentRoute$ }) =>
-  withShadow(HorizontalNavigator$)(
-    ViewTitle$(getViewTitle$(currentRoute$))
+const TitleBar$ = ({ currentRoute$, model }) => {
+  return withShadow(HorizontalNavigator$)(
+    ViewTitle$(
+      span$('Projects').onClick(() => (location.hash = '#!/projects')),
+      span$(
+        choose$(
+          model.selectedProjectName$,
+          add$(' / ', model.selectedProjectName$),
+          ''
+        )
+      )
+        .setStyle({
+          color: choose$(
+            startsWith$(currentRoute$, '/projects/<projectId:string>'),
+            'darkslategray',
+            'lightgray'
+          ),
+        })
+        .onClick(
+          () =>
+            (location.hash = `#!/projects/${model.selectedProjectId$.value}`)
+        )
+    )
   ).setStyle({
     background: 'white',
     color: 'darkslategray',
   });
+};
 
 module.exports = TitleBar$;
 
@@ -1371,12 +1485,13 @@ const ProjectPreview$ = include(
   'src/views/projects/projectPreview/ProjectPreview.js'
 );
 
-const Projects$ = ({ model }) =>
-  div$(
-    ...model.projects.value.map(({ name, id }) =>
+const Projects$ = ({ model }) => {
+  return div$(
+    ...Array.from(model.projects.entries()).map(([id, name]) =>
       ProjectPreview$(name).onClick(() => (location.hash = `#!/projects/${id}`))
     )
   );
+};
 
 module.exports = Projects$;
 
@@ -1465,167 +1580,6 @@ const ExpandCodeEditorButton$ = ({ icon, label$, isOpen$ }) => {
 };
 
 module.exports = ExpandCodeEditorButton$;
-
-  return module.exports;
-})();
-
-modules['src/components/horizontalNavigatorButton/atoms.js'] = (() => {
-  const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const styled = include('src/libraries/styled/styled.js');
-
-const Button$ = styled({
-  height: '64px',
-  width: '64px',
-  overflow: 'hidden',
-  transition: '0.5s',
-  cursor: 'pointer',
-})(div$);
-const Icon$ = styled({
-  ///TODO: continue
-  fontSize: '30px',
-  textAlign: 'center',
-  marginTop: '15px',
-  pointerEvents: 'none',
-  userSelect: 'none',
-})(div$);
-const Label$ = styled({
-  fontSize: '15px',
-  textAlign: 'center',
-  pointerEvents: 'none',
-  userSelect: 'none',
-})(div$);
-
-module.exports = {
-  Button$,
-  Icon$,
-  Label$,
-};
-
-  return module.exports;
-})();
-
-modules['src/components/horizontalNavigatorButton/HorizontalNavigatorButton.js'] = (() => {
-  const module = { exports: {} };
-  const { add$, choose$ } = include('src/libraries/observable/utils.js');
-
-const { Button$, Label$ } = include(
-  'src/components/horizontalNavigatorButton/atoms.js'
-);
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const HorizontalNavigatorButton$ = ({
-  label,
-  route$,
-  isActive$,
-  labelColor$,
-  highlightLabelColor$,
-}) => {
-  return div$(label)
-    .setStyle({
-      height: '64px',
-      width: '192px',
-      display: 'inline-block',
-      textAlign: 'center',
-      lineHeight: '64px',
-      boxSizing: 'border-box',
-      borderBottom: choose$(isActive$, '2px solid deepskyblue', 'none'),
-      color: choose$(isActive$, highlightLabelColor$, labelColor$),
-      userSelect: 'none',
-    })
-    .onMouseEnter(element => {
-      element.setStyle({
-        color: highlightLabelColor$,
-      });
-    })
-    .onMouseLeave(element => {
-      element.setStyle({
-        borderBottom: choose$(isActive$, '2px solid deepskyblue', 'none'),
-        color: choose$(isActive$, highlightLabelColor$, labelColor$),
-      });
-    })
-    .onClick(() => (location.hash = add$('#!', route$).value));
-
-  /*return Button$(Label$(label))
-    .setStyle({
-      background: choose$(
-        isActive$,
-        highlightBackgroundColor$,
-        backgroundColor$
-      ),
-      color: choose$(isActive$, highlightLabelColor$, labelColor$),
-    })
-    .onMouseEnter(element => {
-      element.setStyle({
-        background: highlightBackgroundColor$,
-        color: highlightLabelColor$,
-      });
-    })
-    .onMouseLeave(element => {
-      element.setStyle({
-        background: choose$(
-          isActive$,
-          highlightBackgroundColor$,
-          backgroundColor$
-        ),
-        color: choose$(isActive$, highlightLabelColor$, labelColor$),
-      });
-    })
-    .onClick(() => (location.hash = add$('#!', route$).value));*/
-};
-
-module.exports = HorizontalNavigatorButton$;
-
-  return module.exports;
-})();
-
-modules['src/views/project/projectNavigator/ProjectNavigator.js'] = (() => {
-  const module = { exports: {} };
-  const HorizontalNavigatorButton$ = include(
-  'src/components/horizontalNavigatorButton/HorizontalNavigatorButton.js'
-);
-const HorizontalNavigator$ = include(
-  'src/components/horizontalNavigator/HorizontalNavigator.js'
-);
-const { eq$, or$, startsWith$, add$ } = include(
-  'src/libraries/observable/utils.js'
-);
-const { getViewTitle$ } = include('src/app/utils.js');
-
-const ProjectNavigator$ = ({ currentRoute$, model }) =>
-  HorizontalNavigator$(
-    HorizontalNavigatorButton$({
-      label: getViewTitle$('/projects/<projectId:string>/data-sources'),
-      route$: add$('/projects/', model.selectedProjectId$, '/data-sources'),
-      isActive$: or$(
-        eq$(currentRoute$, '/projects/<projectId:string>'),
-        eq$(currentRoute$, '/projects/<projectId:string>/data-sources')
-      ),
-      labelColor$: 'slategray',
-      highlightLabelColor$: 'darkslategray',
-    }),
-    HorizontalNavigatorButton$({
-      label: getViewTitle$('/projects/<projectId:string>/values'),
-      route$: add$('/projects/', model.selectedProjectId$, '/values'),
-      isActive$: startsWith$(
-        currentRoute$,
-        '/projects/<projectId:string>/values'
-      ),
-      labelColor$: 'slategray',
-      highlightLabelColor$: 'darkslategray',
-    }),
-    HorizontalNavigatorButton$({
-      label: getViewTitle$('/projects/<projectId:string>/dashboards'),
-      route$: add$('/projects/', model.selectedProjectId$, '/dashboards'),
-      isActive$: startsWith$(
-        currentRoute$,
-        '/projects/<projectId:string>/dashboards'
-      ),
-      labelColor$: 'slategray',
-      highlightLabelColor$: 'darkslategray',
-    })
-  );
-
-module.exports = ProjectNavigator$;
 
   return module.exports;
 })();
@@ -2357,12 +2311,13 @@ const Values$ = include('src/views/values/Values.js');
 const Dashboards$ = include('src/views/dashboards/Dashboards.js');
 
 const App = ({ currentRoute$, model }) => {
+  console.log('model.selectedProjectName$: ', model.selectedProjectName$);
   const element = div$(
     HorizontalNavigator$().setStyle({ background: 'black' }),
     AppContainer$(
       AppNavigator$({ currentRoute$ }),
       AppContentContainer$(
-        TitleBar$({ currentRoute$ }),
+        TitleBar$({ currentRoute$, model }),
         If$(eq$(currentRoute$, '/'), Projects$({ model })),
         If$(
           startsWith$(currentRoute$, '/projects/<projectId:string>'),
