@@ -15,9 +15,6 @@ const AppContentContainer$ = include(
 const ProjectContainer$ = include(
   'src/views/project/projectContainer/ProjectContainer.js'
 );
-const ProjectContentContainer$ = include(
-  'src/views/project/projectContentContainer/ProjectContentContainer.js'
-);
 const TitleBar$ = include('src/app/titleBar/TitleBar.js');
 const Projects$ = include('src/views/projects/Projects.js');
 const DataSources$ = include('src/views/dataSources/DataSources.js');
@@ -37,31 +34,23 @@ const App = ({ currentRoute$, model }) => {
           startsWith$(currentRoute$, '/projects/<projectId:string>'),
           ProjectContainer$(
             ProjectNavigator$({ currentRoute$, model }),
-            ProjectContentContainer$(
-              If$(
-                or$(
-                  eq$(
-                    currentRoute$,
-                    '/projects/<projectId:string>/data-sources'
-                  ),
-                  eq$(currentRoute$, '/projects/<projectId:string>')
-                ),
-                DataSources$()
+            If$(
+              or$(
+                eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
+                eq$(currentRoute$, '/projects/<projectId:string>')
               ),
-              If$(
-                startsWith$(
-                  currentRoute$,
-                  '/projects/<projectId:string>/values'
-                ),
-                Values$({ model, currentRoute$ })
+              DataSources$()
+            ),
+            If$(
+              startsWith$(currentRoute$, '/projects/<projectId:string>/values'),
+              Values$({ model, currentRoute$ })
+            ),
+            If$(
+              startsWith$(
+                currentRoute$,
+                '/projects/<projectId:string>/dashboards'
               ),
-              If$(
-                startsWith$(
-                  currentRoute$,
-                  '/projects/<projectId:string>/dashboards'
-                ),
-                Dashboards$({ model, currentRoute$ })
-              )
+              Dashboards$({ model, currentRoute$ })
             )
           )
         )

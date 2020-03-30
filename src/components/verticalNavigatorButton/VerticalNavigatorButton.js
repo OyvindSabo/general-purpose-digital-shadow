@@ -1,9 +1,9 @@
 const { add$, choose$ } = include('src/libraries/observable/utils.js');
 
 const { Button$, Icon$, Label$ } = include(
-  'src/components/navigatorButton/atoms.js'
+  'src/components/verticalNavigatorButton/atoms.js'
 );
-const NavigatorButton$ = ({
+const VerticalNavigatorButton$ = ({
   icon,
   label,
   route$,
@@ -41,4 +41,4 @@ const NavigatorButton$ = ({
     .onClick(() => (location.hash = add$('#!', route$).value));
 };
 
-module.exports = NavigatorButton$;
+module.exports = VerticalNavigatorButton$;

@@ -1191,6 +1191,18 @@ module.exports = {
   return module.exports;
 })();
 
+modules['src/components/horizontalNavigator/HorizontalNavigator.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const HorizontalNavigator$ = styled({ height: '64px' })(div$);
+
+module.exports = HorizontalNavigator$;
+
+  return module.exports;
+})();
+
 modules['src/app/appContainer/AppContainer.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
@@ -1239,70 +1251,6 @@ const ProjectContainer$ = styled({
 })(div$);
 
 module.exports = ProjectContainer$;
-
-  return module.exports;
-})();
-
-modules['src/views/project/projectContentContainer/ProjectContentContainer.js'] = (() => {
-  const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const styled = include('src/libraries/styled/styled.js');
-
-const ProjectContentContainer$ = styled({
-  position: 'absolute',
-  top: '0',
-  left: '64px',
-  right: '0',
-  bottom: '0',
-  overflowY: 'auto',
-})(div$);
-
-module.exports = ProjectContentContainer$;
-
-  return module.exports;
-})();
-
-modules['src/styleWrappers/withShadow.js'] = (() => {
-  const module = { exports: {} };
-  const styled = include('src/libraries/styled/styled.js');
-
-const withShadow = styled({
-  boxShadow: 'rgba(0, 0, 0, 0.25) 0px 0px 8px -4px',
-});
-
-module.exports = withShadow;
-
-  return module.exports;
-})();
-
-modules['src/components/horizontalNavigator/HorizontalNavigator.js'] = (() => {
-  const module = { exports: {} };
-  const styled = include('src/libraries/styled/styled.js');
-const withShadow = include('src/styleWrappers/withShadow.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-
-const HorizontalNavigator$ = withShadow(styled({ height: '64px' })(div$));
-
-module.exports = HorizontalNavigator$;
-
-  return module.exports;
-})();
-
-modules['src/components/verticalNavigator/VerticalNavigator.js'] = (() => {
-  const module = { exports: {} };
-  const styled = include('src/libraries/styled/styled.js');
-const withShadow = include('src/styleWrappers/withShadow.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-
-const VerticalNavigator$ = withShadow(
-  styled({
-    height: '100%',
-    width: '64px',
-    position: 'absolute',
-  })(div$)
-);
-
-module.exports = VerticalNavigator$;
 
   return module.exports;
 })();
@@ -1356,6 +1304,19 @@ module.exports = { ViewTitle$ };
   return module.exports;
 })();
 
+modules['src/styleWrappers/withShadow.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+
+const withShadow = styled({
+  boxShadow: 'rgba(0, 0, 0, 0.25) 0px 0px 8px -4px',
+});
+
+module.exports = withShadow;
+
+  return module.exports;
+})();
+
 modules['src/app/titleBar/TitleBar.js'] = (() => {
   const module = { exports: {} };
   const HorizontalNavigator$ = include(
@@ -1363,9 +1324,12 @@ modules['src/app/titleBar/TitleBar.js'] = (() => {
 );
 const { ViewTitle$ } = include('src/app/titleBar/atoms.js');
 const { getViewTitle$ } = include('src/app/utils.js');
+const withShadow = include('src/styleWrappers/withShadow.js');
 
 const TitleBar$ = ({ currentRoute$ }) =>
-  HorizontalNavigator$(ViewTitle$(getViewTitle$(currentRoute$))).setStyle({
+  withShadow(HorizontalNavigator$)(
+    ViewTitle$(getViewTitle$(currentRoute$))
+  ).setStyle({
     background: 'white',
     color: 'darkslategray',
   });
@@ -1419,6 +1383,25 @@ module.exports = Projects$;
   return module.exports;
 })();
 
+modules['src/components/verticalNavigator/VerticalNavigator.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const withShadow = include('src/styleWrappers/withShadow.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const VerticalNavigator$ = withShadow(
+  styled({
+    height: '100%',
+    width: '64px',
+    position: 'absolute',
+  })(div$)
+);
+
+module.exports = VerticalNavigator$;
+
+  return module.exports;
+})();
+
 modules['src/components/codeEditor/CodeEditor.js'] = (() => {
   const module = { exports: {} };
   const styled = include('src/libraries/styled/styled.js');
@@ -1426,7 +1409,7 @@ const { textArea$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
 const CodeEditor$ = styled({
   width: '100%',
-  height: 'calc(100vh - 128px)',
+  height: 'calc(100vh - 192px)',
   padding: '20px',
   background: 'black',
   color: 'white',
@@ -1486,7 +1469,7 @@ module.exports = ExpandCodeEditorButton$;
   return module.exports;
 })();
 
-modules['src/components/navigatorButton/atoms.js'] = (() => {
+modules['src/components/horizontalNavigatorButton/atoms.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const styled = include('src/libraries/styled/styled.js');
@@ -1522,14 +1505,175 @@ module.exports = {
   return module.exports;
 })();
 
-modules['src/components/navigatorButton/NavigatorButton.js'] = (() => {
+modules['src/components/horizontalNavigatorButton/HorizontalNavigatorButton.js'] = (() => {
+  const module = { exports: {} };
+  const { add$, choose$ } = include('src/libraries/observable/utils.js');
+
+const { Button$, Label$ } = include(
+  'src/components/horizontalNavigatorButton/atoms.js'
+);
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const HorizontalNavigatorButton$ = ({
+  label,
+  route$,
+  isActive$,
+  labelColor$,
+  highlightLabelColor$,
+}) => {
+  return div$(label)
+    .setStyle({
+      height: '64px',
+      width: '192px',
+      display: 'inline-block',
+      textAlign: 'center',
+      lineHeight: '64px',
+      boxSizing: 'border-box',
+      borderBottom: choose$(isActive$, '2px solid deepskyblue', 'none'),
+      color: choose$(isActive$, highlightLabelColor$, labelColor$),
+      userSelect: 'none',
+    })
+    .onMouseEnter(element => {
+      element.setStyle({
+        color: highlightLabelColor$,
+      });
+    })
+    .onMouseLeave(element => {
+      element.setStyle({
+        borderBottom: choose$(isActive$, '2px solid deepskyblue', 'none'),
+        color: choose$(isActive$, highlightLabelColor$, labelColor$),
+      });
+    })
+    .onClick(() => (location.hash = add$('#!', route$).value));
+
+  /*return Button$(Label$(label))
+    .setStyle({
+      background: choose$(
+        isActive$,
+        highlightBackgroundColor$,
+        backgroundColor$
+      ),
+      color: choose$(isActive$, highlightLabelColor$, labelColor$),
+    })
+    .onMouseEnter(element => {
+      element.setStyle({
+        background: highlightBackgroundColor$,
+        color: highlightLabelColor$,
+      });
+    })
+    .onMouseLeave(element => {
+      element.setStyle({
+        background: choose$(
+          isActive$,
+          highlightBackgroundColor$,
+          backgroundColor$
+        ),
+        color: choose$(isActive$, highlightLabelColor$, labelColor$),
+      });
+    })
+    .onClick(() => (location.hash = add$('#!', route$).value));*/
+};
+
+module.exports = HorizontalNavigatorButton$;
+
+  return module.exports;
+})();
+
+modules['src/views/project/projectNavigator/ProjectNavigator.js'] = (() => {
+  const module = { exports: {} };
+  const HorizontalNavigatorButton$ = include(
+  'src/components/horizontalNavigatorButton/HorizontalNavigatorButton.js'
+);
+const HorizontalNavigator$ = include(
+  'src/components/horizontalNavigator/HorizontalNavigator.js'
+);
+const { eq$, or$, startsWith$, add$ } = include(
+  'src/libraries/observable/utils.js'
+);
+const { getViewTitle$ } = include('src/app/utils.js');
+
+const ProjectNavigator$ = ({ currentRoute$, model }) =>
+  HorizontalNavigator$(
+    HorizontalNavigatorButton$({
+      label: getViewTitle$('/projects/<projectId:string>/data-sources'),
+      route$: add$('/projects/', model.selectedProjectId$, '/data-sources'),
+      isActive$: or$(
+        eq$(currentRoute$, '/projects/<projectId:string>'),
+        eq$(currentRoute$, '/projects/<projectId:string>/data-sources')
+      ),
+      labelColor$: 'slategray',
+      highlightLabelColor$: 'darkslategray',
+    }),
+    HorizontalNavigatorButton$({
+      label: getViewTitle$('/projects/<projectId:string>/values'),
+      route$: add$('/projects/', model.selectedProjectId$, '/values'),
+      isActive$: startsWith$(
+        currentRoute$,
+        '/projects/<projectId:string>/values'
+      ),
+      labelColor$: 'slategray',
+      highlightLabelColor$: 'darkslategray',
+    }),
+    HorizontalNavigatorButton$({
+      label: getViewTitle$('/projects/<projectId:string>/dashboards'),
+      route$: add$('/projects/', model.selectedProjectId$, '/dashboards'),
+      isActive$: startsWith$(
+        currentRoute$,
+        '/projects/<projectId:string>/dashboards'
+      ),
+      labelColor$: 'slategray',
+      highlightLabelColor$: 'darkslategray',
+    })
+  );
+
+module.exports = ProjectNavigator$;
+
+  return module.exports;
+})();
+
+modules['src/components/verticalNavigatorButton/atoms.js'] = (() => {
+  const module = { exports: {} };
+  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const styled = include('src/libraries/styled/styled.js');
+
+const Button$ = styled({
+  height: '64px',
+  width: '64px',
+  overflow: 'hidden',
+  transition: '0.5s',
+  cursor: 'pointer',
+})(div$);
+const Icon$ = styled({
+  ///TODO: continue
+  fontSize: '30px',
+  textAlign: 'center',
+  marginTop: '15px',
+  pointerEvents: 'none',
+  userSelect: 'none',
+})(div$);
+const Label$ = styled({
+  fontSize: '15px',
+  textAlign: 'center',
+  pointerEvents: 'none',
+  userSelect: 'none',
+})(div$);
+
+module.exports = {
+  Button$,
+  Icon$,
+  Label$,
+};
+
+  return module.exports;
+})();
+
+modules['src/components/verticalNavigatorButton/VerticalNavigatorButton.js'] = (() => {
   const module = { exports: {} };
   const { add$, choose$ } = include('src/libraries/observable/utils.js');
 
 const { Button$, Icon$, Label$ } = include(
-  'src/components/navigatorButton/atoms.js'
+  'src/components/verticalNavigatorButton/atoms.js'
 );
-const NavigatorButton$ = ({
+const VerticalNavigatorButton$ = ({
   icon,
   label,
   route$,
@@ -1567,76 +1711,15 @@ const NavigatorButton$ = ({
     .onClick(() => (location.hash = add$('#!', route$).value));
 };
 
-module.exports = NavigatorButton$;
-
-  return module.exports;
-})();
-
-modules['src/views/project/projectNavigator/ProjectNavigator.js'] = (() => {
-  const module = { exports: {} };
-  const NavigatorButton$ = include(
-  'src/components/navigatorButton/NavigatorButton.js'
-);
-const VerticalNavigator$ = include(
-  'src/components/verticalNavigator/VerticalNavigator.js'
-);
-const { eq$, or$, startsWith$, add$ } = include(
-  'src/libraries/observable/utils.js'
-);
-const { getViewTitle$ } = include('src/app/utils.js');
-
-const ProjectNavigator$ = ({ currentRoute$, model }) =>
-  VerticalNavigator$(
-    NavigatorButton$({
-      icon: '🏗',
-      label: getViewTitle$('/projects/<projectId:string>/data-sources'),
-      route$: add$('/projects/', model.selectedProjectId$, '/data-sources'),
-      isActive$: or$(
-        eq$(currentRoute$, '/projects/<projectId:string>'),
-        eq$(currentRoute$, '/projects/<projectId:string>/data-sources')
-      ),
-      labelColor$: 'lightslategray',
-      highlightLabelColor$: 'slategray',
-      backgroundColor$: 'white',
-      highlightBackgroundColor$: 'whitesmoke',
-    }),
-    NavigatorButton$({
-      icon: '🧮',
-      label: getViewTitle$('/projects/<projectId:string>/values'),
-      route$: add$('/projects/', model.selectedProjectId$, '/values'),
-      isActive$: startsWith$(
-        currentRoute$,
-        '/projects/<projectId:string>/values'
-      ),
-      labelColor$: 'lightslategray',
-      highlightLabelColor$: 'slategray',
-      backgroundColor$: 'white',
-      highlightBackgroundColor$: 'whitesmoke',
-    }),
-    NavigatorButton$({
-      icon: '📊',
-      label: getViewTitle$('/projects/<projectId:string>/dashboards'),
-      route$: add$('/projects/', model.selectedProjectId$, '/dashboards'),
-      isActive$: startsWith$(
-        currentRoute$,
-        '/projects/<projectId:string>/dashboards'
-      ),
-      labelColor$: 'lightslategray',
-      highlightLabelColor$: 'slategray',
-      backgroundColor$: 'white',
-      highlightBackgroundColor$: 'whitesmoke',
-    })
-  );
-
-module.exports = ProjectNavigator$;
+module.exports = VerticalNavigatorButton$;
 
   return module.exports;
 })();
 
 modules['src/app/appNavigator/AppNavigator.js'] = (() => {
   const module = { exports: {} };
-  const NavigatorButton$ = include(
-  'src/components/navigatorButton/NavigatorButton.js'
+  const VerticalNavigatorButton$ = include(
+  'src/components/verticalNavigatorButton/VerticalNavigatorButton.js'
 );
 const VerticalNavigator$ = include(
   'src/components/verticalNavigator/VerticalNavigator.js'
@@ -1646,7 +1729,7 @@ const { getViewTitle$ } = include('src/app/utils.js');
 
 const AppNavigator$ = ({ currentRoute$ }) =>
   VerticalNavigator$(
-    NavigatorButton$({
+    VerticalNavigatorButton$({
       icon: '🏠',
       label: getViewTitle$('/'),
       route$: '/',
@@ -2266,9 +2349,6 @@ const AppContentContainer$ = include(
 const ProjectContainer$ = include(
   'src/views/project/projectContainer/ProjectContainer.js'
 );
-const ProjectContentContainer$ = include(
-  'src/views/project/projectContentContainer/ProjectContentContainer.js'
-);
 const TitleBar$ = include('src/app/titleBar/TitleBar.js');
 const Projects$ = include('src/views/projects/Projects.js');
 const DataSources$ = include('src/views/dataSources/DataSources.js');
@@ -2288,31 +2368,23 @@ const App = ({ currentRoute$, model }) => {
           startsWith$(currentRoute$, '/projects/<projectId:string>'),
           ProjectContainer$(
             ProjectNavigator$({ currentRoute$, model }),
-            ProjectContentContainer$(
-              If$(
-                or$(
-                  eq$(
-                    currentRoute$,
-                    '/projects/<projectId:string>/data-sources'
-                  ),
-                  eq$(currentRoute$, '/projects/<projectId:string>')
-                ),
-                DataSources$()
+            If$(
+              or$(
+                eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
+                eq$(currentRoute$, '/projects/<projectId:string>')
               ),
-              If$(
-                startsWith$(
-                  currentRoute$,
-                  '/projects/<projectId:string>/values'
-                ),
-                Values$({ model, currentRoute$ })
+              DataSources$()
+            ),
+            If$(
+              startsWith$(currentRoute$, '/projects/<projectId:string>/values'),
+              Values$({ model, currentRoute$ })
+            ),
+            If$(
+              startsWith$(
+                currentRoute$,
+                '/projects/<projectId:string>/dashboards'
               ),
-              If$(
-                startsWith$(
-                  currentRoute$,
-                  '/projects/<projectId:string>/dashboards'
-                ),
-                Dashboards$({ model, currentRoute$ })
-              )
+              Dashboards$({ model, currentRoute$ })
             )
           )
         )

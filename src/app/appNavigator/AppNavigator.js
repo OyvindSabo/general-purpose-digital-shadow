@@ -1,5 +1,5 @@
-const NavigatorButton$ = include(
-  'src/components/navigatorButton/NavigatorButton.js'
+const VerticalNavigatorButton$ = include(
+  'src/components/verticalNavigatorButton/VerticalNavigatorButton.js'
 );
 const VerticalNavigator$ = include(
   'src/components/verticalNavigator/VerticalNavigator.js'
@@ -9,7 +9,7 @@ const { getViewTitle$ } = include('src/app/utils.js');
 
 const AppNavigator$ = ({ currentRoute$ }) =>
   VerticalNavigator$(
-    NavigatorButton$({
+    VerticalNavigatorButton$({
       icon: '🏠',
       label: getViewTitle$('/'),
       route$: '/',
