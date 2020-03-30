@@ -6,13 +6,11 @@ const ProjectPreview$ = withShadow(
   styled({
     color: 'dimgray',
     margin: '32px',
-    padding: '16px',
-    // Height + margin = 2 x navigator buttons
-    height: '96px',
-    verticalAlign: 'top',
+    padding: '0 16px',
+    height: '64px',
     background: 'white',
+    lineHeight: '64px',
     fontSize: '16px',
-    boxSizing: 'border-box',
   })(div$)
 );
 

@@ -23,8 +23,7 @@ const Values$ = include('src/views/values/Values.js');
 const Dashboards$ = include('src/views/dashboards/Dashboards.js');
 
 const App = ({ currentRoute$, model }) => {
-  console.log('model.selectedProjectName$: ', model.selectedProjectName$);
-  const element = div$(
+  return div$(
     HorizontalNavigator$().setStyle({ background: 'black' }),
     AppContainer$(
       AppNavigator$({ currentRoute$ }),
@@ -58,8 +57,6 @@ const App = ({ currentRoute$, model }) => {
       )
     )
   );
-
-  return element;
 };
 
 module.exports = App;

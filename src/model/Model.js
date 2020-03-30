@@ -160,11 +160,6 @@ const Model = ({ router }) => {
         model.lastVisitedProjectView$.value = 'dashboards';
       }
     }
-    console.log('currentRoute$.value: ', currentRoute$.value);
-    console.log(
-      'model.lastVisitedProjectView$.value: ',
-      model.lastVisitedProjectView$.value
-    );
   };
   syncSelectedProjectWithRouter(router);
   router.onHashChange(syncSelectedProjectWithRouter);

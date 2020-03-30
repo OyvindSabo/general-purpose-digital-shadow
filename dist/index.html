@@ -665,11 +665,6 @@ const Model = ({ router }) => {
         model.lastVisitedProjectView$.value = 'dashboards';
       }
     }
-    console.log('currentRoute$.value: ', currentRoute$.value);
-    console.log(
-      'model.lastVisitedProjectView$.value: ',
-      model.lastVisitedProjectView$.value
-    );
   };
   syncSelectedProjectWithRouter(router);
   router.onHashChange(syncSelectedProjectWithRouter);
@@ -1490,13 +1485,11 @@ const ProjectPreview$ = withShadow(
   styled({
     color: 'dimgray',
     margin: '32px',
-    padding: '16px',
-    // Height + margin = 2 x navigator buttons
-    height: '96px',
-    verticalAlign: 'top',
+    padding: '0 16px',
+    height: '64px',
     background: 'white',
+    lineHeight: '64px',
     fontSize: '16px',
-    boxSizing: 'border-box',
   })(div$)
 );
 
@@ -2342,8 +2335,7 @@ const Values$ = include('src/views/values/Values.js');
 const Dashboards$ = include('src/views/dashboards/Dashboards.js');
 
 const App = ({ currentRoute$, model }) => {
-  console.log('model.selectedProjectName$: ', model.selectedProjectName$);
-  const element = div$(
+  return div$(
     HorizontalNavigator$().setStyle({ background: 'black' }),
     AppContainer$(
       AppNavigator$({ currentRoute$ }),
@@ -2377,8 +2369,6 @@ const App = ({ currentRoute$, model }) => {
       )
     )
   );
-
-  return element;
 };
 
 module.exports = App;
