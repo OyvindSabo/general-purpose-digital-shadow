@@ -75,6 +75,7 @@ const Model = ({ router }) => {
         isEditing: true,
       },
     ];
+    console.log('model.project$: ', model.projects$);
   };
 
   window.addEventListener(model.valuesCode$.id, () => {

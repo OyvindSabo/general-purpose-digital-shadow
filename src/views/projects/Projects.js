@@ -9,13 +9,13 @@ const NewProject$ = include('src/views/projects/newProject/NewProject.js');
 
 const Projects$ = ({ model }) => {
   return div$(
-    ...map$(model.projects$, ({ id, name, isEditing }) =>
+    map$(model.projects$, ({ id, name, isEditing }) =>
       ProjectPreview$(name).onClick(
         () =>
           (location.hash = `#!/projects/${id}/${model.lastVisitedProjectView$
             .value || ''}`)
       )
-    ).value,
+    ),
     NewProject$({ model })
   );
 };
