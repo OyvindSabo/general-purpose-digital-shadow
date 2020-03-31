@@ -21,7 +21,6 @@ const observableToNode$ = observable$ => {
       elements.forEach((element, index) => {
         element.classList.add(`${observable$.id}${index}`);
         window.addEventListener(observable$.id, ({ detail }) => {
-          console.log('Listener triggered');
           // Remove all the existing elements except the first
           let insertionPositions = [];
           for (let index = 0; index < 100; index++) {
@@ -39,13 +38,8 @@ const observableToNode$ = observable$ => {
               elementToReplace.parentNode.removeChild(elementToReplace);
             });
           }
-          console.log('Removed everything except the first element');
 
           // For each of the first existing elements
-          console.log(
-            'firstElements: ',
-            document.getElementsByClassName(`${observable$.id}0`)
-          );
           insertionPositions.forEach(({ parent, insertionIndex }, index) => {
             // Create a fragment and add all the elements inside it
             const fragment = document.createDocumentFragment();
@@ -55,7 +49,6 @@ const observableToNode$ = observable$ => {
               node.classList.add(`${observable$.id}${index}`);
               fragment.appendChild(node);
             });
-            console.log('fragment: ', fragment);
             // Repalact the first elemet with the fragments containing the new elements
             parent.insertBefore(fragment, parent.children[insertionIndex]);
           });
