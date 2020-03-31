@@ -10,9 +10,7 @@ modules['src/libraries/observable/Observable.js'] = (() => {
   constructor(value) {
     // Maybe this can cause an id collision of two observables created almost at the same time
     this._id = `${Math.random()}${+new Date()}`;
-    this._value = Array.isArray(value)
-      ? value.map(element => new Observable(element))
-      : value;
+    this._value = value;
   }
   emit() {
     window.dispatchEvent(
@@ -534,10 +532,10 @@ const sellPrice$ = new Observable(100);
 
 const Model = ({ router }) => {
   const model = {
-    projects: new Map([
-      ['0', { name: 'Double wishbone suspension', isEditing: false }],
-      ['1', { name: '3D pyramid', isEditing: false }],
-      ['2', { name: 'Bar charts', isEditing: false }],
+    projects$: new Observable([
+      { id: '0', name: 'Double wishbone suspension', isEditing: false },
+      { id: '1', name: '3D pyramid', isEditing: false },
+      { id: '2', name: 'Bar charts', isEditing: false },
     ]),
 
     selectedProjectId$: new Observable(null),
@@ -574,10 +572,14 @@ const Model = ({ router }) => {
   };
 
   model.createNewProject = () => {
-    model.projects.set(`${Math.random()}${+new Date()}`, {
-      name: '',
-      isEditing: true,
-    });
+    model.projects$.value = [
+      ...model.projects$.value,
+      {
+        id: `${Math.random()}${+new Date()}`,
+        name: '',
+        isEditing: true,
+      },
+    ];
   };
 
   window.addEventListener(model.valuesCode$.id, () => {
@@ -649,8 +651,8 @@ const Model = ({ router }) => {
   const syncSelectedProjectWithRouter = ({ params, currentRoute$ }) => {
     if (currentRoute$.value.indexOf('/projects/<projectId:string>') === 0) {
       model.selectedProjectId$.value = params.projectId;
-      model.selectedProjectName$.value = model.projects.get(
-        params.projectId
+      model.selectedProjectName$.value = model.projects$.value.find(
+        ({ id }) => id === params.projectId
       ).name;
       model.derivedValuesCode$.value = getDerivedValuesCodeByProjectId(
         params.projectId
@@ -690,6 +692,11 @@ module.exports = Model;
 modules['src/libraries/observable/utils.js'] = (() => {
   const module = { exports: {} };
   const Observable = include('src/libraries/observable/Observable.js');
+
+const valueOf$ = observable$ =>
+  observable$ instanceof Observable ? observable$.value : observable$;
+
+const isObservable$ = observable$ => observable$ instanceof Observable;
 
 // Currently needs at least two arguments
 const add$ = (...observables) => {
@@ -962,6 +969,20 @@ const slice$ = (stringOrArray$, start$, stop$) => {
   return slicedStringOrArray$;
 };
 
+const map$ = (array$, function$) => {
+  const mappedArray$ = new Observable(
+    valueOf$(array$).map(valueOf$(function$))
+  );
+
+  [array$, function$].filter(isObservable$).forEach(observable => {
+    window.addEventListener(observable.id, () => {
+      mappedArray$.value = valueOf$(array$).map(valueOf$(function$));
+    });
+  });
+
+  return mappedArray$;
+};
+
 const startsWith$ = (includingString$, includedString$) => {
   const includingString =
     includingString$ instanceof Observable
@@ -1004,6 +1025,8 @@ const startsWith$ = (includingString$, includedString$) => {
 };
 
 module.exports = {
+  valueOf$,
+  isObservable$,
   add$,
   subtract$,
   multiply$,
@@ -1016,6 +1039,7 @@ module.exports = {
   not$,
   toFixed$,
   slice$,
+  map$,
   startsWith$,
 };
 
@@ -1026,34 +1050,45 @@ modules['src/libraries/observableHtml/ObservableHtml.js'] = (() => {
   const module = { exports: {} };
   const Observable = include('src/libraries/observable/Observable.js');
 
-const createElement$ = (elementType, ...observables) => {
-  const element = document.createElement(elementType);
-  observables.forEach(observable => {
-    if (
-      // If it is observable value
-      observable instanceof Observable &&
-      ['string', 'number'].includes(typeof observable.value)
-    ) {
+const observableToNode$ = observable$ => {
+  if (
+    // If it is observable value
+    observable$ instanceof Observable
+  ) {
+    if (['string', 'number'].includes(typeof observable$.value)) {
+      const textNode = document.createTextNode(observable$.value);
+      //textNode.classList.add(observable$.id);
+      window.addEventListener(observable$.id, ({ detail }) => {
+        textNode.nodeValue = detail;
+      });
+      return textNode;
+    }
+    /*if (Array.isArray(observable.value)) {
       const textNode = document.createTextNode(observable.value);
       element.appendChild(textNode);
       window.addEventListener(observable.id, ({ detail }) => {
         textNode.nodeValue = detail;
       });
       return;
-    }
-    if (
-      // If it is non-observable value
-      ['string', 'number'].includes(typeof observable)
-    ) {
-      const textNode = document.createTextNode(observable);
-      element.appendChild(textNode);
-      return;
-    }
-    // If it is a dom node
-    element.appendChild(observable);
-  });
+    }*/
+  }
+  if (
+    // If it is non-observable value
+    ['string', 'number'].includes(typeof observable$)
+  ) {
+    const textNode = document.createTextNode(observable$);
+    return textNode;
+  }
+  // If it is a dom node
+  return observable$;
+};
+
+const createElement$ = (elementType, ...observables) => {
+  const element = document.createElement(elementType);
+  const nodes = observables.map(observableToNode$);
+  nodes.forEach(node => element.appendChild(node));
+
   // Note that styleObject$ is an object with observable values, not an observable object
-  // TODO: It should also be possible to set the style as a non-observable object
   element.setStyle = styleObject$ => {
     Object.entries(styleObject$).forEach(([styleProperty, styleValue$]) => {
       if (styleValue$ instanceof Observable) {
@@ -1540,6 +1575,9 @@ module.exports = NewProject$;
 modules['src/views/projects/Projects.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const { map$, startsWith$, choose$ } = include(
+  'src/libraries/observable/utils.js'
+);
 const ProjectPreview$ = include(
   'src/views/projects/projectPreview/ProjectPreview.js'
 );
@@ -1547,13 +1585,13 @@ const NewProject$ = include('src/views/projects/newProject/NewProject.js');
 
 const Projects$ = ({ model }) => {
   return div$(
-    ...Array.from(model.projects.entries()).map(([id, { name, isEditing }]) =>
+    ...map$(model.projects$, ({ id, name, isEditing }) =>
       ProjectPreview$(name).onClick(
         () =>
           (location.hash = `#!/projects/${id}/${model.lastVisitedProjectView$
             .value || ''}`)
       )
-    ),
+    ).value,
     NewProject$({ model })
   );
 };

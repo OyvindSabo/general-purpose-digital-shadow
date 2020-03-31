@@ -27,10 +27,10 @@ const sellPrice$ = new Observable(100);
 
 const Model = ({ router }) => {
   const model = {
-    projects: new Map([
-      ['0', { name: 'Double wishbone suspension', isEditing: false }],
-      ['1', { name: '3D pyramid', isEditing: false }],
-      ['2', { name: 'Bar charts', isEditing: false }],
+    projects$: new Observable([
+      { id: '0', name: 'Double wishbone suspension', isEditing: false },
+      { id: '1', name: '3D pyramid', isEditing: false },
+      { id: '2', name: 'Bar charts', isEditing: false },
     ]),
 
     selectedProjectId$: new Observable(null),
@@ -67,10 +67,14 @@ const Model = ({ router }) => {
   };
 
   model.createNewProject = () => {
-    model.projects.set(`${Math.random()}${+new Date()}`, {
-      name: '',
-      isEditing: true,
-    });
+    model.projects$.value = [
+      ...model.projects$.value,
+      {
+        id: `${Math.random()}${+new Date()}`,
+        name: '',
+        isEditing: true,
+      },
+    ];
   };
 
   window.addEventListener(model.valuesCode$.id, () => {
@@ -142,8 +146,8 @@ const Model = ({ router }) => {
   const syncSelectedProjectWithRouter = ({ params, currentRoute$ }) => {
     if (currentRoute$.value.indexOf('/projects/<projectId:string>') === 0) {
       model.selectedProjectId$.value = params.projectId;
-      model.selectedProjectName$.value = model.projects.get(
-        params.projectId
+      model.selectedProjectName$.value = model.projects$.value.find(
+        ({ id }) => id === params.projectId
       ).name;
       model.derivedValuesCode$.value = getDerivedValuesCodeByProjectId(
         params.projectId

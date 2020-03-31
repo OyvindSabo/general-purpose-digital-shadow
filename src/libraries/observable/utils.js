@@ -1,5 +1,10 @@
 const Observable = include('src/libraries/observable/Observable.js');
 
+const valueOf$ = observable$ =>
+  observable$ instanceof Observable ? observable$.value : observable$;
+
+const isObservable$ = observable$ => observable$ instanceof Observable;
+
 // Currently needs at least two arguments
 const add$ = (...observables) => {
   const sum = observables
@@ -271,6 +276,20 @@ const slice$ = (stringOrArray$, start$, stop$) => {
   return slicedStringOrArray$;
 };
 
+const map$ = (array$, function$) => {
+  const mappedArray$ = new Observable(
+    valueOf$(array$).map(valueOf$(function$))
+  );
+
+  [array$, function$].filter(isObservable$).forEach(observable => {
+    window.addEventListener(observable.id, () => {
+      mappedArray$.value = valueOf$(array$).map(valueOf$(function$));
+    });
+  });
+
+  return mappedArray$;
+};
+
 const startsWith$ = (includingString$, includedString$) => {
   const includingString =
     includingString$ instanceof Observable
@@ -313,6 +332,8 @@ const startsWith$ = (includingString$, includedString$) => {
 };
 
 module.exports = {
+  valueOf$,
+  isObservable$,
   add$,
   subtract$,
   multiply$,
@@ -325,5 +346,6 @@ module.exports = {
   not$,
   toFixed$,
   slice$,
+  map$,
   startsWith$,
 };

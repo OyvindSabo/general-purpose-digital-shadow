@@ -1,33 +1,44 @@
 const Observable = include('src/libraries/observable/Observable.js');
 
-const createElement$ = (elementType, ...observables) => {
-  const element = document.createElement(elementType);
-  observables.forEach(observable => {
-    if (
-      // If it is observable value
-      observable instanceof Observable &&
-      ['string', 'number'].includes(typeof observable.value)
-    ) {
+const observableToNode$ = observable$ => {
+  if (
+    // If it is observable value
+    observable$ instanceof Observable
+  ) {
+    if (['string', 'number'].includes(typeof observable$.value)) {
+      const textNode = document.createTextNode(observable$.value);
+      //textNode.classList.add(observable$.id);
+      window.addEventListener(observable$.id, ({ detail }) => {
+        textNode.nodeValue = detail;
+      });
+      return textNode;
+    }
+    /*if (Array.isArray(observable.value)) {
       const textNode = document.createTextNode(observable.value);
       element.appendChild(textNode);
       window.addEventListener(observable.id, ({ detail }) => {
         textNode.nodeValue = detail;
       });
       return;
-    }
-    if (
-      // If it is non-observable value
-      ['string', 'number'].includes(typeof observable)
-    ) {
-      const textNode = document.createTextNode(observable);
-      element.appendChild(textNode);
-      return;
-    }
-    // If it is a dom node
-    element.appendChild(observable);
-  });
+    }*/
+  }
+  if (
+    // If it is non-observable value
+    ['string', 'number'].includes(typeof observable$)
+  ) {
+    const textNode = document.createTextNode(observable$);
+    return textNode;
+  }
+  // If it is a dom node
+  return observable$;
+};
+
+const createElement$ = (elementType, ...observables) => {
+  const element = document.createElement(elementType);
+  const nodes = observables.map(observableToNode$);
+  nodes.forEach(node => element.appendChild(node));
+
   // Note that styleObject$ is an object with observable values, not an observable object
-  // TODO: It should also be possible to set the style as a non-observable object
   element.setStyle = styleObject$ => {
     Object.entries(styleObject$).forEach(([styleProperty, styleValue$]) => {
       if (styleValue$ instanceof Observable) {
