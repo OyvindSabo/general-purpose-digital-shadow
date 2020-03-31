@@ -2,7 +2,9 @@ class Observable {
   constructor(value) {
     // Maybe this can cause an id collision of two observables created almost at the same time
     this._id = `${Math.random()}${+new Date()}`;
-    this._value = value;
+    this._value = Array.isArray(value)
+      ? value.map(element => new Observable(element))
+      : value;
   }
   emit() {
     window.dispatchEvent(
