@@ -1261,23 +1261,16 @@ module.exports = styled;
 modules['src/libraries/observableHtml/utils.js'] = (() => {
   const module = { exports: {} };
   const Observable = include('src/libraries/observable/Observable.js');
+const { valueOf$ } = include('src/libraries/observable/utils.js');
 const styled = include('src/libraries/styled/styled.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
 const Choose$ = (observable, element1, element2) => {
-  let element = (observable instanceof Observable
-  ? observable.value
-  : observable)
-    ? element1
-    : element2;
+  let element = valueOf$(observable) ? element1 : element2;
   if (observable instanceof Observable) {
     window.addEventListener(observable.id, ({ detail }) => {
       // TODO: Make it possible to set a specific child of an observable
-      newElement = (observable instanceof Observable
-      ? observable.value
-      : observable)
-        ? element1
-        : element2;
+      newElement = valueOf$(observable) ? element1 : element2;
 
       if (newElement !== element) {
         element.parentNode.replaceChild(newElement, element);
@@ -1586,29 +1579,6 @@ module.exports = TitleBar$;
   return module.exports;
 })();
 
-modules['src/views/projects/projectPreview/ProjectPreview.js'] = (() => {
-  const module = { exports: {} };
-  const styled = include('src/libraries/styled/styled.js');
-const withShadow = include('src/styleWrappers/withShadow.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-
-const ProjectPreview$ = withShadow(
-  styled({
-    color: 'dimgray',
-    margin: '32px 32px 0 32px',
-    padding: '0 16px',
-    height: '64px',
-    background: 'white',
-    lineHeight: '64px',
-    fontSize: '16px',
-  })(div$)
-);
-
-module.exports = ProjectPreview$;
-
-  return module.exports;
-})();
-
 modules['src/views/projects/newProject/NewProject.js'] = (() => {
   const module = { exports: {} };
   const Observable = include('src/libraries/observable/Observable.js');
@@ -1633,39 +1603,6 @@ const NewProject$ = ({ model }) => {
 };
 
 module.exports = NewProject$;
-
-  return module.exports;
-})();
-
-modules['src/views/projects/Projects.js'] = (() => {
-  const module = { exports: {} };
-  const { If$ } = include('src/libraries/observableHtml/utils.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const { not$, map$, startsWith$, choose$ } = include(
-  'src/libraries/observable/utils.js'
-);
-const ProjectPreview$ = include(
-  'src/views/projects/projectPreview/ProjectPreview.js'
-);
-const NewProject$ = include('src/views/projects/newProject/NewProject.js');
-
-const Projects$ = ({ model }) => {
-  return div$(
-    ...model.projects.map(({ id$, name$, isEditing$, isEmpty$ }) =>
-      If$(
-        not$(isEmpty$),
-        ProjectPreview$(name$).onClick(
-          () =>
-            (location.hash = `#!/projects/${id$.value}/${model
-              .lastVisitedProjectView$.value || ''}`)
-        )
-      )
-    ),
-    NewProject$({ model })
-  );
-};
-
-module.exports = Projects$;
 
   return module.exports;
 })();
@@ -1752,6 +1689,124 @@ const ExpandCodeEditorButton$ = ({ icon, label$, isOpen$ }) => {
 };
 
 module.exports = ExpandCodeEditorButton$;
+
+  return module.exports;
+})();
+
+modules['src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const withShadow = include('src/styleWrappers/withShadow.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const ProjectPreviewContainer$ = withShadow(
+  styled({
+    color: 'dimgray',
+    margin: '32px 32px 0 32px',
+    height: '64px',
+    background: 'white',
+    lineHeight: '64px',
+    fontSize: '16px',
+  })(div$)
+);
+
+module.exports = ProjectPreviewContainer$;
+
+  return module.exports;
+})();
+
+modules['src/views/projects/projectPreview/ProjectPreview.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const withShadow = include('src/styleWrappers/withShadow.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const ProjectPreviewContainer$ = include(
+  'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
+);
+
+const ProjectPreview$ = (...children) =>
+  withShadow(ProjectPreviewContainer$)(
+    styled({
+      color: 'dimgray',
+      height: '64px',
+      padding: '0 16px',
+      background: 'white',
+      lineHeight: '64px',
+      fontSize: '16px',
+    })(div$)(...children)
+  );
+module.exports = ProjectPreview$;
+
+  return module.exports;
+})();
+
+modules['src/views/projects/projectNameInput/ProjectNameInput.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const withShadow = include('src/styleWrappers/withShadow.js');
+const { input$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const ProjectPreviewContainer$ = include(
+  'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
+);
+
+const ProjectNameInput$ = value$ =>
+  withShadow(ProjectPreviewContainer$)(
+    styled({
+      color: 'dimgray',
+      height: '64px',
+      padding: '0 16px',
+      background: 'white',
+      lineHeight: '64px',
+      fontSize: '16px',
+      display: 'inline-block',
+      width: '100%',
+    })(input$)(value$)
+  );
+
+module.exports = ProjectNameInput$;
+
+  return module.exports;
+})();
+
+modules['src/views/projects/Projects.js'] = (() => {
+  const module = { exports: {} };
+  const { Choose$, If$ } = include('src/libraries/observableHtml/utils.js');
+const { div$, input$ } = include(
+  'src/libraries/observableHtml/ObservableHtml.js'
+);
+const { not$, or$, map$, startsWith$, choose$ } = include(
+  'src/libraries/observable/utils.js'
+);
+const ProjectPreview$ = include(
+  'src/views/projects/projectPreview/ProjectPreview.js'
+);
+const ProjectNameInput$ = include(
+  'src/views/projects/projectNameInput/ProjectNameInput.js'
+);
+const NewProject$ = include('src/views/projects/newProject/NewProject.js');
+
+const Projects$ = ({ model }) => {
+  console.log('model.projects: ', model.projects);
+  return div$(
+    ...model.projects.map(({ id$, name$, isEditing$, isEmpty$ }) => [
+      ProjectNameInput$().setStyle({
+        display: choose$(or$(isEmpty$, not$(isEditing$)), 'none', 'block'),
+      }),
+      ProjectPreview$(name$)
+        .setStyle({
+          display: choose$(or$(isEmpty$, isEditing$), 'none', 'block'),
+        })
+        .onClick(
+          () =>
+            (location.hash = `#!/projects/${id$.value}/${model
+              .lastVisitedProjectView$.value || ''}`)
+        ),
+    ]),
+    NewProject$({ model })
+  );
+};
+
+module.exports = Projects$;
 
   return module.exports;
 })();

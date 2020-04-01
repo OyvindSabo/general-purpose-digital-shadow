@@ -1,11 +1,11 @@
 const styled = include('src/libraries/styled/styled.js');
 const withShadow = include('src/styleWrappers/withShadow.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const { input$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const ProjectPreviewContainer$ = include(
   'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
 );
 
-const ProjectPreview$ = (...children) =>
+const ProjectNameInput$ = value$ =>
   withShadow(ProjectPreviewContainer$)(
     styled({
       color: 'dimgray',
@@ -14,6 +14,9 @@ const ProjectPreview$ = (...children) =>
       background: 'white',
       lineHeight: '64px',
       fontSize: '16px',
-    })(div$)(...children)
+      display: 'inline-block',
+      width: '100%',
+    })(input$)(value$)
   );
-module.exports = ProjectPreview$;
+
+module.exports = ProjectNameInput$;

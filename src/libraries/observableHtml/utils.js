@@ -1,21 +1,14 @@
 const Observable = include('src/libraries/observable/Observable.js');
+const { valueOf$ } = include('src/libraries/observable/utils.js');
 const styled = include('src/libraries/styled/styled.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
 const Choose$ = (observable, element1, element2) => {
-  let element = (observable instanceof Observable
-  ? observable.value
-  : observable)
-    ? element1
-    : element2;
+  let element = valueOf$(observable) ? element1 : element2;
   if (observable instanceof Observable) {
     window.addEventListener(observable.id, ({ detail }) => {
       // TODO: Make it possible to set a specific child of an observable
-      newElement = (observable instanceof Observable
-      ? observable.value
-      : observable)
-        ? element1
-        : element2;
+      newElement = valueOf$(observable) ? element1 : element2;
 
       if (newElement !== element) {
         element.parentNode.replaceChild(newElement, element);
