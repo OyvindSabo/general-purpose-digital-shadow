@@ -1,5 +1,6 @@
+const { If$ } = include('src/libraries/observableHtml/utils.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const { map$, startsWith$, choose$ } = include(
+const { not$, map$, startsWith$, choose$ } = include(
   'src/libraries/observable/utils.js'
 );
 const ProjectPreview$ = include(
@@ -9,11 +10,14 @@ const NewProject$ = include('src/views/projects/newProject/NewProject.js');
 
 const Projects$ = ({ model }) => {
   return div$(
-    map$(model.projects$, ({ id, name, isEditing }) =>
-      ProjectPreview$(name).onClick(
-        () =>
-          (location.hash = `#!/projects/${id}/${model.lastVisitedProjectView$
-            .value || ''}`)
+    ...model.projects.map(({ id$, name$, isEditing$, isEmpty$ }) =>
+      If$(
+        not$(isEmpty$),
+        ProjectPreview$(name$).onClick(
+          () =>
+            (location.hash = `#!/projects/${id$.value}/${model
+              .lastVisitedProjectView$.value || ''}`)
+        )
       )
     ),
     NewProject$({ model })

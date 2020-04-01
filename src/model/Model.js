@@ -1,8 +1,11 @@
 const Observable = include('src/libraries/observable/Observable.js');
-const { getDerivedValuesCodeByProjectId, getWidgetsCodeByProjectId } = include(
-  'src/data/Data.js'
-);
+const {
+  getAllProjects,
+  getDerivedValuesCodeByProjectId,
+  getWidgetsCodeByProjectId,
+} = include('src/data/Data.js');
 
+const MAX_AMOUNT_OF_PROJECTS = 100;
 const MAX_AMOUNT_OF_DERIVED_VALUES = 100;
 const MAX_AMOUNT_OF_WIDGETS = 100;
 
@@ -27,11 +30,12 @@ const sellPrice$ = new Observable(100);
 
 const Model = ({ router }) => {
   const model = {
-    projects$: new Observable([
-      { id: '0', name: 'Double wishbone suspension', isEditing: false },
-      { id: '1', name: '3D pyramid', isEditing: false },
-      { id: '2', name: 'Bar charts', isEditing: false },
-    ]),
+    projects: [...new Array(MAX_AMOUNT_OF_PROJECTS).keys()].map(() => ({
+      id$: new Observable(''),
+      name$: new Observable(''),
+      isEditing$: new Observable(false),
+      isEmpty$: new Observable(true),
+    })),
 
     selectedProjectId$: new Observable(null),
     selectedProjectName$: new Observable(null),
@@ -66,15 +70,34 @@ const Model = ({ router }) => {
     })),
   };
 
+  model.loadAllProjects = () => {
+    for (let i = 0; i < MAX_AMOUNT_OF_PROJECTS; i++) {
+      model.projects[i].id$.value = '';
+      model.projects[i].name$.value = '';
+      model.projects[i].isEditing$.value = false;
+      model.projects[i].isEmpty$.value = true;
+    }
+    getAllProjects().forEach(({ id, name }, index) => {
+      model.projects[index].id$.value = id;
+      model.projects[index].name$.value = name;
+      model.projects[index].isEmpty$.value = false;
+    });
+  };
+  model.loadAllProjects();
+
   model.createNewProject = () => {
-    model.projects$.value = [
-      ...model.projects$.value,
-      {
-        id: `${Math.random()}${+new Date()}`,
-        name: '',
-        isEditing: true,
-      },
-    ];
+    for (let i = 0; i < MAX_AMOUNT_OF_PROJECTS; i++) {
+      model.projects[i].isEditing$.value = false;
+    }
+    const indexToPlaceNewProject = model.projects.findIndex(
+      project => project.isEmpty$.value
+    );
+    model.projects[
+      indexToPlaceNewProject
+    ].id$.value = `${Math.random()}${+new Date()}`;
+    model.projects[indexToPlaceNewProject].name$.value = '';
+    model.projects[indexToPlaceNewProject].isEditing$.value = true;
+    model.projects[indexToPlaceNewProject].isEmpty$.value = false;
   };
 
   window.addEventListener(model.valuesCode$.id, () => {
@@ -146,7 +169,7 @@ const Model = ({ router }) => {
   const syncSelectedProjectWithRouter = ({ params, currentRoute$ }) => {
     if (currentRoute$.value.indexOf('/projects/<projectId:string>') === 0) {
       model.selectedProjectId$.value = params.projectId;
-      model.selectedProjectName$.value = model.projects$.value.find(
+      model.selectedProjectName$.value = model.projects.value.find(
         ({ id }) => id === params.projectId
       ).name;
       model.derivedValuesCode$.value = getDerivedValuesCodeByProjectId(

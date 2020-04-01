@@ -1,3 +1,9 @@
+const getAllProjects = () => [
+  { id: '0', name: 'Double wishbone suspension' },
+  { id: '1', name: '3D pyramid' },
+  { id: '2', name: 'Bar charts' },
+];
+
 const getDerivedValuesCodeByProjectId = id =>
   ({
     0: `
@@ -232,6 +238,7 @@ const getWidgetsCodeByProjectId = id =>
   }[id]);
 
 module.exports = {
+  getAllProjects,
   getDerivedValuesCodeByProjectId,
   getWidgetsCodeByProjectId,
 };
