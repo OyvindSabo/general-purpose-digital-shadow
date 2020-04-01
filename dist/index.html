@@ -545,6 +545,7 @@ const Model = ({ router }) => {
     projects: [...new Array(MAX_AMOUNT_OF_PROJECTS).keys()].map(() => ({
       id$: new Observable(''),
       name$: new Observable(''),
+      nameInputValue$: new Observable(''),
       isEditing$: new Observable(false),
       isEmpty$: new Observable(true),
     })),
@@ -586,12 +587,14 @@ const Model = ({ router }) => {
     for (let i = 0; i < MAX_AMOUNT_OF_PROJECTS; i++) {
       model.projects[i].id$.value = '';
       model.projects[i].name$.value = '';
+      model.projects[i].nameInputValue$.value = '';
       model.projects[i].isEditing$.value = false;
       model.projects[i].isEmpty$.value = true;
     }
     getAllProjects().forEach(({ id, name }, index) => {
       model.projects[index].id$.value = id;
       model.projects[index].name$.value = name;
+      model.projects[index].nameInputValue$.value = name;
       model.projects[index].isEmpty$.value = false;
     });
   };
@@ -608,8 +611,30 @@ const Model = ({ router }) => {
       indexToPlaceNewProject
     ].id$.value = `${Math.random()}${+new Date()}`;
     model.projects[indexToPlaceNewProject].name$.value = '';
+    model.projects[indexToPlaceNewProject].nameInputValue$.value = '';
     model.projects[indexToPlaceNewProject].isEditing$.value = true;
     model.projects[indexToPlaceNewProject].isEmpty$.value = false;
+  };
+
+  model.setProjectNameInputValue = (projectId, inputValue) => {
+    const project = model.projects.find(({ id$ }) => id$.value === projectId);
+    if (!project) {
+      console.warn(
+        'Tried to update project name input value of nonexistent project.'
+      );
+    }
+    project.nameInputValue$.value = inputValue;
+  };
+
+  model.saveProjectName = projectId => {
+    const project = model.projects.find(({ id$ }) => id$.value === projectId);
+    if (!project) {
+      console.warn(
+        'Tried to update project name input value of nonexistent project.'
+      );
+    }
+    project.name$.value = project.nameInputValue$.value;
+    project.isEditing$.value = false;
   };
 
   window.addEventListener(model.valuesCode$.id, () => {
@@ -1765,7 +1790,7 @@ const Button$ = value$ => {
     .onMouseLeave(element => (isHovered$.value = false));
 };
 
-const ProjectNameInput$ = value$ =>
+const ProjectNameInput$ = ({ model, id$, nameInputValue$ }) =>
   ProjectPreviewContainer$(
     styled({
       color: 'dimgray',
@@ -1776,9 +1801,11 @@ const ProjectNameInput$ = value$ =>
       width: 'calc(100% - 128px)',
       border: 'none',
       outline: 'none',
-    })(input$)(value$),
+    })(input$)(nameInputValue$).onInput(({ value }) => {
+      model.setProjectNameInputValue(id$.value, value);
+    }),
     Button$('Cancel'),
-    Button$('Save')
+    Button$('Save').onClick(() => model.saveProjectName(id$.value))
   );
 
 module.exports = ProjectNameInput$;
@@ -1806,20 +1833,22 @@ const NewProject$ = include('src/views/projects/newProject/NewProject.js');
 const Projects$ = ({ model }) => {
   console.log('model.projects: ', model.projects);
   return div$(
-    ...model.projects.map(({ id$, name$, isEditing$, isEmpty$ }) => [
-      ProjectNameInput$().setStyle({
-        display: choose$(or$(isEmpty$, not$(isEditing$)), 'none', 'block'),
-      }),
-      ProjectPreview$(name$)
-        .setStyle({
-          display: choose$(or$(isEmpty$, isEditing$), 'none', 'block'),
-        })
-        .onClick(
-          () =>
-            (location.hash = `#!/projects/${id$.value}/${model
-              .lastVisitedProjectView$.value || ''}`)
-        ),
-    ]),
+    ...model.projects.map(
+      ({ id$, name$, nameInputValue$, isEditing$, isEmpty$ }) => [
+        ProjectNameInput$({ model, id$, nameInputValue$ }).setStyle({
+          display: choose$(or$(isEmpty$, not$(isEditing$)), 'none', 'block'),
+        }),
+        ProjectPreview$(name$)
+          .setStyle({
+            display: choose$(or$(isEmpty$, isEditing$), 'none', 'block'),
+          })
+          .onClick(
+            () =>
+              (location.hash = `#!/projects/${id$.value}/${model
+                .lastVisitedProjectView$.value || ''}`)
+          ),
+      ]
+    ),
     NewProject$({ model })
   );
 };

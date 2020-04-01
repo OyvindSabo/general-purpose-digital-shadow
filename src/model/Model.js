@@ -33,6 +33,7 @@ const Model = ({ router }) => {
     projects: [...new Array(MAX_AMOUNT_OF_PROJECTS).keys()].map(() => ({
       id$: new Observable(''),
       name$: new Observable(''),
+      nameInputValue$: new Observable(''),
       isEditing$: new Observable(false),
       isEmpty$: new Observable(true),
     })),
@@ -74,12 +75,14 @@ const Model = ({ router }) => {
     for (let i = 0; i < MAX_AMOUNT_OF_PROJECTS; i++) {
       model.projects[i].id$.value = '';
       model.projects[i].name$.value = '';
+      model.projects[i].nameInputValue$.value = '';
       model.projects[i].isEditing$.value = false;
       model.projects[i].isEmpty$.value = true;
     }
     getAllProjects().forEach(({ id, name }, index) => {
       model.projects[index].id$.value = id;
       model.projects[index].name$.value = name;
+      model.projects[index].nameInputValue$.value = name;
       model.projects[index].isEmpty$.value = false;
     });
   };
@@ -96,8 +99,30 @@ const Model = ({ router }) => {
       indexToPlaceNewProject
     ].id$.value = `${Math.random()}${+new Date()}`;
     model.projects[indexToPlaceNewProject].name$.value = '';
+    model.projects[indexToPlaceNewProject].nameInputValue$.value = '';
     model.projects[indexToPlaceNewProject].isEditing$.value = true;
     model.projects[indexToPlaceNewProject].isEmpty$.value = false;
+  };
+
+  model.setProjectNameInputValue = (projectId, inputValue) => {
+    const project = model.projects.find(({ id$ }) => id$.value === projectId);
+    if (!project) {
+      console.warn(
+        'Tried to update project name input value of nonexistent project.'
+      );
+    }
+    project.nameInputValue$.value = inputValue;
+  };
+
+  model.saveProjectName = projectId => {
+    const project = model.projects.find(({ id$ }) => id$.value === projectId);
+    if (!project) {
+      console.warn(
+        'Tried to update project name input value of nonexistent project.'
+      );
+    }
+    project.name$.value = project.nameInputValue$.value;
+    project.isEditing$.value = false;
   };
 
   window.addEventListener(model.valuesCode$.id, () => {

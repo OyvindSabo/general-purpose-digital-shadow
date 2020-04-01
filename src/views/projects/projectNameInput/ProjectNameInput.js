@@ -27,7 +27,7 @@ const Button$ = value$ => {
     .onMouseLeave(element => (isHovered$.value = false));
 };
 
-const ProjectNameInput$ = value$ =>
+const ProjectNameInput$ = ({ model, id$, nameInputValue$ }) =>
   ProjectPreviewContainer$(
     styled({
       color: 'dimgray',
@@ -38,9 +38,11 @@ const ProjectNameInput$ = value$ =>
       width: 'calc(100% - 128px)',
       border: 'none',
       outline: 'none',
-    })(input$)(value$),
+    })(input$)(nameInputValue$).onInput(({ value }) => {
+      model.setProjectNameInputValue(id$.value, value);
+    }),
     Button$('Cancel'),
-    Button$('Save')
+    Button$('Save').onClick(() => model.saveProjectName(id$.value))
   );
 
 module.exports = ProjectNameInput$;
