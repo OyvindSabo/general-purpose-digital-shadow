@@ -681,8 +681,8 @@ const Model = ({ router }) => {
   const syncSelectedProjectWithRouter = ({ params, currentRoute$ }) => {
     if (currentRoute$.value.indexOf('/projects/<projectId:string>') === 0) {
       model.selectedProjectId$.value = params.projectId;
-      model.selectedProjectName$.value = model.projects.value.find(
-        ({ id }) => id === params.projectId
+      model.selectedProjectName$.value = model.projects.find(
+        ({ id$ }) => id$.value === params.projectId
       ).name;
       model.derivedValuesCode$.value = getDerivedValuesCodeByProjectId(
         params.projectId
