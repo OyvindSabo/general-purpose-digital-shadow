@@ -98,8 +98,9 @@ const Model = ({ router }) => {
     model.projects[
       indexToPlaceNewProject
     ].id$.value = `${Math.random()}${+new Date()}`;
-    model.projects[indexToPlaceNewProject].name$.value = '';
-    model.projects[indexToPlaceNewProject].nameInputValue$.value = '';
+    model.projects[indexToPlaceNewProject].name$.value = 'Untitled project';
+    model.projects[indexToPlaceNewProject].nameInputValue$.value =
+      'Untitled project';
     model.projects[indexToPlaceNewProject].isEditing$.value = true;
     model.projects[indexToPlaceNewProject].isEmpty$.value = false;
   };
@@ -114,12 +115,21 @@ const Model = ({ router }) => {
     project.nameInputValue$.value = inputValue;
   };
 
-  model.saveProjectName = projectId => {
+  model.cancelEditingProjectName = projectId => {
     const project = model.projects.find(({ id$ }) => id$.value === projectId);
     if (!project) {
       console.warn(
-        'Tried to update project name input value of nonexistent project.'
+        'Tried to cancel editing the name input value of nonexistent project.'
       );
+    }
+    project.nameInputValue$.value = project.name$.value;
+    project.isEditing$.value = false;
+  };
+
+  model.saveProjectName = projectId => {
+    const project = model.projects.find(({ id$ }) => id$.value === projectId);
+    if (!project) {
+      console.warn('Tried to save project name of nonexistent project.');
     }
     project.name$.value = project.nameInputValue$.value;
     project.isEditing$.value = false;

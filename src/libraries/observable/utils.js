@@ -276,6 +276,16 @@ const slice$ = (stringOrArray$, start$, stop$) => {
   return slicedStringOrArray$;
 };
 
+const length$ = stringOrArray$ => {
+  const length$ = new Observable(valueOf$(stringOrArray$).length);
+  if (isObservable$(stringOrArray$)) {
+    window.addEventListener(stringOrArray$.id, () => {
+      lenth$.value = valueOf$(stringOrArray$).length;
+    });
+  }
+  return length$;
+};
+
 const map$ = (array$, function$) => {
   const mappedArray$ = new Observable(
     valueOf$(array$).map(valueOf$(function$))
@@ -346,6 +356,7 @@ module.exports = {
   not$,
   toFixed$,
   slice$,
+  length$,
   map$,
   startsWith$,
 };

@@ -41,7 +41,7 @@ const ProjectNameInput$ = ({ model, id$, nameInputValue$ }) =>
     })(input$)(nameInputValue$).onInput(({ value }) => {
       model.setProjectNameInputValue(id$.value, value);
     }),
-    Button$('Cancel'),
+    Button$('Cancel').onClick(() => model.cancelEditingProjectName(id$.value)),
     Button$('Save').onClick(() => model.saveProjectName(id$.value))
   );
 
