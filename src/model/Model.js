@@ -206,7 +206,7 @@ const Model = ({ router }) => {
       model.selectedProjectId$.value = params.projectId;
       model.selectedProjectName$.value = model.projects.find(
         ({ id$ }) => id$.value === params.projectId
-      ).name;
+      ).name$.value;
       model.derivedValuesCode$.value = getDerivedValuesCodeByProjectId(
         params.projectId
       );
