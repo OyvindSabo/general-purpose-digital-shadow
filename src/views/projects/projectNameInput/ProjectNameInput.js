@@ -1,7 +1,5 @@
 const styled = include('src/libraries/styled/styled.js');
-const { button$, input$ } = include(
-  'src/libraries/observableHtml/ObservableHtml.js'
-);
+const { input$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const ProjectPreviewButton$ = include(
   'src/views/projects/projectPreviewButton/ProjectPreviewButton.js'
 );

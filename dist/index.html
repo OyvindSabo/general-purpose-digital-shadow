@@ -647,6 +647,27 @@ const Model = ({ router }) => {
     project.isEditing$.value = false;
   };
 
+  model.deleteProject = projectId => {
+    const indexToDelete = model.projects.findIndex(
+      ({ id$ }) => id$.value === projectId
+    );
+    console.log('indexToDelete: ', indexToDelete);
+    for (let i = indexToDelete; i < MAX_AMOUNT_OF_PROJECTS - 1; i++) {
+      model.projects[i].id$.value = model.projects[i + 1].id$.value;
+      model.projects[i].name$.value = model.projects[i + 1].name$.value;
+      model.projects[i].nameInputValue$.value =
+        model.projects[i + 1].nameInputValue$.value;
+      model.projects[i].isEditing$.value =
+        model.projects[i + 1].isEditing$.value;
+      model.projects[i].isEmpty$.value = model.projects[i + 1].isEmpty$.value;
+    }
+    model.projects[MAX_AMOUNT_OF_PROJECTS - 1].id$.value = '';
+    model.projects[MAX_AMOUNT_OF_PROJECTS - 1].name$.value = '';
+    model.projects[MAX_AMOUNT_OF_PROJECTS - 1].nameInputValue$.value = '';
+    model.projects[MAX_AMOUNT_OF_PROJECTS - 1].isEditing$.value = false;
+    model.projects[MAX_AMOUNT_OF_PROJECTS - 1].isEmpty$.value = true;
+  };
+
   window.addEventListener(model.valuesCode$.id, () => {
     const evaluatedCode = evaluateCode(
       model.valuesCode$.value,
@@ -1761,25 +1782,6 @@ module.exports = ProjectPreviewContainer$;
   return module.exports;
 })();
 
-modules['src/views/projects/projectPreview/ProjectPreview.js'] = (() => {
-  const module = { exports: {} };
-  const styled = include('src/libraries/styled/styled.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const ProjectPreviewContainer$ = include(
-  'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
-);
-
-const ProjectPreview$ = (...children) =>
-  ProjectPreviewContainer$(
-    styled({
-      padding: '0 16px',
-    })(div$)(...children)
-  );
-module.exports = ProjectPreview$;
-
-  return module.exports;
-})();
-
 modules['src/views/projects/projectPreviewButton/ProjectPreviewButton.js'] = (() => {
   const module = { exports: {} };
   const { button$ } = include('src/libraries/observableHtml/ObservableHtml.js');
@@ -1810,12 +1812,45 @@ module.exports = ProjectPreviewButton$;
   return module.exports;
 })();
 
+modules['src/views/projects/projectPreview/ProjectPreview.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const ProjectPreviewContainer$ = include(
+  'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
+);
+const ProjectPreviewButton$ = include(
+  'src/views/projects/projectPreviewButton/ProjectPreviewButton.js'
+);
+
+const ProjectPreview$ = ({ model, id$, name$ }) =>
+  ProjectPreviewContainer$(
+    styled({
+      padding: '0 16px',
+      width: 'calc(100% - 128px)',
+      boxSizing: 'border-box',
+      display: 'inline-block',
+    })(div$)(name$).onClick(
+      () =>
+        (location.hash = `#!/projects/${id$.value}/${model
+          .lastVisitedProjectView$.value || ''}`)
+    ),
+    ProjectPreviewButton$('Delete').onClick(() =>
+      model.deleteProject(id$.value)
+    ),
+    ProjectPreviewButton$('Edit').onClick(() =>
+      model.editProjecttName(id$.value)
+    )
+  );
+module.exports = ProjectPreview$;
+
+  return module.exports;
+})();
+
 modules['src/views/projects/projectNameInput/ProjectNameInput.js'] = (() => {
   const module = { exports: {} };
   const styled = include('src/libraries/styled/styled.js');
-const { button$, input$ } = include(
-  'src/libraries/observableHtml/ObservableHtml.js'
-);
+const { input$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const ProjectPreviewButton$ = include(
   'src/views/projects/projectPreviewButton/ProjectPreviewButton.js'
 );
@@ -1868,22 +1903,15 @@ const ProjectNameInput$ = include(
 const NewProject$ = include('src/views/projects/newProject/NewProject.js');
 
 const Projects$ = ({ model }) => {
-  console.log('model.projects: ', model.projects);
   return div$(
     ...model.projects.map(
       ({ id$, name$, nameInputValue$, isEditing$, isEmpty$ }) => [
         ProjectNameInput$({ model, id$, nameInputValue$ }).setStyle({
           display: choose$(or$(isEmpty$, not$(isEditing$)), 'none', 'block'),
         }),
-        ProjectPreview$(name$)
-          .setStyle({
-            display: choose$(or$(isEmpty$, isEditing$), 'none', 'block'),
-          })
-          .onClick(
-            () =>
-              (location.hash = `#!/projects/${id$.value}/${model
-                .lastVisitedProjectView$.value || ''}`)
-          ),
+        ProjectPreview$({ model, id$, name$ }).setStyle({
+          display: choose$(or$(isEmpty$, isEditing$), 'none', 'block'),
+        }),
       ]
     ),
     NewProject$({ model })

@@ -14,22 +14,15 @@ const ProjectNameInput$ = include(
 const NewProject$ = include('src/views/projects/newProject/NewProject.js');
 
 const Projects$ = ({ model }) => {
-  console.log('model.projects: ', model.projects);
   return div$(
     ...model.projects.map(
       ({ id$, name$, nameInputValue$, isEditing$, isEmpty$ }) => [
         ProjectNameInput$({ model, id$, nameInputValue$ }).setStyle({
           display: choose$(or$(isEmpty$, not$(isEditing$)), 'none', 'block'),
         }),
-        ProjectPreview$(name$)
-          .setStyle({
-            display: choose$(or$(isEmpty$, isEditing$), 'none', 'block'),
-          })
-          .onClick(
-            () =>
-              (location.hash = `#!/projects/${id$.value}/${model
-                .lastVisitedProjectView$.value || ''}`)
-          ),
+        ProjectPreview$({ model, id$, name$ }).setStyle({
+          display: choose$(or$(isEmpty$, isEditing$), 'none', 'block'),
+        }),
       ]
     ),
     NewProject$({ model })

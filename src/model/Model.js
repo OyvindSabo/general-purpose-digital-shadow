@@ -135,6 +135,27 @@ const Model = ({ router }) => {
     project.isEditing$.value = false;
   };
 
+  model.deleteProject = projectId => {
+    const indexToDelete = model.projects.findIndex(
+      ({ id$ }) => id$.value === projectId
+    );
+    console.log('indexToDelete: ', indexToDelete);
+    for (let i = indexToDelete; i < MAX_AMOUNT_OF_PROJECTS - 1; i++) {
+      model.projects[i].id$.value = model.projects[i + 1].id$.value;
+      model.projects[i].name$.value = model.projects[i + 1].name$.value;
+      model.projects[i].nameInputValue$.value =
+        model.projects[i + 1].nameInputValue$.value;
+      model.projects[i].isEditing$.value =
+        model.projects[i + 1].isEditing$.value;
+      model.projects[i].isEmpty$.value = model.projects[i + 1].isEmpty$.value;
+    }
+    model.projects[MAX_AMOUNT_OF_PROJECTS - 1].id$.value = '';
+    model.projects[MAX_AMOUNT_OF_PROJECTS - 1].name$.value = '';
+    model.projects[MAX_AMOUNT_OF_PROJECTS - 1].nameInputValue$.value = '';
+    model.projects[MAX_AMOUNT_OF_PROJECTS - 1].isEditing$.value = false;
+    model.projects[MAX_AMOUNT_OF_PROJECTS - 1].isEmpty$.value = true;
+  };
+
   window.addEventListener(model.valuesCode$.id, () => {
     const evaluatedCode = evaluateCode(
       model.valuesCode$.value,
