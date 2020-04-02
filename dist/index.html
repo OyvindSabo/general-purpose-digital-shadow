@@ -601,9 +601,6 @@ const Model = ({ router }) => {
   model.loadAllProjects();
 
   model.createNewProject = () => {
-    for (let i = 0; i < MAX_AMOUNT_OF_PROJECTS; i++) {
-      model.projects[i].isEditing$.value = false;
-    }
     const indexToPlaceNewProject = model.projects.findIndex(
       project => project.isEmpty$.value
     );
