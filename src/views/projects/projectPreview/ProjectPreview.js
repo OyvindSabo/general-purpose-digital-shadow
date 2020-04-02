@@ -23,7 +23,7 @@ const ProjectPreview$ = ({ model, id$, name$ }) =>
       model.deleteProject(id$.value)
     ),
     ProjectPreviewButton$('Edit').onClick(() =>
-      model.editProjecttName(id$.value)
+      model.editProjectName(id$.value)
     )
   );
 module.exports = ProjectPreview$;

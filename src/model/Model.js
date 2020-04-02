@@ -115,6 +115,16 @@ const Model = ({ router }) => {
     project.nameInputValue$.value = inputValue;
   };
 
+  model.editProjectName = projectId => {
+    const project = model.projects.find(({ id$ }) => id$.value === projectId);
+    if (!project) {
+      console.warn(
+        'Tried to cancel editing the name input value of nonexistent project.'
+      );
+    }
+    project.isEditing$.value = true;
+  };
+
   model.cancelEditingProjectName = projectId => {
     const project = model.projects.find(({ id$ }) => id$.value === projectId);
     if (!project) {
