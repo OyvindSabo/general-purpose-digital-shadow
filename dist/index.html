@@ -1780,19 +1780,13 @@ module.exports = ProjectPreview$;
   return module.exports;
 })();
 
-modules['src/views/projects/projectNameInput/ProjectNameInput.js'] = (() => {
+modules['src/views/projects/projectPreviewButton/ProjectPreviewButton.js'] = (() => {
   const module = { exports: {} };
-  const styled = include('src/libraries/styled/styled.js');
+  const { button$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const Observable = include('src/libraries/observable/Observable.js');
 const { choose$ } = include('src/libraries/observable/utils.js');
-const { button$, input$ } = include(
-  'src/libraries/observableHtml/ObservableHtml.js'
-);
-const ProjectPreviewContainer$ = include(
-  'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
-);
 
-const Button$ = value$ => {
+const ProjectPreviewButton$ = value$ => {
   const isHovered$ = new Observable(false);
   return button$(value$)
     .setStyle({
@@ -1811,6 +1805,24 @@ const Button$ = value$ => {
     .onMouseLeave(element => (isHovered$.value = false));
 };
 
+module.exports = ProjectPreviewButton$;
+
+  return module.exports;
+})();
+
+modules['src/views/projects/projectNameInput/ProjectNameInput.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const { button$, input$ } = include(
+  'src/libraries/observableHtml/ObservableHtml.js'
+);
+const ProjectPreviewButton$ = include(
+  'src/views/projects/projectPreviewButton/ProjectPreviewButton.js'
+);
+const ProjectPreviewContainer$ = include(
+  'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
+);
+
 const ProjectNameInput$ = ({ model, id$, nameInputValue$ }) =>
   ProjectPreviewContainer$(
     styled({
@@ -1825,8 +1837,12 @@ const ProjectNameInput$ = ({ model, id$, nameInputValue$ }) =>
     })(input$)(nameInputValue$).onInput(({ value }) => {
       model.setProjectNameInputValue(id$.value, value);
     }),
-    Button$('Cancel').onClick(() => model.cancelEditingProjectName(id$.value)),
-    Button$('Save').onClick(() => model.saveProjectName(id$.value))
+    ProjectPreviewButton$('Cancel').onClick(() =>
+      model.cancelEditingProjectName(id$.value)
+    ),
+    ProjectPreviewButton$('Save').onClick(() =>
+      model.saveProjectName(id$.value)
+    )
   );
 
 module.exports = ProjectNameInput$;
