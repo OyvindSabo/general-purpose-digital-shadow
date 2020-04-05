@@ -1,4 +1,4 @@
-const getAllProjects = () => [
+const projects = [
   {
     id: '0',
     name: 'Double wishbone suspension',
@@ -234,6 +234,12 @@ widgets['3D Bar Chart'] = {
   },
 ];
 
+const getAllProjects = () => projects;
+
+const getProjectById = (projectIdId) =>
+  projects.find(({ id }) => id == projectId);
+
 module.exports = {
   getAllProjects,
+  getProjectById,
 };
