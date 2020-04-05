@@ -1,4 +1,4 @@
-const projects = [
+let projects = [
   {
     id: '0',
     name: 'Double wishbone suspension',
@@ -239,7 +239,33 @@ const getAllProjects = () => projects;
 const getProjectById = (projectIdId) =>
   projects.find(({ id }) => id == projectId);
 
+const createProject = (project) => {
+  projects = [
+    ...projects,
+    {
+      ...project,
+      id: `${Math.random()}${+new Date()}`,
+    },
+  ];
+};
+
+const updateProjectById = (projectId, project) => {
+  const projectIndex = projects.findIndex(({ id }) => id === projectId);
+  if (projectIndex === -1) {
+    console.warn('Tried to update nonexistent project');
+    return;
+  }
+  Object.assign(projects[projectIndex], project);
+};
+
+const deleteProjectById = (projectId) => {
+  projects = projects.filter(({ id }) => id !== projectId);
+};
+
 module.exports = {
   getAllProjects,
   getProjectById,
+  createProject,
+  updateProjectById,
+  deleteProjectById,
 };

@@ -1,5 +1,11 @@
 const Observable = include('src/libraries/observable/Observable.js');
-const { getAllProjects } = include('src/data/Data.js');
+const {
+  getAllProjects,
+  getProjectById,
+  createProject,
+  updateProjectById,
+  deleteProjectById,
+} = include('src/data/Data.js');
 
 const MAX_AMOUNT_OF_PROJECTS = 100;
 const MAX_AMOUNT_OF_VALUES = 100;
@@ -92,21 +98,25 @@ const Model = ({ router }) => {
         model.projects[index].widgetsCode$.value = widgetsCode;
       }
     );
+    const selectedProject = model.projects.find(
+      ({ id$ }) => id$.value === model.selectedProjectId$.value
+    );
+    if (!selectedProject) {
+      model.selectedProjectId$.value = null;
+      model.selectedProjectName$.value = null;
+      return;
+    }
+    model.selectedProjectName$.value = selectedProject.name$.value;
   };
   model.loadAllProjects();
 
   model.createNewProject = () => {
-    const indexToPlaceNewProject = model.projects.findIndex(
-      (project) => project.isEmpty$.value
-    );
-    model.projects[
-      indexToPlaceNewProject
-    ].id$.value = `${Math.random()}${+new Date()}`;
-    model.projects[indexToPlaceNewProject].name$.value = 'Untitled project';
-    model.projects[indexToPlaceNewProject].nameInputValue$.value =
-      'Untitled project';
-    model.projects[indexToPlaceNewProject].isEditing$.value = true;
-    model.projects[indexToPlaceNewProject].isEmpty$.value = false;
+    createProject({
+      name: 'Untitled project',
+      derivedValuesCode: '',
+      widgetsCode: '',
+    });
+    model.loadAllProjects();
   };
 
   model.setProjectNameInputValue = (projectId, inputValue) => {
@@ -142,32 +152,13 @@ const Model = ({ router }) => {
 
   model.saveProjectName = (projectId) => {
     const project = model.projects.find(({ id$ }) => id$.value === projectId);
-    if (!project) {
-      console.warn('Tried to save project name of nonexistent project.');
-    }
-    project.name$.value = project.nameInputValue$.value;
-    project.isEditing$.value = false;
+    updateProjectById(projectId, { name: project.nameInputValue$.value });
+    model.loadAllProjects();
   };
 
   model.deleteProject = (projectId) => {
-    const indexToDelete = model.projects.findIndex(
-      ({ id$ }) => id$.value === projectId
-    );
-    console.log('indexToDelete: ', indexToDelete);
-    for (let i = indexToDelete; i < MAX_AMOUNT_OF_PROJECTS - 1; i++) {
-      model.projects[i].id$.value = model.projects[i + 1].id$.value;
-      model.projects[i].name$.value = model.projects[i + 1].name$.value;
-      model.projects[i].nameInputValue$.value =
-        model.projects[i + 1].nameInputValue$.value;
-      model.projects[i].isEditing$.value =
-        model.projects[i + 1].isEditing$.value;
-      model.projects[i].isEmpty$.value = model.projects[i + 1].isEmpty$.value;
-    }
-    model.projects[MAX_AMOUNT_OF_PROJECTS - 1].id$.value = '';
-    model.projects[MAX_AMOUNT_OF_PROJECTS - 1].name$.value = '';
-    model.projects[MAX_AMOUNT_OF_PROJECTS - 1].nameInputValue$.value = '';
-    model.projects[MAX_AMOUNT_OF_PROJECTS - 1].isEditing$.value = false;
-    model.projects[MAX_AMOUNT_OF_PROJECTS - 1].isEmpty$.value = true;
+    deleteProjectById(projectId);
+    model.loadAllProjects();
   };
 
   window.addEventListener(model.valuesCode$.id, () => {
