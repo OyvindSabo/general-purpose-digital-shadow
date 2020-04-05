@@ -1,11 +1,8 @@
 const Observable = include('src/libraries/observable/Observable.js');
-const {
-  getAllProjects,
-  getDerivedValuesCodeByProjectId,
-  getWidgetsCodeByProjectId,
-} = include('src/data/Data.js');
+const { getAllProjects } = include('src/data/Data.js');
 
 const MAX_AMOUNT_OF_PROJECTS = 100;
+const MAX_AMOUNT_OF_VALUES = 100;
 const MAX_AMOUNT_OF_DERIVED_VALUES = 100;
 const MAX_AMOUNT_OF_WIDGETS = 100;
 
@@ -30,14 +27,18 @@ const sellPrice$ = new Observable(100);
 
 const Model = ({ router }) => {
   const model = {
+    // All values
     projects: [...new Array(MAX_AMOUNT_OF_PROJECTS).keys()].map(() => ({
       id$: new Observable(''),
       name$: new Observable(''),
       nameInputValue$: new Observable(''),
       isEditing$: new Observable(false),
       isEmpty$: new Observable(true),
+      derivedValuesCode$: new Observable(''),
+      widgetsCode$: new Observable(''),
     })),
 
+    // Selected values
     selectedProjectId$: new Observable(null),
     selectedProjectName$: new Observable(null),
 
@@ -49,7 +50,7 @@ const Model = ({ router }) => {
     derivedValuesCode$: new Observable(''),
     widgetsCode$: new Observable(''),
 
-    values: [...new Array(MAX_AMOUNT_OF_DERIVED_VALUES).keys()].map(() => ({
+    values: [...new Array(MAX_AMOUNT_OF_VALUES).keys()].map(() => ({
       label$: new Observable(''),
       value$: new Observable(0),
       isEmpty$: new Observable(true),
@@ -61,7 +62,7 @@ const Model = ({ router }) => {
         isEmpty$: new Observable(true),
       })
     ),
-    widgets: [...new Array(MAX_AMOUNT_OF_DERIVED_VALUES).keys()].map(() => ({
+    widgets: [...new Array(MAX_AMOUNT_OF_WIDGETS).keys()].map(() => ({
       label$: new Observable(''),
       edges$: new Observable([]),
       surfaces$: new Observable([]),
@@ -78,19 +79,25 @@ const Model = ({ router }) => {
       model.projects[i].nameInputValue$.value = '';
       model.projects[i].isEditing$.value = false;
       model.projects[i].isEmpty$.value = true;
+      model.projects[i].derivedValuesCode$.value = '';
+      model.projects[i].widgetsCode$.value = '';
     }
-    getAllProjects().forEach(({ id, name }, index) => {
-      model.projects[index].id$.value = id;
-      model.projects[index].name$.value = name;
-      model.projects[index].nameInputValue$.value = name;
-      model.projects[index].isEmpty$.value = false;
-    });
+    getAllProjects().forEach(
+      ({ id, name, derivedValuesCode, widgetsCode }, index) => {
+        model.projects[index].id$.value = id;
+        model.projects[index].name$.value = name;
+        model.projects[index].nameInputValue$.value = name;
+        model.projects[index].isEmpty$.value = false;
+        model.projects[index].derivedValuesCode$.value = derivedValuesCode;
+        model.projects[index].widgetsCode$.value = widgetsCode;
+      }
+    );
   };
   model.loadAllProjects();
 
   model.createNewProject = () => {
     const indexToPlaceNewProject = model.projects.findIndex(
-      project => project.isEmpty$.value
+      (project) => project.isEmpty$.value
     );
     model.projects[
       indexToPlaceNewProject
@@ -112,7 +119,7 @@ const Model = ({ router }) => {
     project.nameInputValue$.value = inputValue;
   };
 
-  model.editProjectName = projectId => {
+  model.editProjectName = (projectId) => {
     const project = model.projects.find(({ id$ }) => id$.value === projectId);
     if (!project) {
       console.warn(
@@ -122,7 +129,7 @@ const Model = ({ router }) => {
     project.isEditing$.value = true;
   };
 
-  model.cancelEditingProjectName = projectId => {
+  model.cancelEditingProjectName = (projectId) => {
     const project = model.projects.find(({ id$ }) => id$.value === projectId);
     if (!project) {
       console.warn(
@@ -133,7 +140,7 @@ const Model = ({ router }) => {
     project.isEditing$.value = false;
   };
 
-  model.saveProjectName = projectId => {
+  model.saveProjectName = (projectId) => {
     const project = model.projects.find(({ id$ }) => id$.value === projectId);
     if (!project) {
       console.warn('Tried to save project name of nonexistent project.');
@@ -142,7 +149,7 @@ const Model = ({ router }) => {
     project.isEditing$.value = false;
   };
 
-  model.deleteProject = projectId => {
+  model.deleteProject = (projectId) => {
     const indexToDelete = model.projects.findIndex(
       ({ id$ }) => id$.value === projectId
     );
@@ -231,14 +238,13 @@ const Model = ({ router }) => {
 
   const syncSelectedProjectWithRouter = ({ params, currentRoute$ }) => {
     if (currentRoute$.value.indexOf('/projects/<projectId:string>') === 0) {
-      model.selectedProjectId$.value = params.projectId;
-      model.selectedProjectName$.value = model.projects.find(
+      const selectedProject = model.projects.find(
         ({ id$ }) => id$.value === params.projectId
-      ).name$.value;
-      model.derivedValuesCode$.value = getDerivedValuesCodeByProjectId(
-        params.projectId
       );
-      model.widgetsCode$.value = getWidgetsCodeByProjectId(params.projectId);
+      model.selectedProjectId$.value = selectedProject.id$.value;
+      model.selectedProjectName$.value = selectedProject.name$.value;
+      model.derivedValuesCode$.value = selectedProject.derivedValuesCode$.value;
+      model.widgetsCode$.value = selectedProject.widgetsCode$.value;
       if (
         currentRoute$.value.indexOf(
           '/projects/<projectId:string>/data-sources'
