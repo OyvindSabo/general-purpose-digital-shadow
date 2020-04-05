@@ -24,7 +24,7 @@ const Dashboards$ = ({ model, currentRoute$ }) => {
     div$(
       CodeEditor$(model.widgetsCode$)
         .onInput(({ value }) => {
-          model.widgetsCode$.value = value;
+          model.updateWidgetsCode(model.selectedProjectId$.value, value);
         })
         .setStyle({ paddingLeft: '80px' })
     ).setStyle({

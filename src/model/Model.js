@@ -170,6 +170,11 @@ const Model = ({ router }) => {
     model.loadAllProjects();
   };
 
+  model.updateWidgetsCode = (projectId, widgetsCode) => {
+    updateProjectById(projectId, { widgetsCode });
+    model.loadAllProjects();
+  };
+
   window.addEventListener(model.valuesCode$.id, () => {
     const evaluatedCode = evaluateCode(
       model.valuesCode$.value,
