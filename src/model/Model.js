@@ -104,9 +104,13 @@ const Model = ({ router }) => {
     if (!selectedProject) {
       model.selectedProjectId$.value = null;
       model.selectedProjectName$.value = null;
+      model.derivedValuesCode$.value = '';
+      model.widgetsCode$.value = '';
       return;
     }
     model.selectedProjectName$.value = selectedProject.name$.value;
+    model.derivedValuesCode$.value = selectedProject.derivedValuesCode$.value;
+    model.widgetsCode$.value = selectedProject.widgetsCode$.value;
   };
   model.loadAllProjects();
 
@@ -158,6 +162,11 @@ const Model = ({ router }) => {
 
   model.deleteProject = (projectId) => {
     deleteProjectById(projectId);
+    model.loadAllProjects();
+  };
+
+  model.updateDerivedValuesCode = (projectId, derivedValuesCode) => {
+    updateProjectById(projectId, { derivedValuesCode });
     model.loadAllProjects();
   };
 

@@ -24,7 +24,7 @@ const Values$ = ({ model, currentRoute$ }) => {
     div$(
       CodeEditor$(model.derivedValuesCode$)
         .onInput(({ value }) => {
-          model.derivedValuesCode$.value = value;
+          model.updateDerivedValuesCode(model.selectedProjectId$.value, value);
         })
         .setStyle({ paddingLeft: '80px' })
     ).setStyle({
