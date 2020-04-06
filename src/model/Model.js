@@ -41,10 +41,12 @@ const Model = ({ router }) => {
       nameInputValue$: new Observable(''),
       isEditing$: new Observable(false),
       isEmpty$: new Observable(true),
-      apiReqests: [...new Array(MAX_AMOUNT_OF_API_REQUESTS).keys()].map(() => ({
-        url$: new Observable(''),
-        fetchInterval$: new Observable(null),
-      })),
+      apiRequests: [...new Array(MAX_AMOUNT_OF_API_REQUESTS).keys()].map(
+        () => ({
+          url$: new Observable(''),
+          fetchInterval$: new Observable(null),
+        })
+      ),
       derivedValuesCode$: new Observable(''),
       widgetsCode$: new Observable(''),
     })),
@@ -57,7 +59,7 @@ const Model = ({ router }) => {
 
     derivedValuesEditorIsOpen$: new Observable(false),
 
-    selectedApiReqests: [...new Array(MAX_AMOUNT_OF_API_REQUESTS).keys()].map(
+    selectedApiRequests: [...new Array(MAX_AMOUNT_OF_API_REQUESTS).keys()].map(
       () => ({
         url$: new Observable(''),
         fetchInterval$: new Observable(null),
@@ -99,8 +101,8 @@ const Model = ({ router }) => {
       model.projects[i].derivedValuesCode$.value = '';
       model.projects[i].widgetsCode$.value = '';
       for (let j = 0; j < MAX_AMOUNT_OF_API_REQUESTS; j++) {
-        model.projects[i].apiReqests[j].url$.value = '';
-        model.projects[i].apiReqests[j].fetchInterval$.value = '';
+        model.projects[i].apiRequests[j].url$.value = '';
+        model.projects[i].apiRequests[j].fetchInterval$.value = '';
       }
     }
     getAllProjects().forEach(
@@ -112,8 +114,8 @@ const Model = ({ router }) => {
         model.projects[index].derivedValuesCode$.value = derivedValuesCode;
         model.projects[index].widgetsCode$.value = widgetsCode;
         apiRequests.forEach(({ url, fetchInterval }, j) => {
-          model.projects[index].apiReqests[j].url$.value = url;
-          model.projects[index].apiReqests[
+          model.projects[index].apiRequests[j].url$.value = url;
+          model.projects[index].apiRequests[
             j
           ].fetchInterval$.value = fetchInterval;
         });
@@ -130,6 +132,10 @@ const Model = ({ router }) => {
       return;
     }
     model.selectedProjectName$.value = selectedProject.name$.value;
+    selectedProject.apiRequests.forEach(({ url$, fetchInterval$ }, j) => {
+      model.selectedApiRequests[j].url$.value = url$.value;
+      model.selectedApiRequests[j].fetchInterval$.value = fetchInterval$.value;
+    });
     model.derivedValuesCode$.value = selectedProject.derivedValuesCode$.value;
     model.widgetsCode$.value = selectedProject.widgetsCode$.value;
   };
@@ -269,6 +275,13 @@ const Model = ({ router }) => {
       );
       model.selectedProjectId$.value = selectedProject.id$.value;
       model.selectedProjectName$.value = selectedProject.name$.value;
+
+      console.log('selectedProject: ', selectedProject);
+      selectedProject.apiRequests.forEach(({ url$, fetchInterval$ }, j) => {
+        model.selectedApiRequests[j].url$.value = url$.value;
+        model.selectedApiRequests[j].fetchInterval$.value =
+          fetchInterval$.value;
+      });
       model.derivedValuesCode$.value = selectedProject.derivedValuesCode$.value;
       model.widgetsCode$.value = selectedProject.widgetsCode$.value;
       if (
