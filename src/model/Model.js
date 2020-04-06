@@ -8,6 +8,7 @@ const {
 } = include('src/data/Data.js');
 
 const MAX_AMOUNT_OF_PROJECTS = 100;
+const MAX_AMOUNT_OF_API_REQUESTS = 100;
 const MAX_AMOUNT_OF_VALUES = 100;
 const MAX_AMOUNT_OF_DERIVED_VALUES = 100;
 const MAX_AMOUNT_OF_WIDGETS = 100;
@@ -40,6 +41,10 @@ const Model = ({ router }) => {
       nameInputValue$: new Observable(''),
       isEditing$: new Observable(false),
       isEmpty$: new Observable(true),
+      apiReqests: [...new Array(MAX_AMOUNT_OF_API_REQUESTS).keys()].map(() => ({
+        url$: new Observable(''),
+        fetchInterval$: new Observable(null),
+      })),
       derivedValuesCode$: new Observable(''),
       widgetsCode$: new Observable(''),
     })),
@@ -52,6 +57,12 @@ const Model = ({ router }) => {
 
     derivedValuesEditorIsOpen$: new Observable(false),
 
+    selectedApiReqests: [...new Array(MAX_AMOUNT_OF_API_REQUESTS).keys()].map(
+      () => ({
+        url$: new Observable(''),
+        fetchInterval$: new Observable(null),
+      })
+    ),
     valuesCode$: new Observable(''),
     derivedValuesCode$: new Observable(''),
     widgetsCode$: new Observable(''),
@@ -87,15 +98,25 @@ const Model = ({ router }) => {
       model.projects[i].isEmpty$.value = true;
       model.projects[i].derivedValuesCode$.value = '';
       model.projects[i].widgetsCode$.value = '';
+      for (let j = 0; j < MAX_AMOUNT_OF_API_REQUESTS; j++) {
+        model.projects[i].apiReqests[j].url$.value = '';
+        model.projects[i].apiReqests[j].fetchInterval$.value = '';
+      }
     }
     getAllProjects().forEach(
-      ({ id, name, derivedValuesCode, widgetsCode }, index) => {
+      ({ id, name, apiRequests, derivedValuesCode, widgetsCode }, index) => {
         model.projects[index].id$.value = id;
         model.projects[index].name$.value = name;
         model.projects[index].nameInputValue$.value = name;
         model.projects[index].isEmpty$.value = false;
         model.projects[index].derivedValuesCode$.value = derivedValuesCode;
         model.projects[index].widgetsCode$.value = widgetsCode;
+        apiRequests.forEach(({ url, fetchInterval }, j) => {
+          model.projects[index].apiReqests[j].url$.value = url;
+          model.projects[index].apiReqests[
+            j
+          ].fetchInterval$.value = fetchInterval;
+        });
       }
     );
     const selectedProject = model.projects.find(

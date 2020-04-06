@@ -1,4 +1,15 @@
-const getAllProjects = () => JSON.parse(localStorage.getItem('projects')) || [];
+const getAllProjects = () => {
+  const projects = JSON.parse(localStorage.getItem('projects')) || [];
+  return projects.map(
+    ({ id, name, apiRequests, derivedValuesCode, widgetsCode }) => ({
+      id: id || '',
+      name: name || '',
+      apiRequests: apiRequests || [],
+      derivedValuesCode: derivedValuesCode || '',
+      widgetsCode: widgetsCode || '',
+    })
+  );
+};
 
 const getProjectById = (projectIdId) =>
   JSON.parse(localStorage.getItem('projects')).find(
