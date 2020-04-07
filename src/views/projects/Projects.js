@@ -13,19 +13,19 @@ const ProjectNameInput$ = include(
 );
 const NewProject$ = include('src/views/projects/newProject/NewProject.js');
 
-const Projects$ = ({ model }) => {
+const Projects$ = ({ viewModel }) => {
   return div$(
-    ...model.projects.map(
+    ...viewModel.projects.map(
       ({ id$, name$, nameInputValue$, isEditing$, isEmpty$ }) => [
-        ProjectNameInput$({ model, id$, nameInputValue$ }).setStyle({
+        ProjectNameInput$({ viewModel, id$, nameInputValue$ }).setStyle({
           display: choose$(or$(isEmpty$, not$(isEditing$)), 'none', 'block'),
         }),
-        ProjectPreview$({ model, id$, name$ }).setStyle({
+        ProjectPreview$({ viewModel, id$, name$ }).setStyle({
           display: choose$(or$(isEmpty$, isEditing$), 'none', 'block'),
         }),
       ]
     ),
-    NewProject$({ model })
+    NewProject$({ viewModel })
   );
 };
 

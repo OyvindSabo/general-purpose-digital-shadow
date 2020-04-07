@@ -7,7 +7,7 @@ const ProjectPreviewButton$ = include(
   'src/views/projects/projectPreviewButton/ProjectPreviewButton.js'
 );
 
-const ProjectPreview$ = ({ model, id$, name$ }) =>
+const ProjectPreview$ = ({ viewModel, id$, name$ }) =>
   ProjectPreviewContainer$(
     styled({
       padding: '0 16px',
@@ -16,14 +16,15 @@ const ProjectPreview$ = ({ model, id$, name$ }) =>
       display: 'inline-block',
     })(div$)(name$).onClick(
       () =>
-        (location.hash = `#!/projects/${id$.value}/${model
-          .lastVisitedProjectView$.value || ''}`)
+        (location.hash = `#!/projects/${id$.value}/${
+          viewModel.lastVisitedProjectView$.value || ''
+        }`)
     ),
     ProjectPreviewButton$('Delete').onClick(() =>
-      model.deleteProject(id$.value)
+      viewModel.deleteProject(id$.value)
     ),
     ProjectPreviewButton$('Edit').onClick(() =>
-      model.editProjectName(id$.value)
+      viewModel.editProjectName(id$.value)
     )
   );
 module.exports = ProjectPreview$;

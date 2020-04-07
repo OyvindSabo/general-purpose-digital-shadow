@@ -1,7 +1,7 @@
 const Observable = include('src/libraries/observable/Observable.js');
 const { span$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
-const NewProject$ = ({ model }) => {
+const NewProject$ = ({ viewModel }) => {
   const color$ = new Observable('slategray');
   return span$('New project')
     .setStyle({
@@ -16,7 +16,7 @@ const NewProject$ = ({ model }) => {
     })
     .onMouseEnter(() => (color$.value = 'darkslategray'))
     .onMouseLeave(() => (color$.value = 'slategray'))
-    .onClick(model.createNewProject);
+    .onClick(viewModel.createNewProject);
 };
 
 module.exports = NewProject$;

@@ -21,17 +21,17 @@ const router = new Router({
   '/projects/<projectId:string>/dashboards/edit': 'Edit dashboards',
 });
 
-const model = Model({ router });
+const viewModel = Model({ router });
 
 document.body.appendChild(
   App({
-    model,
+    viewModel,
     params: router.getParams,
     currentRoute$: router.currentRoute$,
   })
 );
-document.body.update = props =>
-  document.body.childNodes.forEach(childNode => {
+document.body.update = (props) =>
+  document.body.childNodes.forEach((childNode) => {
     if (typeof childNode.update === 'function') {
       childNode.update(props);
     }

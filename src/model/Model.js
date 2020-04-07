@@ -8,7 +8,6 @@ const {
 } = include('src/data/Data.js');
 
 const MAX_AMOUNT_OF_PROJECTS = 100;
-const MAX_AMOUNT_OF_API_REQUESTS = 100;
 const MAX_AMOUNT_OF_VALUES = 100;
 const MAX_AMOUNT_OF_DERIVED_VALUES = 100;
 const MAX_AMOUNT_OF_WIDGETS = 100;
@@ -33,7 +32,8 @@ const buyPrice$ = new Observable(100);
 const sellPrice$ = new Observable(100);
 
 const Model = ({ router }) => {
-  const model = {
+  const dataModel = { projects: [] };
+  const viewModel = {
     // All values
     projects: [...new Array(MAX_AMOUNT_OF_PROJECTS).keys()].map(() => ({
       id$: new Observable(''),
@@ -41,14 +41,6 @@ const Model = ({ router }) => {
       nameInputValue$: new Observable(''),
       isEditing$: new Observable(false),
       isEmpty$: new Observable(true),
-      apiRequests: [...new Array(MAX_AMOUNT_OF_API_REQUESTS).keys()].map(
-        () => ({
-          url$: new Observable(''),
-          fetchInterval$: new Observable(null),
-        })
-      ),
-      derivedValuesCode$: new Observable(''),
-      widgetsCode$: new Observable(''),
     })),
 
     // Selected values
@@ -59,15 +51,11 @@ const Model = ({ router }) => {
 
     derivedValuesEditorIsOpen$: new Observable(false),
 
-    selectedApiRequests: [...new Array(MAX_AMOUNT_OF_API_REQUESTS).keys()].map(
-      () => ({
-        url$: new Observable(''),
-        fetchInterval$: new Observable(null),
-      })
-    ),
+    selectedApiUrl$: new Observable(''),
+    selectedApiInterval$: new Observable(''),
     valuesCode$: new Observable(''),
-    derivedValuesCode$: new Observable(''),
-    widgetsCode$: new Observable(''),
+    selectedDerivedValuesCode$: new Observable(''),
+    selectedWidgetsCode$: new Observable(''),
 
     values: [...new Array(MAX_AMOUNT_OF_VALUES).keys()].map(() => ({
       label$: new Observable(''),
@@ -91,67 +79,57 @@ const Model = ({ router }) => {
     })),
   };
 
-  model.loadAllProjects = () => {
+  viewModel.loadAllProjects = () => {
+    dataModel.projects = getAllProjects();
     for (let i = 0; i < MAX_AMOUNT_OF_PROJECTS; i++) {
-      model.projects[i].id$.value = '';
-      model.projects[i].name$.value = '';
-      model.projects[i].nameInputValue$.value = '';
-      model.projects[i].isEditing$.value = false;
-      model.projects[i].isEmpty$.value = true;
-      model.projects[i].derivedValuesCode$.value = '';
-      model.projects[i].widgetsCode$.value = '';
-      for (let j = 0; j < MAX_AMOUNT_OF_API_REQUESTS; j++) {
-        model.projects[i].apiRequests[j].url$.value = '';
-        model.projects[i].apiRequests[j].fetchInterval$.value = '';
-      }
+      viewModel.projects[i].id$.value = '';
+      viewModel.projects[i].name$.value = '';
+      viewModel.projects[i].nameInputValue$.value = '';
+      viewModel.projects[i].isEditing$.value = false;
+      viewModel.projects[i].isEmpty$.value = true;
     }
-    getAllProjects().forEach(
+    dataModel.projects.forEach(
       ({ id, name, apiRequests, derivedValuesCode, widgetsCode }, index) => {
-        model.projects[index].id$.value = id;
-        model.projects[index].name$.value = name;
-        model.projects[index].nameInputValue$.value = name;
-        model.projects[index].isEmpty$.value = false;
-        model.projects[index].derivedValuesCode$.value = derivedValuesCode;
-        model.projects[index].widgetsCode$.value = widgetsCode;
-        apiRequests.forEach(({ url, fetchInterval }, j) => {
-          model.projects[index].apiRequests[j].url$.value = url;
-          model.projects[index].apiRequests[
-            j
-          ].fetchInterval$.value = fetchInterval;
-        });
+        viewModel.projects[index].id$.value = id;
+        viewModel.projects[index].name$.value = name;
+        viewModel.projects[index].nameInputValue$.value = name;
+        viewModel.projects[index].isEmpty$.value = false;
       }
     );
-    const selectedProject = model.projects.find(
-      ({ id$ }) => id$.value === model.selectedProjectId$.value
+    const selectedProject = dataModel.projects.find(
+      ({ id }) => id === viewModel.selectedProjectId$.value
     );
     if (!selectedProject) {
-      model.selectedProjectId$.value = null;
-      model.selectedProjectName$.value = null;
-      model.derivedValuesCode$.value = '';
-      model.widgetsCode$.value = '';
+      viewModel.selectedProjectId$.value = null;
+      viewModel.selectedProjectName$.value = null;
+      viewModel.selectedApiUrl$.value$ = '';
+      viewModel.selectedApiInterval$.value = null;
+      viewModel.selectedDerivedValuesCode$.value = '';
+      viewModel.selectedWidgetsCode$.value = '';
       return;
     }
-    model.selectedProjectName$.value = selectedProject.name$.value;
-    selectedProject.apiRequests.forEach(({ url$, fetchInterval$ }, j) => {
-      model.selectedApiRequests[j].url$.value = url$.value;
-      model.selectedApiRequests[j].fetchInterval$.value = fetchInterval$.value;
-    });
-    model.derivedValuesCode$.value = selectedProject.derivedValuesCode$.value;
-    model.widgetsCode$.value = selectedProject.widgetsCode$.value;
+    viewModel.selectedProjectName$.value /***/ = selectedProject.name;
+    viewModel.selectedApiUrl$.value /********/ = selectedProject.apiUrl;
+    viewModel.selectedApiInterval$.value /***/ = selectedProject.apiInterval;
+    viewModel.selectedDerivedValuesCode$.value =
+      selectedProject.derivedValuesCode;
+    viewModel.selectedWidgetsCode$.value /***/ = selectedProject.widgetsCode;
   };
-  model.loadAllProjects();
+  viewModel.loadAllProjects();
 
-  model.createNewProject = () => {
+  viewModel.createNewProject = () => {
     createProject({
       name: 'Untitled project',
       derivedValuesCode: '',
       widgetsCode: '',
     });
-    model.loadAllProjects();
+    viewModel.loadAllProjects();
   };
 
-  model.setProjectNameInputValue = (projectId, inputValue) => {
-    const project = model.projects.find(({ id$ }) => id$.value === projectId);
+  viewModel.setProjectNameInputValue = (projectId, inputValue) => {
+    const project = viewModel.projects.find(
+      ({ id$ }) => id$.value === projectId
+    );
     if (!project) {
       console.warn(
         'Tried to update project name input value of nonexistent project.'
@@ -160,8 +138,10 @@ const Model = ({ router }) => {
     project.nameInputValue$.value = inputValue;
   };
 
-  model.editProjectName = (projectId) => {
-    const project = model.projects.find(({ id$ }) => id$.value === projectId);
+  viewModel.editProjectName = (projectId) => {
+    const project = viewModel.projects.find(
+      ({ id$ }) => id$.value === projectId
+    );
     if (!project) {
       console.warn(
         'Tried to cancel editing the name input value of nonexistent project.'
@@ -170,8 +150,10 @@ const Model = ({ router }) => {
     project.isEditing$.value = true;
   };
 
-  model.cancelEditingProjectName = (projectId) => {
-    const project = model.projects.find(({ id$ }) => id$.value === projectId);
+  viewModel.cancelEditingProjectName = (projectId) => {
+    const project = viewModel.projects.find(
+      ({ id$ }) => id$.value === projectId
+    );
     if (!project) {
       console.warn(
         'Tried to cancel editing the name input value of nonexistent project.'
@@ -181,43 +163,58 @@ const Model = ({ router }) => {
     project.isEditing$.value = false;
   };
 
-  model.saveProjectName = (projectId) => {
-    const project = model.projects.find(({ id$ }) => id$.value === projectId);
-    updateProjectById(projectId, { name: project.nameInputValue$.value });
-    model.loadAllProjects();
+  viewModel.saveProjectName = (projectId) => {
+    const project = viewModel.projects.find(
+      ({ id$ }) => id$.value === projectId
+    );
+    updateProjectById(projectId, {
+      name: project.nameInputValue$.value,
+    });
+    viewModel.loadAllProjects();
   };
 
-  model.deleteProject = (projectId) => {
+  viewModel.saveSelectedProject = () => {
+    updateProjectById(viewModel.selectedProjectId$.value, {
+      name: viewModel.selectedName$.value,
+      apiUrl: viewModel.selectedApiUrl$.value,
+      apiInterval: viewModel.selectedApiInterval$.value,
+      derivedValuesCode: viewModel.selectedDerivedValuesCode$.value,
+      widgetsCode: viewModel.selectedWidgetsCode$.value,
+    });
+    viewModel.loadAllProjects();
+  };
+
+  viewModel.deleteProject = (projectId) => {
     deleteProjectById(projectId);
-    model.loadAllProjects();
+    viewModel.loadAllProjects();
   };
 
-  model.updateDerivedValuesCode = (projectId, derivedValuesCode) => {
+  viewModel.updateDerivedValuesCode = (projectId, derivedValuesCode) => {
     updateProjectById(projectId, { derivedValuesCode });
-    model.loadAllProjects();
+    viewModel.loadAllProjects();
   };
 
-  model.updateWidgetsCode = (projectId, widgetsCode) => {
+  viewModel.updateWidgetsCode = (projectId, widgetsCode) => {
     updateProjectById(projectId, { widgetsCode });
-    model.loadAllProjects();
+    viewModel.loadAllProjects();
   };
 
-  window.addEventListener(model.valuesCode$.id, () => {
+  window.addEventListener(viewModel.valuesCode$.id, () => {
     const evaluatedCode = evaluateCode(
-      model.valuesCode$.value,
-      model.derivedValuesCode$.value,
-      model.widgetsCode$.value
+      viewModel.valuesCode$.value,
+      viewModel.selectedDerivedValuesCode$.value,
+      viewModel.selectedWidgetsCode$.value
     );
 
     const valuesEntries = Object.entries(evaluatedCode.values);
-    model.values.forEach(({ label$, value$, isEmpty$ }, index) => {
+    viewModel.values.forEach(({ label$, value$, isEmpty$ }, index) => {
       label$.value = valuesEntries[index] ? valuesEntries[index][0] : '';
       value$.value = valuesEntries[index] ? valuesEntries[index][1] : 0;
       isEmpty$.value = !Boolean(valuesEntries[index]);
     });
 
     const derivedValuesEntries = Object.entries(evaluatedCode.derivedValues);
-    model.derivedValues.forEach(({ label$, value$, isEmpty$ }, index) => {
+    viewModel.derivedValues.forEach(({ label$, value$, isEmpty$ }, index) => {
       label$.value = derivedValuesEntries[index]
         ? derivedValuesEntries[index][0]
         : '';
@@ -228,7 +225,7 @@ const Model = ({ router }) => {
     });
 
     const widgetsEntries = Object.entries(evaluatedCode.widgets);
-    model.widgets.forEach(
+    viewModel.widgets.forEach(
       ({ label$, edges$, surfaces$, is3d$, center$, isEmpty$ }, index) => {
         label$.value = widgetsEntries[index] ? widgetsEntries[index][0] : '';
         edges$.value = widgetsEntries[index]
@@ -259,7 +256,7 @@ const Model = ({ router }) => {
         Math.floor(Math.random() * 2) == 1
           ? sellPrice$.value * 1.01
           : sellPrice$.value / 1.01;
-      model.valuesCode$.value = `
+      viewModel.valuesCode$.value = `
           values.buyPrice = ${buyPrice$.value};
           values.sellPrice = ${sellPrice$.value};
           `;
@@ -270,44 +267,40 @@ const Model = ({ router }) => {
 
   const syncSelectedProjectWithRouter = ({ params, currentRoute$ }) => {
     if (currentRoute$.value.indexOf('/projects/<projectId:string>') === 0) {
-      const selectedProject = model.projects.find(
-        ({ id$ }) => id$.value === params.projectId
+      const selectedProject = dataModel.projects.find(
+        ({ id }) => id === params.projectId
       );
-      model.selectedProjectId$.value = selectedProject.id$.value;
-      model.selectedProjectName$.value = selectedProject.name$.value;
-
-      console.log('selectedProject: ', selectedProject);
-      selectedProject.apiRequests.forEach(({ url$, fetchInterval$ }, j) => {
-        model.selectedApiRequests[j].url$.value = url$.value;
-        model.selectedApiRequests[j].fetchInterval$.value =
-          fetchInterval$.value;
-      });
-      model.derivedValuesCode$.value = selectedProject.derivedValuesCode$.value;
-      model.widgetsCode$.value = selectedProject.widgetsCode$.value;
+      viewModel.selectedProjectId$.value = selectedProject.id;
+      viewModel.selectedProjectName$.value = selectedProject.name;
+      viewModel.selectedApiUrl$.value = selectedProject.apiUrl;
+      viewModel.selectedApiInterval$.value = selectedProject.apiInterval;
+      viewModel.selectedDerivedValuesCode$.value =
+        selectedProject.derivedValuesCode;
+      viewModel.selectedWidgetsCode$.value = selectedProject.widgetsCode;
       if (
         currentRoute$.value.indexOf(
           '/projects/<projectId:string>/data-sources'
         ) === 0
       ) {
-        model.lastVisitedProjectView$.value = 'data-sources';
+        viewModel.lastVisitedProjectView$.value = 'data-sources';
       }
       if (
         currentRoute$.value.indexOf('/projects/<projectId:string>/values') === 0
       ) {
-        model.lastVisitedProjectView$.value = 'values';
+        viewModel.lastVisitedProjectView$.value = 'values';
       }
       if (
         currentRoute$.value.indexOf(
           '/projects/<projectId:string>/dashboards'
         ) === 0
       ) {
-        model.lastVisitedProjectView$.value = 'dashboards';
+        viewModel.lastVisitedProjectView$.value = 'dashboards';
       }
     }
   };
   syncSelectedProjectWithRouter(router);
   router.onHashChange(syncSelectedProjectWithRouter);
 
-  return model;
+  return viewModel;
 };
 module.exports = Model;

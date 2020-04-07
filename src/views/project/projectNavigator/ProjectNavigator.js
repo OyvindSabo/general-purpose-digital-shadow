@@ -9,11 +9,11 @@ const { eq$, or$, startsWith$, add$ } = include(
 );
 const { getViewTitle$ } = include('src/app/utils.js');
 
-const ProjectNavigator$ = ({ currentRoute$, model }) =>
+const ProjectNavigator$ = ({ currentRoute$, viewModel }) =>
   HorizontalNavigator$(
     HorizontalNavigatorButton$({
       label: getViewTitle$('/projects/<projectId:string>/data-sources'),
-      route$: add$('/projects/', model.selectedProjectId$, '/data-sources'),
+      route$: add$('/projects/', viewModel.selectedProjectId$, '/data-sources'),
       isActive$: or$(
         eq$(currentRoute$, '/projects/<projectId:string>'),
         eq$(currentRoute$, '/projects/<projectId:string>/data-sources')
@@ -23,7 +23,7 @@ const ProjectNavigator$ = ({ currentRoute$, model }) =>
     }),
     HorizontalNavigatorButton$({
       label: getViewTitle$('/projects/<projectId:string>/values'),
-      route$: add$('/projects/', model.selectedProjectId$, '/values'),
+      route$: add$('/projects/', viewModel.selectedProjectId$, '/values'),
       isActive$: startsWith$(
         currentRoute$,
         '/projects/<projectId:string>/values'
@@ -33,7 +33,7 @@ const ProjectNavigator$ = ({ currentRoute$, model }) =>
     }),
     HorizontalNavigatorButton$({
       label: getViewTitle$('/projects/<projectId:string>/dashboards'),
-      route$: add$('/projects/', model.selectedProjectId$, '/dashboards'),
+      route$: add$('/projects/', viewModel.selectedProjectId$, '/dashboards'),
       isActive$: startsWith$(
         currentRoute$,
         '/projects/<projectId:string>/dashboards'

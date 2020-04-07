@@ -22,18 +22,18 @@ const AppNavigator$ = include('src/app/appNavigator/AppNavigator.js');
 const Values$ = include('src/views/values/Values.js');
 const Dashboards$ = include('src/views/dashboards/Dashboards.js');
 
-const App = ({ currentRoute$, model }) => {
+const App = ({ currentRoute$, viewModel }) => {
   return div$(
     HorizontalNavigator$().setStyle({ background: 'black' }),
     AppContainer$(
       AppNavigator$({ currentRoute$ }),
       AppContentContainer$(
-        TitleBar$({ currentRoute$, model }),
-        If$(eq$(currentRoute$, '/'), Projects$({ model })),
+        TitleBar$({ currentRoute$, viewModel }),
+        If$(eq$(currentRoute$, '/'), Projects$({ viewModel })),
         If$(
           startsWith$(currentRoute$, '/projects/<projectId:string>'),
           ProjectContainer$(
-            ProjectNavigator$({ currentRoute$, model }),
+            ProjectNavigator$({ currentRoute$, viewModel }),
             If$(
               or$(
                 eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
@@ -43,14 +43,14 @@ const App = ({ currentRoute$, model }) => {
             ),
             If$(
               startsWith$(currentRoute$, '/projects/<projectId:string>/values'),
-              Values$({ model, currentRoute$ })
+              Values$({ viewModel, currentRoute$ })
             ),
             If$(
               startsWith$(
                 currentRoute$,
                 '/projects/<projectId:string>/dashboards'
               ),
-              Dashboards$({ model, currentRoute$ })
+              Dashboards$({ viewModel, currentRoute$ })
             )
           )
         )

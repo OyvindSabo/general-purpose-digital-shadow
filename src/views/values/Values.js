@@ -6,7 +6,7 @@ const ValueWidget$ = include('src/components/valueWidget/ValueWidget.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { eq$, choose$ } = include('src/libraries/observable/utils.js');
 
-const Values$ = ({ model, currentRoute$ }) => {
+const Values$ = ({ viewModel, currentRoute$ }) => {
   const codeEditorIsOpen$ = eq$(
     currentRoute$,
     '/projects/<projectId:string>/values/edit'
@@ -18,13 +18,16 @@ const Values$ = ({ model, currentRoute$ }) => {
       isOpen$: codeEditorIsOpen$,
     }).onClick(() => {
       location.hash = codeEditorIsOpen$.value
-        ? `#!/projects/${model.selectedProjectId$.value}/values`
-        : `#!/projects/${model.selectedProjectId$.value}/values/edit`;
+        ? `#!/projects/${viewModel.selectedProjectId$.value}/values`
+        : `#!/projects/${viewModel.selectedProjectId$.value}/values/edit`;
     }),
     div$(
-      CodeEditor$(model.derivedValuesCode$)
+      CodeEditor$(viewModel.selectedDerivedValuesCode$)
         .onInput(({ value }) => {
-          model.updateDerivedValuesCode(model.selectedProjectId$.value, value);
+          viewModel.updateDerivedValuesCode(
+            viewModel.selectedProjectId$.value,
+            value
+          );
         })
         .setStyle({ paddingLeft: '80px' })
     ).setStyle({
@@ -35,7 +38,7 @@ const Values$ = ({ model, currentRoute$ }) => {
     }),
     div$(
       div$(
-        ...model.derivedValues.map(({ label$, value$, isEmpty$ }) =>
+        ...viewModel.derivedValues.map(({ label$, value$, isEmpty$ }) =>
           ValueWidget$({ label$, value$, isEmpty$ })
         )
       ).setStyle({ position: 'relative', top: '0' })

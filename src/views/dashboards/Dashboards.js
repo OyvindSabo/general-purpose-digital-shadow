@@ -6,7 +6,7 @@ const CanvasWidget$ = include('src/components/canvasWidget/CanvasWidget.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { eq$, choose$ } = include('src/libraries/observable/utils.js');
 
-const Dashboards$ = ({ model, currentRoute$ }) => {
+const Dashboards$ = ({ viewModel, currentRoute$ }) => {
   const codeEditorIsOpen$ = eq$(
     currentRoute$,
     '/projects/<projectId:string>/dashboards/edit'
@@ -18,13 +18,16 @@ const Dashboards$ = ({ model, currentRoute$ }) => {
       isOpen$: codeEditorIsOpen$,
     }).onClick(() => {
       location.hash = codeEditorIsOpen$.value
-        ? `#!/projects/${model.selectedProjectId$.value}/dashboards`
-        : `#!/projects/${model.selectedProjectId$.value}/dashboards/edit`;
+        ? `#!/projects/${viewModel.selectedProjectId$.value}/dashboards`
+        : `#!/projects/${viewModel.selectedProjectId$.value}/dashboards/edit`;
     }),
     div$(
-      CodeEditor$(model.widgetsCode$)
+      CodeEditor$(viewModel.selectedWidgetsCode$)
         .onInput(({ value }) => {
-          model.updateWidgetsCode(model.selectedProjectId$.value, value);
+          viewModel.updateWidgetsCode(
+            viewModel.selectedProjectId$.value,
+            value
+          );
         })
         .setStyle({ paddingLeft: '80px' })
     ).setStyle({
@@ -35,7 +38,7 @@ const Dashboards$ = ({ model, currentRoute$ }) => {
     }),
     div$(
       div$(
-        ...model.widgets.map(
+        ...viewModel.widgets.map(
           ({ label$, surfaces$, edges$, is3d$, center$, isEmpty$ }) =>
             CanvasWidget$({
               label$,

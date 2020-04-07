@@ -8,14 +8,14 @@ const { add$, startsWith$, choose$ } = include(
 );
 const { span$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
-const TitleBar$ = ({ currentRoute$, model }) => {
+const TitleBar$ = ({ currentRoute$, viewModel }) => {
   return withShadow(HorizontalNavigator$)(
     ViewTitle$(
       span$('Projects').onClick(() => (location.hash = '#!/projects')),
       span$(
         choose$(
-          model.selectedProjectName$,
-          add$(' / ', model.selectedProjectName$),
+          viewModel.selectedProjectName$,
+          add$(' / ', viewModel.selectedProjectName$),
           ''
         )
       )
@@ -29,8 +29,8 @@ const TitleBar$ = ({ currentRoute$, model }) => {
         .onClick(
           () =>
             (location.hash = `#!/projects/${
-              model.selectedProjectId$.value
-            }/${model.lastVisitedProjectView$.value || ''}`)
+              viewModel.selectedProjectId$.value
+            }/${viewModel.lastVisitedProjectView$.value || ''}`)
         )
     )
   ).setStyle({
