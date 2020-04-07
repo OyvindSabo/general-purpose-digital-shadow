@@ -39,7 +39,7 @@ const App = ({ currentRoute$, viewModel }) => {
                 eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
                 eq$(currentRoute$, '/projects/<projectId:string>')
               ),
-              DataSources$()
+              DataSources$({ viewModel })
             ),
             If$(
               startsWith$(currentRoute$, '/projects/<projectId:string>/values'),

@@ -189,6 +189,16 @@ const Model = ({ router }) => {
     viewModel.loadAllProjects();
   };
 
+  viewModel.updateApiUrl = (projectId, apiUrl) => {
+    updateProjectById(projectId, { apiUrl });
+    viewModel.loadAllProjects();
+  };
+
+  viewModel.updateApiInterval = (projectId, apiInterval) => {
+    updateProjectById(projectId, { apiInterval });
+    viewModel.loadAllProjects();
+  };
+
   viewModel.updateDerivedValuesCode = (projectId, derivedValuesCode) => {
     updateProjectById(projectId, { derivedValuesCode });
     viewModel.loadAllProjects();

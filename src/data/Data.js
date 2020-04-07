@@ -1,10 +1,11 @@
 const getAllProjects = () => {
   const projects = JSON.parse(localStorage.getItem('projects')) || [];
   return projects.map(
-    ({ id, name, apiRequests, derivedValuesCode, widgetsCode }) => ({
+    ({ id, name, apiUrl, apiInterval, derivedValuesCode, widgetsCode }) => ({
       id: id || '',
       name: name || '',
-      apiRequests: apiRequests || [],
+      apiUrl: apiUrl || '',
+      apiInterval: apiInterval || 0,
       derivedValuesCode: derivedValuesCode || '',
       widgetsCode: widgetsCode || '',
     })

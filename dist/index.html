@@ -263,10 +263,11 @@ modules['src/data/Data.js'] = (() => {
   const getAllProjects = () => {
   const projects = JSON.parse(localStorage.getItem('projects')) || [];
   return projects.map(
-    ({ id, name, apiRequests, derivedValuesCode, widgetsCode }) => ({
+    ({ id, name, apiUrl, apiInterval, derivedValuesCode, widgetsCode }) => ({
       id: id || '',
       name: name || '',
-      apiRequests: apiRequests || [],
+      apiUrl: apiUrl || '',
+      apiInterval: apiInterval || 0,
       derivedValuesCode: derivedValuesCode || '',
       widgetsCode: widgetsCode || '',
     })
@@ -508,6 +509,16 @@ const Model = ({ router }) => {
 
   viewModel.deleteProject = (projectId) => {
     deleteProjectById(projectId);
+    viewModel.loadAllProjects();
+  };
+
+  viewModel.updateApiUrl = (projectId, apiUrl) => {
+    updateProjectById(projectId, { apiUrl });
+    viewModel.loadAllProjects();
+  };
+
+  viewModel.updateApiInterval = (projectId, apiInterval) => {
+    updateProjectById(projectId, { apiInterval });
     viewModel.loadAllProjects();
   };
 
@@ -1159,17 +1170,6 @@ module.exports = {
   return module.exports;
 })();
 
-modules['src/views/dataSources/DataSources.js'] = (() => {
-  const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-
-const DataSourcesView$ = () => div$('DataSourcesView');
-
-module.exports = DataSourcesView$;
-
-  return module.exports;
-})();
-
 modules['src/libraries/styled/styled.js'] = (() => {
   const module = { exports: {} };
   const styled = style => Component => (...children) =>
@@ -1633,6 +1633,84 @@ const ProjectPreviewContainer$ = withShadow(
 );
 
 module.exports = ProjectPreviewContainer$;
+
+  return module.exports;
+})();
+
+modules['src/views/dataSources/apiIntervalInput/ApiIntervalInput.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const { input$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const ProjectPreviewContainer$ = include(
+  'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
+);
+
+const ApiIntervalInput$ = ({ viewModel }) =>
+  ProjectPreviewContainer$(
+    styled({
+      color: 'dimgray',
+      height: '64px',
+      padding: '0 16px',
+      lineHeight: '64px',
+      fontSize: '16px',
+      width: '100%',
+      border: 'none',
+      outline: 'none',
+    })(input$)(viewModel.selectedApiInterval$)
+      .setProps({ type: 'number', min: '0' })
+      .onInput(({ value }) => {
+        viewModel.updateApiInterval(viewModel.selectedProjectId$.value, value);
+      })
+  );
+
+module.exports = ApiIntervalInput$;
+
+  return module.exports;
+})();
+
+modules['src/views/dataSources/apiUrlInput/ApiUrlInput.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const { input$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const ProjectPreviewContainer$ = include(
+  'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
+);
+
+const ApiUrlInput$ = ({ viewModel }) =>
+  ProjectPreviewContainer$(
+    styled({
+      color: 'dimgray',
+      height: '64px',
+      padding: '0 16px',
+      lineHeight: '64px',
+      fontSize: '16px',
+      width: '100%',
+      border: 'none',
+      outline: 'none',
+    })(input$)(viewModel.selectedApiUrl$).onInput(({ value }) => {
+      viewModel.updateApiUrl(viewModel.selectedProjectId$.value, value);
+    })
+  );
+
+module.exports = ApiUrlInput$;
+
+  return module.exports;
+})();
+
+modules['src/views/dataSources/DataSources.js'] = (() => {
+  const module = { exports: {} };
+  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const ApiIntervalInput$ = include(
+  'src/views/dataSources/apiIntervalInput/ApiIntervalInput.js'
+);
+const ApiUrlInput$ = include(
+  'src/views/dataSources/apiUrlInput/ApiUrlInput.js'
+);
+
+const DataSourcesView$ = ({ viewModel }) =>
+  div$(ApiUrlInput$({ viewModel }), ApiIntervalInput$({ viewModel }));
+
+module.exports = DataSourcesView$;
 
   return module.exports;
 })();
@@ -2528,7 +2606,7 @@ const App = ({ currentRoute$, viewModel }) => {
                 eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
                 eq$(currentRoute$, '/projects/<projectId:string>')
               ),
-              DataSources$()
+              DataSources$({ viewModel })
             ),
             If$(
               startsWith$(currentRoute$, '/projects/<projectId:string>/values'),
