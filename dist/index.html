@@ -1643,7 +1643,7 @@ modules['src/views/projects/projectPreviewButton/ProjectPreviewButton.js'] = (()
 const Observable = include('src/libraries/observable/Observable.js');
 const { choose$ } = include('src/libraries/observable/utils.js');
 
-const ProjectPreviewButton$ = value$ => {
+const ProjectPreviewButton$ = (value$) => {
   const isHovered$ = new Observable(false);
   return button$(value$)
     .setStyle({
@@ -1659,7 +1659,7 @@ const ProjectPreviewButton$ = value$ => {
       cursor: 'pointer',
     })
     .onMouseEnter(() => (isHovered$.value = true))
-    .onMouseLeave(element => (isHovered$.value = false));
+    .onMouseLeave((element) => (isHovered$.value = false));
 };
 
 module.exports = ProjectPreviewButton$;
@@ -1903,11 +1903,61 @@ module.exports = ApiIntervalInput$;
   return module.exports;
 })();
 
+modules['src/components/fullWidthCard/FullWidthCard.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const withShadow = include('src/styleWrappers/withShadow.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const FullWidthCard$ = withShadow(
+  styled({
+    color: 'dimgray',
+    margin: '32px 32px 0 32px',
+    background: 'white',
+    lineHeight: '64px',
+    fontSize: '16px',
+  })(div$)
+);
+
+module.exports = FullWidthCard$;
+
+  return module.exports;
+})();
+
+modules['src/components/textButton/TextButton.js'] = (() => {
+  const module = { exports: {} };
+  const { button$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const Observable = include('src/libraries/observable/Observable.js');
+const { choose$ } = include('src/libraries/observable/utils.js');
+
+const TextButton$ = (value$) => {
+  const isHovered$ = new Observable(false);
+  return button$(value$)
+    .setStyle({
+      color: choose$(isHovered$, 'darkslategray', 'slategray'),
+      height: '64px',
+      background: 'white',
+      lineHeight: '64px',
+      fontSize: '16px',
+      width: '100%',
+      textAlign: 'center',
+      border: 'none',
+      outline: 'none',
+      cursor: 'pointer',
+      padding: '0 16px',
+    })
+    .onMouseEnter(() => (isHovered$.value = true))
+    .onMouseLeave(() => (isHovered$.value = false));
+};
+
+module.exports = TextButton$;
+
+  return module.exports;
+})();
+
 modules['src/views/dataSources/apiUrlInput/ApiUrlInput.js'] = (() => {
   const module = { exports: {} };
-  const ProjectPreviewContainer$ = include(
-  'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
-);
+  const FullWidthCard$ = include('src/components/fullWidthCard/FullWidthCard.js');
 const ApiInputLabel$ = include(
   'src/views/dataSources/apiInputLabel/ApiInputLabel.js'
 );
@@ -1915,13 +1965,21 @@ const Input$ = include('src/components/input/Input.js');
 const ApiInputContainer$ = include(
   'src/views/dataSources/apiInputContainer/ApiInputContainer.js'
 );
+const TextButton$ = include('src/components/textButton/TextButton.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
 const ApiUrlInput$ = ({ viewModel }) =>
-  ProjectPreviewContainer$(
-    ApiInputLabel$('API URL'),
-    ApiInputContainer$(
-      Input$(viewModel.selectedApiUrl$).onInput(({ value }) => {
-        viewModel.updateApiUrl(viewModel.selectedProjectId$.value, value);
+  FullWidthCard$(
+    div$(
+      ApiInputLabel$('API URL'),
+      ApiInputContainer$(
+        Input$(viewModel.selectedApiUrl$).onInput(({ value }) => {
+          viewModel.updateApiUrl(viewModel.selectedProjectId$.value, value);
+        })
+      ),
+      TextButton$('Test API URL').setStyle({
+        textAlign: 'left',
+        width: '192px',
       })
     )
   );
