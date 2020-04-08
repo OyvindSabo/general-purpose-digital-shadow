@@ -21,16 +21,18 @@ const ApiUrlInput$ = ({ viewModel }) =>
           viewModel.updateApiUrl(viewModel.selectedProjectId$.value, value);
         })
       ),
-      TextButton$('Test API URL').setStyle({
-        textAlign: 'left',
-        width: '192px',
-        height: '64px',
-        float: 'left',
-      }),
-      ApiUrlTestPreview$(JSON.stringify(viewModel.projects)).setStyle({
+      TextButton$('Test API URL')
+        .setStyle({
+          textAlign: 'left',
+          width: '192px',
+          height: '64px',
+          float: 'left',
+        })
+        .onClick(viewModel.testApiUrlInput),
+      ApiUrlTestPreview$(viewModel.selectedApiUrlTestPreview$).setStyle({
         width: 'calc(100% - 192px)',
       })
-    )
+    ).setStyle({ minHeight: '128px' })
   );
 
 module.exports = ApiUrlInput$;

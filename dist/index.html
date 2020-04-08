@@ -375,6 +375,7 @@ const Model = ({ router }) => {
     derivedValuesEditorIsOpen$: new Observable(false),
 
     selectedApiUrl$: new Observable(''),
+    selectedApiUrlTestPreview$: new Observable(''),
     selectedApiInterval$: new Observable(''),
     valuesCode$: new Observable(''),
     selectedDerivedValuesCode$: new Observable(''),
@@ -530,6 +531,18 @@ const Model = ({ router }) => {
   viewModel.updateWidgetsCode = (projectId, widgetsCode) => {
     updateProjectById(projectId, { widgetsCode });
     viewModel.loadAllProjects();
+  };
+
+  viewModel.testApiUrlInput = () => {
+    fetch(viewModel.selectedApiUrl$.value)
+      .then((response) => response.json())
+      .then((jsonResponse) => {
+        viewModel.selectedApiUrlTestPreview$.value = JSON.stringify(
+          jsonResponse,
+          null,
+          2
+        );
+      });
   };
 
   window.addEventListener(viewModel.valuesCode$.id, () => {
@@ -1964,12 +1977,14 @@ const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const ApiUrlTestPreview$ = styled({
   color: 'dimgray',
   background: 'white',
-  lineHeight: '64px',
+  lineHeight: '32px',
   fontSize: '0 16px',
   width: '100%',
   padding: '16px',
   display: 'inline-block',
   boxSizing: 'border-box',
+  fontFamily: '"Courier New", Courier, monospace',
+  whiteSpace: 'pre-wrap',
 })(div$);
 
 module.exports = ApiUrlTestPreview$;
@@ -2002,16 +2017,18 @@ const ApiUrlInput$ = ({ viewModel }) =>
           viewModel.updateApiUrl(viewModel.selectedProjectId$.value, value);
         })
       ),
-      TextButton$('Test API URL').setStyle({
-        textAlign: 'left',
-        width: '192px',
-        height: '64px',
-        float: 'left',
-      }),
-      ApiUrlTestPreview$(JSON.stringify(viewModel.projects)).setStyle({
+      TextButton$('Test API URL')
+        .setStyle({
+          textAlign: 'left',
+          width: '192px',
+          height: '64px',
+          float: 'left',
+        })
+        .onClick(viewModel.testApiUrlInput),
+      ApiUrlTestPreview$(viewModel.selectedApiUrlTestPreview$).setStyle({
         width: 'calc(100% - 192px)',
       })
-    )
+    ).setStyle({ minHeight: '128px' })
   );
 
 module.exports = ApiUrlInput$;

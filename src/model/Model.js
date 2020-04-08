@@ -52,6 +52,7 @@ const Model = ({ router }) => {
     derivedValuesEditorIsOpen$: new Observable(false),
 
     selectedApiUrl$: new Observable(''),
+    selectedApiUrlTestPreview$: new Observable(''),
     selectedApiInterval$: new Observable(''),
     valuesCode$: new Observable(''),
     selectedDerivedValuesCode$: new Observable(''),
@@ -207,6 +208,18 @@ const Model = ({ router }) => {
   viewModel.updateWidgetsCode = (projectId, widgetsCode) => {
     updateProjectById(projectId, { widgetsCode });
     viewModel.loadAllProjects();
+  };
+
+  viewModel.testApiUrlInput = () => {
+    fetch(viewModel.selectedApiUrl$.value)
+      .then((response) => response.json())
+      .then((jsonResponse) => {
+        viewModel.selectedApiUrlTestPreview$.value = JSON.stringify(
+          jsonResponse,
+          null,
+          2
+        );
+      });
   };
 
   window.addEventListener(viewModel.valuesCode$.id, () => {
