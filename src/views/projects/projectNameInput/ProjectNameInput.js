@@ -6,21 +6,18 @@ const ProjectPreviewButton$ = include(
 const ProjectPreviewContainer$ = include(
   'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
 );
+const Input$ = include('src/components/input/Input.js');
+const ProjectNameInputContainer$ = include(
+  'src/views/projects/projectNameInputContainer/ProjectNameInputContainer.js'
+);
 
 const ProjectNameInput$ = ({ viewModel, id$, nameInputValue$ }) =>
   ProjectPreviewContainer$(
-    styled({
-      color: 'dimgray',
-      height: '64px',
-      padding: '0 16px',
-      lineHeight: '64px',
-      fontSize: '16px',
-      width: 'calc(100% - 128px)',
-      border: 'none',
-      outline: 'none',
-    })(input$)(nameInputValue$).onInput(({ value }) => {
-      viewModel.setProjectNameInputValue(id$.value, value);
-    }),
+    ProjectNameInputContainer$(
+      Input$(nameInputValue$).onInput(({ value }) => {
+        viewModel.setProjectNameInputValue(id$.value, value);
+      })
+    ),
     ProjectPreviewButton$('Cancel').onClick(() =>
       viewModel.cancelEditingProjectName(id$.value)
     ),
