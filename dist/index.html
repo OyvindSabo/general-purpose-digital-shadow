@@ -1272,6 +1272,7 @@ const AppContentContainer$ = styled({
   left: '64px',
   right: '0',
   bottom: '0',
+  overflow: 'auto',
 })(div$);
 
 module.exports = AppContentContainer$;
@@ -1955,6 +1956,27 @@ module.exports = TextButton$;
   return module.exports;
 })();
 
+modules['src/views/dataSources/apiUrlTestPreview/ApiUrlTestPreview.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const ApiUrlTestPreview$ = styled({
+  color: 'dimgray',
+  background: 'white',
+  lineHeight: '64px',
+  fontSize: '0 16px',
+  width: '100%',
+  padding: '16px',
+  display: 'inline-block',
+  boxSizing: 'border-box',
+})(div$);
+
+module.exports = ApiUrlTestPreview$;
+
+  return module.exports;
+})();
+
 modules['src/views/dataSources/apiUrlInput/ApiUrlInput.js'] = (() => {
   const module = { exports: {} };
   const FullWidthCard$ = include('src/components/fullWidthCard/FullWidthCard.js');
@@ -1966,6 +1988,9 @@ const ApiInputContainer$ = include(
   'src/views/dataSources/apiInputContainer/ApiInputContainer.js'
 );
 const TextButton$ = include('src/components/textButton/TextButton.js');
+const ApiUrlTestPreview$ = include(
+  'src/views/dataSources/apiUrlTestPreview/ApiUrlTestPreview.js'
+);
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
 const ApiUrlInput$ = ({ viewModel }) =>
@@ -1980,6 +2005,11 @@ const ApiUrlInput$ = ({ viewModel }) =>
       TextButton$('Test API URL').setStyle({
         textAlign: 'left',
         width: '192px',
+        height: '64px',
+        float: 'left',
+      }),
+      ApiUrlTestPreview$(JSON.stringify(viewModel.projects)).setStyle({
+        width: 'calc(100% - 192px)',
       })
     )
   );

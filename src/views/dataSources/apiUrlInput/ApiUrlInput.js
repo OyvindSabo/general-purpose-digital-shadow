@@ -7,6 +7,9 @@ const ApiInputContainer$ = include(
   'src/views/dataSources/apiInputContainer/ApiInputContainer.js'
 );
 const TextButton$ = include('src/components/textButton/TextButton.js');
+const ApiUrlTestPreview$ = include(
+  'src/views/dataSources/apiUrlTestPreview/ApiUrlTestPreview.js'
+);
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
 const ApiUrlInput$ = ({ viewModel }) =>
@@ -21,6 +24,11 @@ const ApiUrlInput$ = ({ viewModel }) =>
       TextButton$('Test API URL').setStyle({
         textAlign: 'left',
         width: '192px',
+        height: '64px',
+        float: 'left',
+      }),
+      ApiUrlTestPreview$(JSON.stringify(viewModel.projects)).setStyle({
+        width: 'calc(100% - 192px)',
       })
     )
   );
