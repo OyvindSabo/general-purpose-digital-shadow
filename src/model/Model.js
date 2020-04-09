@@ -12,24 +12,22 @@ const MAX_AMOUNT_OF_VALUES = 100;
 const MAX_AMOUNT_OF_DERIVED_VALUES = 100;
 const MAX_AMOUNT_OF_WIDGETS = 100;
 
-const evaluateCode = (valuesCode, derivedValuesCode, widgetsCode) => {
-  return eval(`
-    const values = {};
-    const derivedValues = {};
-    const widgets = {};
-    ${valuesCode}
-    ${derivedValuesCode}
-    ${widgetsCode}
-    result = {
-      values,
-      derivedValues,
-      widgets,
-    };
+const evaluateCode = (apiResponse, derivedValuesCode, widgetsCode) =>
+  eval(`
+    let apiResponse = {};
+    let derivedValues = {};
+    let widgets = {};
+    try {
+      if (${apiResponse || "''"}) {
+        apiResponse = ${apiResponse || "''"};
+      }
+      ${derivedValuesCode}
+      ${widgetsCode}
+    } catch(e) {
+      console.warn(e);
+    }
+    result = { apiResponse, derivedValues, widgets };
   `);
-};
-
-const buyPrice$ = new Observable(100);
-const sellPrice$ = new Observable(100);
 
 const Model = ({ router }) => {
   const dataModel = { projects: [] };
@@ -54,7 +52,7 @@ const Model = ({ router }) => {
     selectedApiUrl$: new Observable(''),
     selectedApiUrlTestPreview$: new Observable(''),
     selectedApiInterval$: new Observable(''),
-    valuesCode$: new Observable(''),
+    apiResponse$: new Observable(''),
     selectedDerivedValuesCode$: new Observable(''),
     selectedWidgetsCode$: new Observable(''),
 
@@ -121,6 +119,8 @@ const Model = ({ router }) => {
   viewModel.createNewProject = () => {
     createProject({
       name: 'Untitled project',
+      apiUrl: '',
+      apiInterval: 0,
       derivedValuesCode: '',
       widgetsCode: '',
     });
@@ -222,19 +222,12 @@ const Model = ({ router }) => {
       });
   };
 
-  window.addEventListener(viewModel.valuesCode$.id, () => {
+  const updateValues = () => {
     const evaluatedCode = evaluateCode(
-      viewModel.valuesCode$.value,
+      viewModel.apiResponse$.value,
       viewModel.selectedDerivedValuesCode$.value,
       viewModel.selectedWidgetsCode$.value
     );
-
-    const valuesEntries = Object.entries(evaluatedCode.values);
-    viewModel.values.forEach(({ label$, value$, isEmpty$ }, index) => {
-      label$.value = valuesEntries[index] ? valuesEntries[index][0] : '';
-      value$.value = valuesEntries[index] ? valuesEntries[index][1] : 0;
-      isEmpty$.value = !Boolean(valuesEntries[index]);
-    });
 
     const derivedValuesEntries = Object.entries(evaluatedCode.derivedValues);
     viewModel.derivedValues.forEach(({ label$, value$, isEmpty$ }, index) => {
@@ -266,27 +259,36 @@ const Model = ({ router }) => {
         isEmpty$.value = !widgetsEntries[index];
       }
     );
-  });
-
-  // We can pretend we are fetching data from an api here
-  const updateValues = () => {
-    setTimeout(() => {
-      buyPrice$.value =
-        Math.floor(Math.random() * 2) == 1
-          ? buyPrice$.value * 1.01
-          : buyPrice$.value / 1.01;
-      sellPrice$.value =
-        Math.floor(Math.random() * 2) == 1
-          ? sellPrice$.value * 1.01
-          : sellPrice$.value / 1.01;
-      viewModel.valuesCode$.value = `
-          values.buyPrice = ${buyPrice$.value};
-          values.sellPrice = ${sellPrice$.value};
-          `;
-      updateValues();
-    }, 100);
   };
-  updateValues();
+
+  window.addEventListener(viewModel.apiResponse$.id, updateValues);
+
+  // Recalculate derived values and visualizations ten times per second
+  const repeatedlyUpdateValues = () =>
+    setTimeout(() => {
+      updateValues();
+      repeatedlyUpdateValues();
+    }, 100);
+  repeatedlyUpdateValues();
+
+  const fetchDataFromApi = () => {
+    fetch(viewModel.selectedApiUrl$.value)
+      .then((response) => response.json())
+      .then((jsonResponse) => {
+        viewModel.apiResponse$.value = JSON.stringify(jsonResponse, null, 2);
+      });
+  };
+
+  const repeatedlyFetchDataFromApi = () =>
+    setTimeout(() => {
+      if (viewModel.selectedApiInterval$.value !== 0) {
+        fetchDataFromApi();
+      }
+      repeatedlyFetchDataFromApi();
+    }, viewModel.selectedApiInterval$.value * 1000);
+  repeatedlyFetchDataFromApi();
+
+  addEventListener(viewModel.selectedApiInterval$.id, fetchDataFromApi);
 
   const syncSelectedProjectWithRouter = ({ params, currentRoute$ }) => {
     if (currentRoute$.value.indexOf('/projects/<projectId:string>') === 0) {

@@ -1,8 +1,8 @@
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const { toFixed$ } = include('src/libraries/observable/utils.js');
+const { Number$, toFixed$ } = include('src/libraries/observable/utils.js');
 
 const WidgetValue$ = ({ value$ }) =>
-  div$(toFixed$(value$, 2)).setStyle({
+  div$(toFixed$(Number$(value$), 2)).setStyle({
     fontSize: '60px',
     textAlign: 'center',
     width: '100%',

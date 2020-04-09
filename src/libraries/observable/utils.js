@@ -1,24 +1,24 @@
 const Observable = include('src/libraries/observable/Observable.js');
 
-const valueOf$ = observable$ =>
+const valueOf$ = (observable$) =>
   observable$ instanceof Observable ? observable$.value : observable$;
 
-const isObservable$ = observable$ => observable$ instanceof Observable;
+const isObservable$ = (observable$) => observable$ instanceof Observable;
 
 // Currently needs at least two arguments
 const add$ = (...observables) => {
   const sum = observables
-    .map(observable =>
+    .map((observable) =>
       observable instanceof Observable ? observable.value : observable
     )
     .reduce((a, b) => a + b);
   const sum$ = new Observable(sum);
   observables
-    .filter(observable => observable instanceof Observable)
-    .forEach(observable => {
+    .filter((observable) => observable instanceof Observable)
+    .forEach((observable) => {
       window.addEventListener(observable.id, ({ detail }) => {
         const sum = observables
-          .map(observable =>
+          .map((observable) =>
             observable instanceof Observable ? observable.value : observable
           )
           .reduce((a, b) => a + b);
@@ -31,15 +31,15 @@ const add$ = (...observables) => {
 // Currently needs at least two arguments
 const subtract$ = (...observables) => {
   const difference = observables
-    .map(observable =>
+    .map((observable) =>
       observable instanceof Observable ? observable.value : observable
     )
     .reduce((a, b) => a - b);
   const difference$ = new Observable(difference);
-  observables.forEach(observable => {
+  observables.forEach((observable) => {
     window.addEventListener(observable.id, ({ detail }) => {
       const difference = observables
-        .map(observable =>
+        .map((observable) =>
           observable instanceof Observable ? observable.value : observable
         )
         .reduce((a, b) => a - b);
@@ -52,15 +52,15 @@ const subtract$ = (...observables) => {
 // Currently needs at least two arguments
 const multiply$ = (...observables) => {
   const product = observables
-    .map(observable =>
+    .map((observable) =>
       observable instanceof Observable ? observable.value : observable
     )
     .reduce((a, b) => a * b);
   const product$ = new Observable(product);
-  observables.forEach(observable => {
+  observables.forEach((observable) => {
     window.addEventListener(observable.id, ({ detail }) => {
       const product = observables
-        .map(observable =>
+        .map((observable) =>
           observable instanceof Observable ? observable.value : observable
         )
         .reduce((a, b) => a * b);
@@ -73,15 +73,15 @@ const multiply$ = (...observables) => {
 // Currently needs at least two arguments
 const divide$ = (...observables) => {
   const quotient = observables
-    .map(observable =>
+    .map((observable) =>
       observable instanceof Observable ? observable.value : observable
     )
     .reduce((a, b) => a / b);
   const quotient$ = new Observable(quotient);
-  observables.forEach(observable => {
+  observables.forEach((observable) => {
     window.addEventListener(observable.id, ({ detail }) => {
       const quotient = observables
-        .map(observable =>
+        .map((observable) =>
           observable instanceof Observable ? observable.value : observable
         )
         .reduce((a, b) => a / b);
@@ -93,9 +93,7 @@ const divide$ = (...observables) => {
 
 const choose$ = (observable, option1, option2) => {
   const result$ = new Observable(
-    (observable instanceof Observable
-    ? observable.value
-    : observable)
+    (observable instanceof Observable ? observable.value : observable)
       ? option1 instanceof Observable
         ? option1.value
         : option1
@@ -104,13 +102,13 @@ const choose$ = (observable, option1, option2) => {
       : option2
   );
   [observable, option1, option2]
-    .filter(observable => observable instanceof Observable)
-    .forEach(observable => {
+    .filter((observable) => observable instanceof Observable)
+    .forEach((observable) => {
       window.addEventListener(observable.id, ({ detail }) => {
         // TODO: Make it possible to set a specific child of an observable
-        result$.value = (observable instanceof Observable
-        ? observable.value
-        : observable)
+        result$.value = (
+          observable instanceof Observable ? observable.value : observable
+        )
           ? option1 instanceof Observable
             ? option1.value
             : option1
@@ -138,8 +136,8 @@ const cond$ = (...clauses) => {
 
   clauses
     .flat()
-    .filter(testOrExpression => testOrExpression instanceof Observable)
-    .forEach(testOrExpression => {
+    .filter((testOrExpression) => testOrExpression instanceof Observable)
+    .forEach((testOrExpression) => {
       window.addEventListener(testOrExpression.id, ({ detail }) => {
         const result = clauses
           .map(([test, expression]) => [
@@ -160,15 +158,15 @@ const cond$ = (...clauses) => {
 
 const eq$ = (...observables) => {
   const equality = observables
-    .map(observable =>
+    .map((observable) =>
       observable instanceof Observable ? observable.value : observable
     )
     .every((element, _, array) => element === array[0]);
   const equality$ = new Observable(equality);
-  observables.forEach(observable => {
+  observables.forEach((observable) => {
     window.addEventListener(observable.id, ({ detail }) => {
       const equality = observables
-        .map(observable =>
+        .map((observable) =>
           observable instanceof Observable ? observable.value : observable
         )
         .every((element, _, array) => element === array[0]);
@@ -180,15 +178,15 @@ const eq$ = (...observables) => {
 
 const and$ = (...observables) => {
   const allTruthy = observables
-    .map(observable =>
+    .map((observable) =>
       observable instanceof Observable ? observable.value : observable
     )
     .every(Boolean);
   const allTruthy$ = new Observable(allTruthy);
-  observables.forEach(observable => {
+  observables.forEach((observable) => {
     window.addEventListener(observable.id, ({ detail }) => {
       const allTruthy = observables
-        .map(observable =>
+        .map((observable) =>
           observable instanceof Observable ? observable.value : observable
         )
         .every(Boolean);
@@ -200,17 +198,17 @@ const and$ = (...observables) => {
 
 const or$ = (...observables) => {
   const someTruthy = observables
-    .map(observable =>
+    .map((observable) =>
       observable instanceof Observable ? observable.value : observable
     )
     .some(Boolean);
   const someTruthy$ = new Observable(someTruthy);
   observables
-    .filter(observable => observable instanceof Observable)
-    .forEach(observable => {
+    .filter((observable) => observable instanceof Observable)
+    .forEach((observable) => {
       window.addEventListener(observable.id, ({ detail }) => {
         const someTruthy = observables
-          .map(observable =>
+          .map((observable) =>
             observable instanceof Observable ? observable.value : observable
           )
           .some(Boolean);
@@ -220,7 +218,7 @@ const or$ = (...observables) => {
   return someTruthy$;
 };
 
-const not$ = observable => {
+const not$ = (observable) => {
   const conditional =
     observable instanceof Observable ? observable.value : observable;
   const opposite$ = new Observable(!conditional);
@@ -232,6 +230,16 @@ const not$ = observable => {
   return opposite$;
 };
 
+const Number$ = (maybeNumber$) => {
+  const number$ = new Observable(Number(valueOf$(maybeNumber$)));
+  if (isObservable$(maybeNumber$)) {
+    window.addEventListener(maybeNumber$.id, () => {
+      number$.value = Number(valueOf$(maybeNumber$));
+    });
+  }
+  return number$;
+};
+
 const toFixed$ = (number$, decimals$) => {
   const number = number$ instanceof Observable ? number$.value : number$;
   const decimals =
@@ -239,8 +247,8 @@ const toFixed$ = (number$, decimals$) => {
   const formattedNumber = number.toFixed(decimals);
   const formattedNumber$ = new Observable(formattedNumber);
   [number$, decimals$]
-    .filter(observable => observable instanceof Observable)
-    .forEach(observable => {
+    .filter((observable) => observable instanceof Observable)
+    .forEach((observable) => {
       window.addEventListener(observable.id, ({ detail }) => {
         const number = number$ instanceof Observable ? number$.value : number$;
         const decimals =
@@ -261,8 +269,8 @@ const slice$ = (stringOrArray$, start$, stop$) => {
   const stop = stop$ instanceof Observable ? stop$.value : stop$;
   const slicedStringOrArray$ = new Observable(stringOrArray.slice(start, stop));
   [stringOrArray$, start$, stop$]
-    .filter(observable => observable instanceof Observable)
-    .forEach(observable => {
+    .filter((observable) => observable instanceof Observable)
+    .forEach((observable) => {
       window.addEventListener(observable.id, ({ detail }) => {
         const stringOrArray =
           stringOrArray$ instanceof Observable
@@ -276,7 +284,7 @@ const slice$ = (stringOrArray$, start$, stop$) => {
   return slicedStringOrArray$;
 };
 
-const length$ = stringOrArray$ => {
+const length$ = (stringOrArray$) => {
   const length$ = new Observable(valueOf$(stringOrArray$).length);
   if (isObservable$(stringOrArray$)) {
     window.addEventListener(stringOrArray$.id, () => {
@@ -291,7 +299,7 @@ const map$ = (array$, function$) => {
     valueOf$(array$).map(valueOf$(function$))
   );
 
-  [array$, function$].filter(isObservable$).forEach(observable => {
+  [array$, function$].filter(isObservable$).forEach((observable) => {
     window.addEventListener(observable.id, () => {
       mappedArray$.value = valueOf$(array$).map(valueOf$(function$));
     });
@@ -319,8 +327,8 @@ const startsWith$ = (includingString$, includedString$) => {
   );
 
   [includingString$, includedString$]
-    .filter(string => string instanceof Observable)
-    .forEach(string => {
+    .filter((string) => string instanceof Observable)
+    .forEach((string) => {
       window.addEventListener(string.id, ({ detail }) => {
         const includingString =
           includingString$ instanceof Observable
@@ -354,6 +362,7 @@ module.exports = {
   and$,
   or$,
   not$,
+  Number$,
   toFixed$,
   slice$,
   length$,

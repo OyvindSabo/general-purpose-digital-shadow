@@ -335,24 +335,22 @@ const MAX_AMOUNT_OF_VALUES = 100;
 const MAX_AMOUNT_OF_DERIVED_VALUES = 100;
 const MAX_AMOUNT_OF_WIDGETS = 100;
 
-const evaluateCode = (valuesCode, derivedValuesCode, widgetsCode) => {
-  return eval(`
-    const values = {};
-    const derivedValues = {};
-    const widgets = {};
-    ${valuesCode}
-    ${derivedValuesCode}
-    ${widgetsCode}
-    result = {
-      values,
-      derivedValues,
-      widgets,
-    };
+const evaluateCode = (apiResponse, derivedValuesCode, widgetsCode) =>
+  eval(`
+    let apiResponse = {};
+    let derivedValues = {};
+    let widgets = {};
+    try {
+      if (${apiResponse || "''"}) {
+        apiResponse = ${apiResponse || "''"};
+      }
+      ${derivedValuesCode}
+      ${widgetsCode}
+    } catch(e) {
+      console.warn(e);
+    }
+    result = { apiResponse, derivedValues, widgets };
   `);
-};
-
-const buyPrice$ = new Observable(100);
-const sellPrice$ = new Observable(100);
 
 const Model = ({ router }) => {
   const dataModel = { projects: [] };
@@ -377,7 +375,7 @@ const Model = ({ router }) => {
     selectedApiUrl$: new Observable(''),
     selectedApiUrlTestPreview$: new Observable(''),
     selectedApiInterval$: new Observable(''),
-    valuesCode$: new Observable(''),
+    apiResponse$: new Observable(''),
     selectedDerivedValuesCode$: new Observable(''),
     selectedWidgetsCode$: new Observable(''),
 
@@ -444,6 +442,8 @@ const Model = ({ router }) => {
   viewModel.createNewProject = () => {
     createProject({
       name: 'Untitled project',
+      apiUrl: '',
+      apiInterval: 0,
       derivedValuesCode: '',
       widgetsCode: '',
     });
@@ -545,19 +545,12 @@ const Model = ({ router }) => {
       });
   };
 
-  window.addEventListener(viewModel.valuesCode$.id, () => {
+  const updateValues = () => {
     const evaluatedCode = evaluateCode(
-      viewModel.valuesCode$.value,
+      viewModel.apiResponse$.value,
       viewModel.selectedDerivedValuesCode$.value,
       viewModel.selectedWidgetsCode$.value
     );
-
-    const valuesEntries = Object.entries(evaluatedCode.values);
-    viewModel.values.forEach(({ label$, value$, isEmpty$ }, index) => {
-      label$.value = valuesEntries[index] ? valuesEntries[index][0] : '';
-      value$.value = valuesEntries[index] ? valuesEntries[index][1] : 0;
-      isEmpty$.value = !Boolean(valuesEntries[index]);
-    });
 
     const derivedValuesEntries = Object.entries(evaluatedCode.derivedValues);
     viewModel.derivedValues.forEach(({ label$, value$, isEmpty$ }, index) => {
@@ -589,27 +582,36 @@ const Model = ({ router }) => {
         isEmpty$.value = !widgetsEntries[index];
       }
     );
-  });
-
-  // We can pretend we are fetching data from an api here
-  const updateValues = () => {
-    setTimeout(() => {
-      buyPrice$.value =
-        Math.floor(Math.random() * 2) == 1
-          ? buyPrice$.value * 1.01
-          : buyPrice$.value / 1.01;
-      sellPrice$.value =
-        Math.floor(Math.random() * 2) == 1
-          ? sellPrice$.value * 1.01
-          : sellPrice$.value / 1.01;
-      viewModel.valuesCode$.value = `
-          values.buyPrice = ${buyPrice$.value};
-          values.sellPrice = ${sellPrice$.value};
-          `;
-      updateValues();
-    }, 100);
   };
-  updateValues();
+
+  window.addEventListener(viewModel.apiResponse$.id, updateValues);
+
+  // Recalculate derived values and visualizations ten times per second
+  const repeatedlyUpdateValues = () =>
+    setTimeout(() => {
+      updateValues();
+      repeatedlyUpdateValues();
+    }, 100);
+  repeatedlyUpdateValues();
+
+  const fetchDataFromApi = () => {
+    fetch(viewModel.selectedApiUrl$.value)
+      .then((response) => response.json())
+      .then((jsonResponse) => {
+        viewModel.apiResponse$.value = JSON.stringify(jsonResponse, null, 2);
+      });
+  };
+
+  const repeatedlyFetchDataFromApi = () =>
+    setTimeout(() => {
+      if (viewModel.selectedApiInterval$.value !== 0) {
+        fetchDataFromApi();
+      }
+      repeatedlyFetchDataFromApi();
+    }, viewModel.selectedApiInterval$.value * 1000);
+  repeatedlyFetchDataFromApi();
+
+  addEventListener(viewModel.selectedApiInterval$.id, fetchDataFromApi);
 
   const syncSelectedProjectWithRouter = ({ params, currentRoute$ }) => {
     if (currentRoute$.value.indexOf('/projects/<projectId:string>') === 0) {
@@ -658,25 +660,25 @@ modules['src/libraries/observable/utils.js'] = (() => {
   const module = { exports: {} };
   const Observable = include('src/libraries/observable/Observable.js');
 
-const valueOf$ = observable$ =>
+const valueOf$ = (observable$) =>
   observable$ instanceof Observable ? observable$.value : observable$;
 
-const isObservable$ = observable$ => observable$ instanceof Observable;
+const isObservable$ = (observable$) => observable$ instanceof Observable;
 
 // Currently needs at least two arguments
 const add$ = (...observables) => {
   const sum = observables
-    .map(observable =>
+    .map((observable) =>
       observable instanceof Observable ? observable.value : observable
     )
     .reduce((a, b) => a + b);
   const sum$ = new Observable(sum);
   observables
-    .filter(observable => observable instanceof Observable)
-    .forEach(observable => {
+    .filter((observable) => observable instanceof Observable)
+    .forEach((observable) => {
       window.addEventListener(observable.id, ({ detail }) => {
         const sum = observables
-          .map(observable =>
+          .map((observable) =>
             observable instanceof Observable ? observable.value : observable
           )
           .reduce((a, b) => a + b);
@@ -689,15 +691,15 @@ const add$ = (...observables) => {
 // Currently needs at least two arguments
 const subtract$ = (...observables) => {
   const difference = observables
-    .map(observable =>
+    .map((observable) =>
       observable instanceof Observable ? observable.value : observable
     )
     .reduce((a, b) => a - b);
   const difference$ = new Observable(difference);
-  observables.forEach(observable => {
+  observables.forEach((observable) => {
     window.addEventListener(observable.id, ({ detail }) => {
       const difference = observables
-        .map(observable =>
+        .map((observable) =>
           observable instanceof Observable ? observable.value : observable
         )
         .reduce((a, b) => a - b);
@@ -710,15 +712,15 @@ const subtract$ = (...observables) => {
 // Currently needs at least two arguments
 const multiply$ = (...observables) => {
   const product = observables
-    .map(observable =>
+    .map((observable) =>
       observable instanceof Observable ? observable.value : observable
     )
     .reduce((a, b) => a * b);
   const product$ = new Observable(product);
-  observables.forEach(observable => {
+  observables.forEach((observable) => {
     window.addEventListener(observable.id, ({ detail }) => {
       const product = observables
-        .map(observable =>
+        .map((observable) =>
           observable instanceof Observable ? observable.value : observable
         )
         .reduce((a, b) => a * b);
@@ -731,15 +733,15 @@ const multiply$ = (...observables) => {
 // Currently needs at least two arguments
 const divide$ = (...observables) => {
   const quotient = observables
-    .map(observable =>
+    .map((observable) =>
       observable instanceof Observable ? observable.value : observable
     )
     .reduce((a, b) => a / b);
   const quotient$ = new Observable(quotient);
-  observables.forEach(observable => {
+  observables.forEach((observable) => {
     window.addEventListener(observable.id, ({ detail }) => {
       const quotient = observables
-        .map(observable =>
+        .map((observable) =>
           observable instanceof Observable ? observable.value : observable
         )
         .reduce((a, b) => a / b);
@@ -751,9 +753,7 @@ const divide$ = (...observables) => {
 
 const choose$ = (observable, option1, option2) => {
   const result$ = new Observable(
-    (observable instanceof Observable
-    ? observable.value
-    : observable)
+    (observable instanceof Observable ? observable.value : observable)
       ? option1 instanceof Observable
         ? option1.value
         : option1
@@ -762,13 +762,13 @@ const choose$ = (observable, option1, option2) => {
       : option2
   );
   [observable, option1, option2]
-    .filter(observable => observable instanceof Observable)
-    .forEach(observable => {
+    .filter((observable) => observable instanceof Observable)
+    .forEach((observable) => {
       window.addEventListener(observable.id, ({ detail }) => {
         // TODO: Make it possible to set a specific child of an observable
-        result$.value = (observable instanceof Observable
-        ? observable.value
-        : observable)
+        result$.value = (
+          observable instanceof Observable ? observable.value : observable
+        )
           ? option1 instanceof Observable
             ? option1.value
             : option1
@@ -796,8 +796,8 @@ const cond$ = (...clauses) => {
 
   clauses
     .flat()
-    .filter(testOrExpression => testOrExpression instanceof Observable)
-    .forEach(testOrExpression => {
+    .filter((testOrExpression) => testOrExpression instanceof Observable)
+    .forEach((testOrExpression) => {
       window.addEventListener(testOrExpression.id, ({ detail }) => {
         const result = clauses
           .map(([test, expression]) => [
@@ -818,15 +818,15 @@ const cond$ = (...clauses) => {
 
 const eq$ = (...observables) => {
   const equality = observables
-    .map(observable =>
+    .map((observable) =>
       observable instanceof Observable ? observable.value : observable
     )
     .every((element, _, array) => element === array[0]);
   const equality$ = new Observable(equality);
-  observables.forEach(observable => {
+  observables.forEach((observable) => {
     window.addEventListener(observable.id, ({ detail }) => {
       const equality = observables
-        .map(observable =>
+        .map((observable) =>
           observable instanceof Observable ? observable.value : observable
         )
         .every((element, _, array) => element === array[0]);
@@ -838,15 +838,15 @@ const eq$ = (...observables) => {
 
 const and$ = (...observables) => {
   const allTruthy = observables
-    .map(observable =>
+    .map((observable) =>
       observable instanceof Observable ? observable.value : observable
     )
     .every(Boolean);
   const allTruthy$ = new Observable(allTruthy);
-  observables.forEach(observable => {
+  observables.forEach((observable) => {
     window.addEventListener(observable.id, ({ detail }) => {
       const allTruthy = observables
-        .map(observable =>
+        .map((observable) =>
           observable instanceof Observable ? observable.value : observable
         )
         .every(Boolean);
@@ -858,17 +858,17 @@ const and$ = (...observables) => {
 
 const or$ = (...observables) => {
   const someTruthy = observables
-    .map(observable =>
+    .map((observable) =>
       observable instanceof Observable ? observable.value : observable
     )
     .some(Boolean);
   const someTruthy$ = new Observable(someTruthy);
   observables
-    .filter(observable => observable instanceof Observable)
-    .forEach(observable => {
+    .filter((observable) => observable instanceof Observable)
+    .forEach((observable) => {
       window.addEventListener(observable.id, ({ detail }) => {
         const someTruthy = observables
-          .map(observable =>
+          .map((observable) =>
             observable instanceof Observable ? observable.value : observable
           )
           .some(Boolean);
@@ -878,7 +878,7 @@ const or$ = (...observables) => {
   return someTruthy$;
 };
 
-const not$ = observable => {
+const not$ = (observable) => {
   const conditional =
     observable instanceof Observable ? observable.value : observable;
   const opposite$ = new Observable(!conditional);
@@ -890,6 +890,16 @@ const not$ = observable => {
   return opposite$;
 };
 
+const Number$ = (maybeNumber$) => {
+  const number$ = new Observable(Number(valueOf$(maybeNumber$)));
+  if (isObservable$(maybeNumber$)) {
+    window.addEventListener(maybeNumber$.id, () => {
+      number$.value = Number(valueOf$(maybeNumber$));
+    });
+  }
+  return number$;
+};
+
 const toFixed$ = (number$, decimals$) => {
   const number = number$ instanceof Observable ? number$.value : number$;
   const decimals =
@@ -897,8 +907,8 @@ const toFixed$ = (number$, decimals$) => {
   const formattedNumber = number.toFixed(decimals);
   const formattedNumber$ = new Observable(formattedNumber);
   [number$, decimals$]
-    .filter(observable => observable instanceof Observable)
-    .forEach(observable => {
+    .filter((observable) => observable instanceof Observable)
+    .forEach((observable) => {
       window.addEventListener(observable.id, ({ detail }) => {
         const number = number$ instanceof Observable ? number$.value : number$;
         const decimals =
@@ -919,8 +929,8 @@ const slice$ = (stringOrArray$, start$, stop$) => {
   const stop = stop$ instanceof Observable ? stop$.value : stop$;
   const slicedStringOrArray$ = new Observable(stringOrArray.slice(start, stop));
   [stringOrArray$, start$, stop$]
-    .filter(observable => observable instanceof Observable)
-    .forEach(observable => {
+    .filter((observable) => observable instanceof Observable)
+    .forEach((observable) => {
       window.addEventListener(observable.id, ({ detail }) => {
         const stringOrArray =
           stringOrArray$ instanceof Observable
@@ -934,7 +944,7 @@ const slice$ = (stringOrArray$, start$, stop$) => {
   return slicedStringOrArray$;
 };
 
-const length$ = stringOrArray$ => {
+const length$ = (stringOrArray$) => {
   const length$ = new Observable(valueOf$(stringOrArray$).length);
   if (isObservable$(stringOrArray$)) {
     window.addEventListener(stringOrArray$.id, () => {
@@ -949,7 +959,7 @@ const map$ = (array$, function$) => {
     valueOf$(array$).map(valueOf$(function$))
   );
 
-  [array$, function$].filter(isObservable$).forEach(observable => {
+  [array$, function$].filter(isObservable$).forEach((observable) => {
     window.addEventListener(observable.id, () => {
       mappedArray$.value = valueOf$(array$).map(valueOf$(function$));
     });
@@ -977,8 +987,8 @@ const startsWith$ = (includingString$, includedString$) => {
   );
 
   [includingString$, includedString$]
-    .filter(string => string instanceof Observable)
-    .forEach(string => {
+    .filter((string) => string instanceof Observable)
+    .forEach((string) => {
       window.addEventListener(string.id, ({ detail }) => {
         const includingString =
           includingString$ instanceof Observable
@@ -1012,6 +1022,7 @@ module.exports = {
   and$,
   or$,
   not$,
+  Number$,
   toFixed$,
   slice$,
   length$,
@@ -2193,10 +2204,10 @@ module.exports = WidgetLabel$;
 modules['src/components/widgetValue/WidgetValue.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const { toFixed$ } = include('src/libraries/observable/utils.js');
+const { Number$, toFixed$ } = include('src/libraries/observable/utils.js');
 
 const WidgetValue$ = ({ value$ }) =>
-  div$(toFixed$(value$, 2)).setStyle({
+  div$(toFixed$(Number$(value$), 2)).setStyle({
     fontSize: '60px',
     textAlign: 'center',
     width: '100%',
