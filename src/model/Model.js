@@ -17,15 +17,9 @@ const evaluateCode = (apiResponse, derivedValuesCode, widgetsCode) =>
     let apiResponse = {};
     let derivedValues = {};
     let widgets = {};
-    try {
-      if (${apiResponse || "''"}) {
-        apiResponse = ${apiResponse || "''"};
-      }
-      ${derivedValuesCode}
-      ${widgetsCode}
-    } catch(e) {
-      console.warn(e);
-    }
+    apiResponse = ${apiResponse || "''"};
+    ${derivedValuesCode}
+    ${widgetsCode}
     result = { apiResponse, derivedValues, widgets };
   `);
 
@@ -223,11 +217,16 @@ const Model = ({ router }) => {
   };
 
   const updateValues = () => {
-    const evaluatedCode = evaluateCode(
-      viewModel.apiResponse$.value,
-      viewModel.selectedDerivedValuesCode$.value,
-      viewModel.selectedWidgetsCode$.value
-    );
+    let evaluatedCode;
+    try {
+      evaluatedCode = evaluateCode(
+        viewModel.apiResponse$.value,
+        viewModel.selectedDerivedValuesCode$.value,
+        viewModel.selectedWidgetsCode$.value
+      );
+    } catch (e) {
+      evaluatedCode = { derivedValues: {}, widgets: {} };
+    }
 
     const derivedValuesEntries = Object.entries(evaluatedCode.derivedValues);
     viewModel.derivedValues.forEach(({ label$, value$, isEmpty$ }, index) => {
@@ -281,6 +280,7 @@ const Model = ({ router }) => {
 
   const repeatedlyFetchDataFromApi = () =>
     setTimeout(() => {
+      console.log('repeatedly fetch data from api');
       if (viewModel.selectedApiInterval$.value !== 0) {
         fetchDataFromApi();
       }
