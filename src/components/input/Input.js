@@ -10,7 +10,6 @@ const Input$ = styled({
   fontSize: '16px',
   width: '100%',
   border: 'none',
-  outline: 'none',
 })(input$);
 
 module.exports = Input$;

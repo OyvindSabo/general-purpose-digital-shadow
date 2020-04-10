@@ -9,8 +9,6 @@ const ProjectNameInputContainer$ = styled({
   lineHeight: '64px',
   fontSize: '16px',
   width: 'calc(100% - 128px)',
-  border: 'none',
-  outline: 'none',
   display: 'inline-block',
   boxSizing: 'border-box',
 })(span$);

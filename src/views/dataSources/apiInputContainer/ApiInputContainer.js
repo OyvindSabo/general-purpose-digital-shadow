@@ -9,8 +9,6 @@ const ApiInputContainer$ = styled({
   lineHeight: '64px',
   fontSize: '16px',
   width: 'calc(100% - 192px)',
-  border: 'none',
-  outline: 'none',
   display: 'inline-block',
   boxSizing: 'border-box',
 })(span$);

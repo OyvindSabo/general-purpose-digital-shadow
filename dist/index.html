@@ -1256,54 +1256,6 @@ module.exports = {
   return module.exports;
 })();
 
-modules['src/components/horizontalNavigator/HorizontalNavigator.js'] = (() => {
-  const module = { exports: {} };
-  const styled = include('src/libraries/styled/styled.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-
-const HorizontalNavigator$ = styled({ height: '64px' })(div$);
-
-module.exports = HorizontalNavigator$;
-
-  return module.exports;
-})();
-
-modules['src/app/appContainer/AppContainer.js'] = (() => {
-  const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const styled = include('src/libraries/styled/styled.js');
-
-const AppContainer$ = styled({
-  height: 'calc(100% - 64px)',
-  position: 'absolute',
-  left: '0',
-  right: '0',
-})(div$);
-
-module.exports = AppContainer$;
-
-  return module.exports;
-})();
-
-modules['src/app/appContentContainer/AppContentContainer.js'] = (() => {
-  const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const styled = include('src/libraries/styled/styled.js');
-
-const AppContentContainer$ = styled({
-  position: 'absolute',
-  top: '0',
-  left: '64px',
-  right: '0',
-  bottom: '0',
-  overflow: 'auto',
-})(div$);
-
-module.exports = AppContentContainer$;
-
-  return module.exports;
-})();
-
 modules['src/views/project/projectContainer/ProjectContainer.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
@@ -1360,6 +1312,18 @@ const HorizontalNavigatorButton$ = ({
 };
 
 module.exports = HorizontalNavigatorButton$;
+
+  return module.exports;
+})();
+
+modules['src/components/horizontalNavigator/HorizontalNavigator.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+
+const HorizontalNavigator$ = styled({ height: '64px' })(div$);
+
+module.exports = HorizontalNavigator$;
 
   return module.exports;
 })();
@@ -1554,47 +1518,6 @@ module.exports = NewProject$;
   return module.exports;
 })();
 
-modules['src/components/verticalNavigator/VerticalNavigator.js'] = (() => {
-  const module = { exports: {} };
-  const styled = include('src/libraries/styled/styled.js');
-const withShadow = include('src/styleWrappers/withShadow.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-
-const VerticalNavigator$ = withShadow(
-  styled({
-    height: '100%',
-    width: '64px',
-    position: 'absolute',
-  })(div$)
-);
-
-module.exports = VerticalNavigator$;
-
-  return module.exports;
-})();
-
-modules['src/components/codeEditor/CodeEditor.js'] = (() => {
-  const module = { exports: {} };
-  const styled = include('src/libraries/styled/styled.js');
-const { textArea$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-
-const CodeEditor$ = styled({
-  width: '100%',
-  height: 'calc(100vh - 192px)',
-  padding: '20px',
-  background: 'black',
-  color: 'white',
-  fontFamily: '"Courier New", Courier, monospace',
-  fontSize: '14px',
-  lineHeight: '20px',
-  whiteSpace: 'nowrap',
-})(textArea$);
-
-module.exports = CodeEditor$;
-
-  return module.exports;
-})();
-
 modules['src/components/expandCodeEditorButton/ExpandCodeEditorButton.js'] = (() => {
   const module = { exports: {} };
   const Observable = include('src/libraries/observable/Observable.js');
@@ -1742,7 +1665,6 @@ const Input$ = styled({
   fontSize: '16px',
   width: '100%',
   border: 'none',
-  outline: 'none',
 })(input$);
 
 module.exports = Input$;
@@ -1763,8 +1685,6 @@ const ProjectNameInputContainer$ = styled({
   lineHeight: '64px',
   fontSize: '16px',
   width: 'calc(100% - 128px)',
-  border: 'none',
-  outline: 'none',
   display: 'inline-block',
   boxSizing: 'border-box',
 })(span$);
@@ -1884,8 +1804,6 @@ const ApiInputContainer$ = styled({
   lineHeight: '64px',
   fontSize: '16px',
   width: 'calc(100% - 192px)',
-  border: 'none',
-  outline: 'none',
   display: 'inline-block',
   boxSizing: 'border-box',
 })(span$);
@@ -1945,6 +1863,35 @@ const FullWidthCard$ = withShadow(
 );
 
 module.exports = FullWidthCard$;
+
+  return module.exports;
+})();
+
+modules['src/components/codeEditor/CodeEditor.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const { textArea$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const FullWidthCard$ = include('src/components/fullWidthCard/FullWidthCard.js');
+
+const CodeEditor$ = (value) =>
+  FullWidthCard$(
+    textArea$(value).setStyle({
+      padding: '20px',
+      width: '100%',
+      height: '100%',
+      fontFamily: '"Courier New", Courier, monospace',
+      fontSize: '14px',
+      lineHeight: '20px',
+      whiteSpace: 'nowrap',
+      border: 'none',
+      color: 'darkslategray',
+    })
+  ).setStyle({
+    height: 'calc(100% - 64px)',
+    boxSizing: 'border-box',
+  });
+
+module.exports = CodeEditor$;
 
   return module.exports;
 })();
@@ -2061,122 +2008,6 @@ const DataSourcesView$ = ({ viewModel }) =>
   div$(ApiUrlInput$({ viewModel }), ApiIntervalInput$({ viewModel }));
 
 module.exports = DataSourcesView$;
-
-  return module.exports;
-})();
-
-modules['src/components/verticalNavigatorButton/atoms.js'] = (() => {
-  const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const styled = include('src/libraries/styled/styled.js');
-
-const Button$ = styled({
-  height: '64px',
-  width: '64px',
-  overflow: 'hidden',
-  transition: '0.5s',
-  cursor: 'pointer',
-})(div$);
-const Icon$ = styled({
-  ///TODO: continue
-  fontSize: '30px',
-  textAlign: 'center',
-  marginTop: '15px',
-  pointerEvents: 'none',
-  userSelect: 'none',
-})(div$);
-const Label$ = styled({
-  fontSize: '15px',
-  textAlign: 'center',
-  pointerEvents: 'none',
-  userSelect: 'none',
-})(div$);
-
-module.exports = {
-  Button$,
-  Icon$,
-  Label$,
-};
-
-  return module.exports;
-})();
-
-modules['src/components/verticalNavigatorButton/VerticalNavigatorButton.js'] = (() => {
-  const module = { exports: {} };
-  const { add$, choose$ } = include('src/libraries/observable/utils.js');
-
-const { Button$, Icon$, Label$ } = include(
-  'src/components/verticalNavigatorButton/atoms.js'
-);
-const VerticalNavigatorButton$ = ({
-  icon,
-  label,
-  route$,
-  isActive$,
-  labelColor$,
-  highlightLabelColor$,
-  backgroundColor$,
-  highlightBackgroundColor$,
-}) => {
-  return Button$(Icon$(icon), Label$(label))
-    .setStyle({
-      background: choose$(
-        isActive$,
-        highlightBackgroundColor$,
-        backgroundColor$
-      ),
-      color: choose$(isActive$, highlightLabelColor$, labelColor$),
-    })
-    .onMouseEnter(element => {
-      element.setStyle({
-        background: highlightBackgroundColor$,
-        color: highlightLabelColor$,
-      });
-    })
-    .onMouseLeave(element => {
-      element.setStyle({
-        background: choose$(
-          isActive$,
-          highlightBackgroundColor$,
-          backgroundColor$
-        ),
-        color: choose$(isActive$, highlightLabelColor$, labelColor$),
-      });
-    })
-    .onClick(() => (location.hash = add$('#!', route$).value));
-};
-
-module.exports = VerticalNavigatorButton$;
-
-  return module.exports;
-})();
-
-modules['src/app/appNavigator/AppNavigator.js'] = (() => {
-  const module = { exports: {} };
-  const VerticalNavigatorButton$ = include(
-  'src/components/verticalNavigatorButton/VerticalNavigatorButton.js'
-);
-const VerticalNavigator$ = include(
-  'src/components/verticalNavigator/VerticalNavigator.js'
-);
-const { eq$ } = include('src/libraries/observable/utils.js');
-const { getViewTitle$ } = include('src/app/utils.js');
-
-const AppNavigator$ = ({ currentRoute$ }) =>
-  VerticalNavigator$(
-    VerticalNavigatorButton$({
-      icon: '🏠',
-      label: getViewTitle$('/'),
-      route$: '/',
-      isActive$: eq$(currentRoute$, '/'),
-      labelColor$: 'whitesmoke',
-      highlightLabelColor$: 'white',
-      backgroundColor$: 'lightslategray',
-      highlightBackgroundColor$: 'slategray',
-    })
-  ).setStyle({ background: 'lightslategrey' });
-
-module.exports = AppNavigator$;
 
   return module.exports;
 })();
@@ -2300,10 +2131,11 @@ const Values$ = ({ viewModel, currentRoute$ }) => {
             value
           );
         })
-        .setStyle({ paddingLeft: '80px' })
+        .setStyle({ marginLeft: '96px' })
     ).setStyle({
       display: 'inline-block',
       width: choose$(codeEditorIsOpen$, '50%', '0'),
+      height: 'calc(100% - 64px)',
       transition: '0.5s',
       overflow: 'hidden',
     }),
@@ -2316,8 +2148,10 @@ const Values$ = ({ viewModel, currentRoute$ }) => {
     ).setStyle({
       display: 'inline-block',
       position: 'absolute',
-      paddingLeft: choose$(codeEditorIsOpen$, '0', '80px'),
+      paddingLeft: choose$(codeEditorIsOpen$, '0', '64px'),
       transition: '0.5s',
+      height: 'calc(100% - 64px)',
+      overflowY: 'auto',
     })
   ).setStyle({ width: '100%' });
 };
@@ -2733,11 +2567,12 @@ const Dashboards$ = ({ viewModel, currentRoute$ }) => {
             value
           );
         })
-        .setStyle({ paddingLeft: '80px' })
+        .setStyle({ marginLeft: '96px' })
     ).setStyle({
       display: 'inline-block',
       width: choose$(codeEditorIsOpen$, '50%', '0'),
       transition: '0.5s',
+      height: 'calc(100% - 64px)',
       overflow: 'hidden',
     }),
     div$(
@@ -2760,7 +2595,7 @@ const Dashboards$ = ({ viewModel, currentRoute$ }) => {
     ).setStyle({
       display: 'inline-block',
       position: 'absolute',
-      paddingLeft: choose$(codeEditorIsOpen$, '0', '80px'),
+      paddingLeft: choose$(codeEditorIsOpen$, '0', '64px'),
       transition: '0.5s',
     })
   ).setStyle({ width: '100%' });
@@ -2776,16 +2611,8 @@ modules['src/app/App.js'] = (() => {
   const { eq$, or$, startsWith$ } = include('src/libraries/observable/utils.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { If$ } = include('src/libraries/observableHtml/utils.js');
-
-const HorizontalNavigator$ = include(
-  'src/components/horizontalNavigator/HorizontalNavigator.js'
-);
 const ProjectNavigator$ = include(
   'src/views/project/projectNavigator/ProjectNavigator.js'
-);
-const AppContainer$ = include('src/app/appContainer/AppContainer.js');
-const AppContentContainer$ = include(
-  'src/app/appContentContainer/AppContentContainer.js'
 );
 const ProjectContainer$ = include(
   'src/views/project/projectContainer/ProjectContainer.js'
@@ -2793,41 +2620,31 @@ const ProjectContainer$ = include(
 const TitleBar$ = include('src/app/titleBar/TitleBar.js');
 const Projects$ = include('src/views/projects/Projects.js');
 const DataSources$ = include('src/views/dataSources/DataSources.js');
-const AppNavigator$ = include('src/app/appNavigator/AppNavigator.js');
 const Values$ = include('src/views/values/Values.js');
 const Dashboards$ = include('src/views/dashboards/Dashboards.js');
 
 const App = ({ currentRoute$, viewModel }) => {
   return div$(
-    HorizontalNavigator$().setStyle({ background: 'black' }),
-    AppContainer$(
-      AppNavigator$({ currentRoute$ }),
-      AppContentContainer$(
-        TitleBar$({ currentRoute$, viewModel }),
-        If$(eq$(currentRoute$, '/'), Projects$({ viewModel })),
+    TitleBar$({ currentRoute$, viewModel }),
+    If$(eq$(currentRoute$, '/'), Projects$({ viewModel })),
+    If$(
+      startsWith$(currentRoute$, '/projects/<projectId:string>'),
+      ProjectContainer$(
+        ProjectNavigator$({ currentRoute$, viewModel }),
         If$(
-          startsWith$(currentRoute$, '/projects/<projectId:string>'),
-          ProjectContainer$(
-            ProjectNavigator$({ currentRoute$, viewModel }),
-            If$(
-              or$(
-                eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
-                eq$(currentRoute$, '/projects/<projectId:string>')
-              ),
-              DataSources$({ viewModel })
-            ),
-            If$(
-              startsWith$(currentRoute$, '/projects/<projectId:string>/values'),
-              Values$({ viewModel, currentRoute$ })
-            ),
-            If$(
-              startsWith$(
-                currentRoute$,
-                '/projects/<projectId:string>/dashboards'
-              ),
-              Dashboards$({ viewModel, currentRoute$ })
-            )
-          )
+          or$(
+            eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
+            eq$(currentRoute$, '/projects/<projectId:string>')
+          ),
+          DataSources$({ viewModel })
+        ),
+        If$(
+          startsWith$(currentRoute$, '/projects/<projectId:string>/values'),
+          Values$({ viewModel, currentRoute$ })
+        ),
+        If$(
+          startsWith$(currentRoute$, '/projects/<projectId:string>/dashboards'),
+          Dashboards$({ viewModel, currentRoute$ })
         )
       )
     )

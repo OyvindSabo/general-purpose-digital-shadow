@@ -29,11 +29,12 @@ const Dashboards$ = ({ viewModel, currentRoute$ }) => {
             value
           );
         })
-        .setStyle({ paddingLeft: '80px' })
+        .setStyle({ marginLeft: '96px' })
     ).setStyle({
       display: 'inline-block',
       width: choose$(codeEditorIsOpen$, '50%', '0'),
       transition: '0.5s',
+      height: 'calc(100% - 64px)',
       overflow: 'hidden',
     }),
     div$(
@@ -56,7 +57,7 @@ const Dashboards$ = ({ viewModel, currentRoute$ }) => {
     ).setStyle({
       display: 'inline-block',
       position: 'absolute',
-      paddingLeft: choose$(codeEditorIsOpen$, '0', '80px'),
+      paddingLeft: choose$(codeEditorIsOpen$, '0', '64px'),
       transition: '0.5s',
     })
   ).setStyle({ width: '100%' });
