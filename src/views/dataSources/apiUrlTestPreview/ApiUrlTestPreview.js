@@ -2,7 +2,7 @@ const styled = include('src/libraries/styled/styled.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
 const ApiUrlTestPreview$ = styled({
-  color: 'dimgray',
+  color: 'lightslategray',
   background: 'ghostwhite',
   lineHeight: '32px',
   fontSize: '0 16px',

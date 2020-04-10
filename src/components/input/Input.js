@@ -2,7 +2,7 @@ const styled = include('src/libraries/styled/styled.js');
 const { input$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
 const Input$ = styled({
-  color: 'dimgray',
+  color: 'darkslategray',
   background: 'ghostwhite',
   height: '100%',
   padding: '0 8px',
