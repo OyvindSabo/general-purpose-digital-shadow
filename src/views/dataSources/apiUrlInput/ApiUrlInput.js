@@ -30,7 +30,7 @@ const ApiUrlInput$ = ({ viewModel }) =>
         })
         .onClick(viewModel.testApiUrlInput),
       ApiUrlTestPreview$(viewModel.selectedApiUrlTestPreview$).setStyle({
-        width: 'calc(100% - 192px)',
+        width: 'calc(100% - 208px)',
       })
     ).setStyle({ minHeight: '128px' })
   );
