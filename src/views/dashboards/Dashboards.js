@@ -59,6 +59,8 @@ const Dashboards$ = ({ viewModel, currentRoute$ }) => {
       position: 'absolute',
       paddingLeft: choose$(codeEditorIsOpen$, '0', '64px'),
       transition: '0.5s',
+      height: 'calc(100% - 64px)',
+      overflowY: 'auto',
     })
   ).setStyle({ width: '100%' });
 };
