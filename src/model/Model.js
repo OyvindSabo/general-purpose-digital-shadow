@@ -261,14 +261,11 @@ const Model = ({ router }) => {
   };
 
   window.addEventListener(viewModel.apiResponse$.id, updateValues);
-
-  // Recalculate derived values and visualizations ten times per second
-  const repeatedlyUpdateValues = () =>
-    setTimeout(() => {
-      updateValues();
-      repeatedlyUpdateValues();
-    }, 100);
-  repeatedlyUpdateValues();
+  window.addEventListener(
+    viewModel.selectedDerivedValuesCode$.id,
+    updateValues
+  );
+  window.addEventListener(viewModel.selectedWidgetsCode$.id, updateValues);
 
   const fetchDataFromApi = () => {
     fetch(viewModel.selectedApiUrl$.value)
@@ -278,17 +275,30 @@ const Model = ({ router }) => {
       });
   };
 
-  const repeatedlyFetchDataFromApi = () =>
+  const repeatedlyFetchDataFromApi = (timeoutInSeconds) =>
     setTimeout(() => {
       console.log('repeatedly fetch data from api');
       if (viewModel.selectedApiInterval$.value !== 0) {
         fetchDataFromApi();
       }
-      repeatedlyFetchDataFromApi();
-    }, viewModel.selectedApiInterval$.value * 1000);
+      if (timeoutInSeconds === viewModel.selectedApiInterval$.value) {
+        repeatedlyFetchDataFromApi(timeoutInSeconds);
+      }
+    }, timeoutInSeconds * 1000);
   repeatedlyFetchDataFromApi();
 
-  addEventListener(viewModel.selectedApiInterval$.id, fetchDataFromApi);
+  addEventListener(viewModel.selectedApiInterval$.id, () =>
+    setTimeout(() => {
+      fetchDataFromApi();
+      repeatedlyFetchDataFromApi(viewModel.selectedApiInterval$.value);
+    }, 1000)
+  );
+  addEventListener(viewModel.selectedApiUrl$.id, () =>
+    setTimeout(() => {
+      fetchDataFromApi();
+      repeatedlyFetchDataFromApi(viewModel.selectedApiInterval$.value);
+    }, 1000)
+  );
 
   const syncSelectedProjectWithRouter = ({ params, currentRoute$ }) => {
     if (currentRoute$.value.indexOf('/projects/<projectId:string>') === 0) {
