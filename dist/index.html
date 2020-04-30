@@ -1047,7 +1047,7 @@ modules['src/libraries/observableHtml/ObservableHtml.js'] = (() => {
   const module = { exports: {} };
   const Observable = include('src/libraries/observable/Observable.js');
 
-const observableToNode$ = observable$ => {
+const observableToNode$ = (observable$) => {
   if (
     // If it is observable value
     observable$ instanceof Observable
@@ -1118,10 +1118,10 @@ const observableToNode$ = observable$ => {
 const createElement$ = (elementType, ...observables) => {
   const element = document.createElement(elementType);
   const nodes = observables.map(observableToNode$).flat();
-  nodes.forEach(node => element.appendChild(node));
+  nodes.forEach((node) => element.appendChild(node));
 
   // Note that styleObject$ is an object with observable values, not an observable object
-  element.setStyle = styleObject$ => {
+  element.setStyle = (styleObject$) => {
     Object.entries(styleObject$).forEach(([styleProperty, styleValue$]) => {
       if (styleValue$ instanceof Observable) {
         element.style[styleProperty] = styleValue$.value;
@@ -1134,7 +1134,7 @@ const createElement$ = (elementType, ...observables) => {
     });
     return element;
   };
-  element.setProps = propsObject => {
+  element.setProps = (propsObject) => {
     Object.entries(propsObject).forEach(([propKey, propValue$]) => {
       if (propValue$ instanceof Observable) {
         element[propKey] = propValue$.value;
@@ -1147,29 +1147,30 @@ const createElement$ = (elementType, ...observables) => {
     });
     return element;
   };
-  element.onClick = clickCallback => {
+  element.onClick = (clickCallback) => {
     element.style.cursor = 'pointer';
     element.onclick = () => clickCallback(element);
     return element;
   };
-  element.onMouseEnter = mouseEnterCallback => {
+  element.onMouseEnter = (mouseEnterCallback) => {
     element.onmouseenter = () => mouseEnterCallback(element);
     return element;
   };
-  element.onMouseLeave = mouseLeaveCallback => {
+  element.onMouseLeave = (mouseLeaveCallback) => {
     element.onmouseleave = () => mouseLeaveCallback(element);
     return element;
   };
-  element.onInput = inputCallback => {
+  element.onInput = (inputCallback) => {
     element.oninput = () => inputCallback(element);
     return element;
   };
-  element.onChange = changeCallback => {
+  element.onChange = (changeCallback) => {
     element.onchange = () => changeCallback(element);
     return element;
   };
   return element;
 };
+const a$ = (...children) => createElement$('a', ...children);
 const div$ = (...children) => createElement$('div', ...children);
 const span$ = (...children) => createElement$('span', ...children);
 const h1$ = (...children) => createElement$('h1', ...children);
@@ -1189,6 +1190,7 @@ const canvas$ = ({ width$, height$ }) =>
 
 module.exports = {
   createElement$,
+  a$,
   div$,
   span$,
   h1$,
@@ -1426,15 +1428,23 @@ module.exports = ProjectNavigator$;
 
 modules['src/app/titleBar/atoms.js'] = (() => {
   const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+  const { div$, a$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const styled = include('src/libraries/styled/styled.js');
 
 const ViewTitle$ = styled({
   fontSize: '32px',
   padding: '16px',
+  display: 'inline-block',
 })(div$);
 
-module.exports = { ViewTitle$ };
+const ExportButton$ = styled({
+  fontSize: '16px',
+  padding: '0 16px',
+  float: 'right',
+  lineHeight: '64px',
+})(div$);
+
+module.exports = { ViewTitle$, ExportButton$ };
 
   return module.exports;
 })();
@@ -1457,7 +1467,7 @@ modules['src/app/titleBar/TitleBar.js'] = (() => {
   const HorizontalNavigator$ = include(
   'src/components/horizontalNavigator/HorizontalNavigator.js'
 );
-const { ViewTitle$ } = include('src/app/titleBar/atoms.js');
+const { ViewTitle$, ExportButton$ } = include('src/app/titleBar/atoms.js');
 const withShadow = include('src/styleWrappers/withShadow.js');
 const { add$, startsWith$, choose$ } = include(
   'src/libraries/observable/utils.js'
@@ -1488,7 +1498,16 @@ const TitleBar$ = ({ currentRoute$, viewModel }) => {
               viewModel.selectedProjectId$.value
             }/${viewModel.lastVisitedProjectView$.value || ''}`)
         )
-    )
+    ),
+    ExportButton$('Export').onClick(() => {
+      const element = document.createElement('a');
+      const fileContent = document.head.innerHTML;
+      const file = new Blob([fileContent], { type: 'text/plain' });
+      element.href = URL.createObjectURL(file);
+      element.download = `${viewModel.selectedProjectName$.value}.html`;
+      document.body.appendChild(element); // Required for this to work in FireFox
+      element.click();
+    })
   ).setStyle({
     background: 'white',
     color: 'darkslategray',

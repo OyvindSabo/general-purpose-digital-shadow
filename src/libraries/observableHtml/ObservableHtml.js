@@ -1,6 +1,6 @@
 const Observable = include('src/libraries/observable/Observable.js');
 
-const observableToNode$ = observable$ => {
+const observableToNode$ = (observable$) => {
   if (
     // If it is observable value
     observable$ instanceof Observable
@@ -71,10 +71,10 @@ const observableToNode$ = observable$ => {
 const createElement$ = (elementType, ...observables) => {
   const element = document.createElement(elementType);
   const nodes = observables.map(observableToNode$).flat();
-  nodes.forEach(node => element.appendChild(node));
+  nodes.forEach((node) => element.appendChild(node));
 
   // Note that styleObject$ is an object with observable values, not an observable object
-  element.setStyle = styleObject$ => {
+  element.setStyle = (styleObject$) => {
     Object.entries(styleObject$).forEach(([styleProperty, styleValue$]) => {
       if (styleValue$ instanceof Observable) {
         element.style[styleProperty] = styleValue$.value;
@@ -87,7 +87,7 @@ const createElement$ = (elementType, ...observables) => {
     });
     return element;
   };
-  element.setProps = propsObject => {
+  element.setProps = (propsObject) => {
     Object.entries(propsObject).forEach(([propKey, propValue$]) => {
       if (propValue$ instanceof Observable) {
         element[propKey] = propValue$.value;
@@ -100,29 +100,30 @@ const createElement$ = (elementType, ...observables) => {
     });
     return element;
   };
-  element.onClick = clickCallback => {
+  element.onClick = (clickCallback) => {
     element.style.cursor = 'pointer';
     element.onclick = () => clickCallback(element);
     return element;
   };
-  element.onMouseEnter = mouseEnterCallback => {
+  element.onMouseEnter = (mouseEnterCallback) => {
     element.onmouseenter = () => mouseEnterCallback(element);
     return element;
   };
-  element.onMouseLeave = mouseLeaveCallback => {
+  element.onMouseLeave = (mouseLeaveCallback) => {
     element.onmouseleave = () => mouseLeaveCallback(element);
     return element;
   };
-  element.onInput = inputCallback => {
+  element.onInput = (inputCallback) => {
     element.oninput = () => inputCallback(element);
     return element;
   };
-  element.onChange = changeCallback => {
+  element.onChange = (changeCallback) => {
     element.onchange = () => changeCallback(element);
     return element;
   };
   return element;
 };
+const a$ = (...children) => createElement$('a', ...children);
 const div$ = (...children) => createElement$('div', ...children);
 const span$ = (...children) => createElement$('span', ...children);
 const h1$ = (...children) => createElement$('h1', ...children);
@@ -142,6 +143,7 @@ const canvas$ = ({ width$, height$ }) =>
 
 module.exports = {
   createElement$,
+  a$,
   div$,
   span$,
   h1$,

@@ -1,7 +1,7 @@
 const HorizontalNavigator$ = include(
   'src/components/horizontalNavigator/HorizontalNavigator.js'
 );
-const { ViewTitle$ } = include('src/app/titleBar/atoms.js');
+const { ViewTitle$, ExportButton$ } = include('src/app/titleBar/atoms.js');
 const withShadow = include('src/styleWrappers/withShadow.js');
 const { add$, startsWith$, choose$ } = include(
   'src/libraries/observable/utils.js'
@@ -32,7 +32,16 @@ const TitleBar$ = ({ currentRoute$, viewModel }) => {
               viewModel.selectedProjectId$.value
             }/${viewModel.lastVisitedProjectView$.value || ''}`)
         )
-    )
+    ),
+    ExportButton$('Export').onClick(() => {
+      const element = document.createElement('a');
+      const fileContent = document.head.innerHTML;
+      const file = new Blob([fileContent], { type: 'text/plain' });
+      element.href = URL.createObjectURL(file);
+      element.download = `${viewModel.selectedProjectName$.value}.html`;
+      document.body.appendChild(element); // Required for this to work in FireFox
+      element.click();
+    })
   ).setStyle({
     background: 'white',
     color: 'darkslategray',
