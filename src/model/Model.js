@@ -23,9 +23,11 @@ const evaluateCode = (apiResponse, derivedValuesCode, widgetsCode) =>
     result = { apiResponse, derivedValues, widgets };
   `);
 
-const Model = ({ router }) => {
+const Model = ({ router, isExported }) => {
   const dataModel = { projects: [] };
   const viewModel = {
+    isExported, // When exporting the code, this will be true in the exported code
+
     // All values
     projects: [...new Array(MAX_AMOUNT_OF_PROJECTS).keys()].map(() => ({
       id$: new Observable(''),

@@ -35,7 +35,12 @@ const TitleBar$ = ({ currentRoute$, viewModel }) => {
     ),
     ExportButton$('Export').onClick(() => {
       const element = document.createElement('a');
-      const fileContent = document.head.innerHTML;
+      const fileContent = document.head.innerHTML.replace(
+        '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *f*a*l*s*e*;*'
+          .split('*')
+          .join(''),
+        '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *t*r*u*e*;*'.split('*').join('')
+      );
       const file = new Blob([fileContent], { type: 'text/plain' });
       element.href = URL.createObjectURL(file);
       element.download = `${viewModel.selectedProjectName$.value}.html`;

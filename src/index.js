@@ -10,6 +10,8 @@ Object.assign(document.body.style, {
 });
 //const FIREBASE_API_KEY = 'AIzaSyCeGXLqw0MEwiSFHG1Wks1HfQHXRZoOuFY';
 
+const isExported = false;
+
 // Create router
 const router = new Router({
   '/': 'Projects',
@@ -21,7 +23,7 @@ const router = new Router({
   '/projects/<projectId:string>/dashboards/edit': 'Edit dashboards',
 });
 
-const viewModel = Model({ router });
+const viewModel = Model({ router, isExported });
 
 document.body.appendChild(
   App({

@@ -346,9 +346,11 @@ const evaluateCode = (apiResponse, derivedValuesCode, widgetsCode) =>
     result = { apiResponse, derivedValues, widgets };
   `);
 
-const Model = ({ router }) => {
+const Model = ({ router, isExported }) => {
   const dataModel = { projects: [] };
   const viewModel = {
+    isExported, // When exporting the code, this will be true in the exported code
+
     // All values
     projects: [...new Array(MAX_AMOUNT_OF_PROJECTS).keys()].map(() => ({
       id$: new Observable(''),
@@ -1501,7 +1503,12 @@ const TitleBar$ = ({ currentRoute$, viewModel }) => {
     ),
     ExportButton$('Export').onClick(() => {
       const element = document.createElement('a');
-      const fileContent = document.head.innerHTML;
+      const fileContent = document.head.innerHTML.replace(
+        '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *f*a*l*s*e*;*'
+          .split('*')
+          .join(''),
+        '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *t*r*u*e*;*'.split('*').join('')
+      );
       const file = new Blob([fileContent], { type: 'text/plain' });
       element.href = URL.createObjectURL(file);
       element.download = `${viewModel.selectedProjectName$.value}.html`;
@@ -2661,31 +2668,52 @@ const Values$ = include('src/views/values/Values.js');
 const Dashboards$ = include('src/views/dashboards/Dashboards.js');
 
 const App = ({ currentRoute$, viewModel }) => {
-  return div$(
-    TitleBar$({ currentRoute$, viewModel }),
-    If$(eq$(currentRoute$, '/'), Projects$({ viewModel })),
-    If$(
-      startsWith$(currentRoute$, '/projects/<projectId:string>'),
-      ProjectContainer$(
-        ProjectNavigator$({ currentRoute$, viewModel }),
-        If$(
-          or$(
-            eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
-            eq$(currentRoute$, '/projects/<projectId:string>')
+  return viewModel.isExported
+    ? div$(
+        TitleBar$({ currentRoute$, viewModel }),
+        ProjectContainer$(
+          ProjectNavigator$({ currentRoute$, viewModel }),
+          If$(
+            startsWith$(currentRoute$, '/values'),
+            Values$({ viewModel, currentRoute$ })
           ),
-          DataSources$({ viewModel })
-        ),
-        If$(
-          startsWith$(currentRoute$, '/projects/<projectId:string>/values'),
-          Values$({ viewModel, currentRoute$ })
-        ),
-        If$(
-          startsWith$(currentRoute$, '/projects/<projectId:string>/dashboards'),
-          Dashboards$({ viewModel, currentRoute$ })
+          If$(
+            or$(
+              eq$(currentRoute$, '/'),
+              startsWith$(currentRoute$, '/dashboards')
+            ),
+            Dashboards$({ viewModel, currentRoute$ })
+          )
         )
       )
-    )
-  );
+    : div$(
+        TitleBar$({ currentRoute$, viewModel }),
+        If$(eq$(currentRoute$, '/'), Projects$({ viewModel })),
+        If$(
+          startsWith$(currentRoute$, '/projects/<projectId:string>'),
+          ProjectContainer$(
+            ProjectNavigator$({ currentRoute$, viewModel }),
+            If$(
+              or$(
+                eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
+                eq$(currentRoute$, '/projects/<projectId:string>')
+              ),
+              DataSources$({ viewModel })
+            ),
+            If$(
+              startsWith$(currentRoute$, '/projects/<projectId:string>/values'),
+              Values$({ viewModel, currentRoute$ })
+            ),
+            If$(
+              startsWith$(
+                currentRoute$,
+                '/projects/<projectId:string>/dashboards'
+              ),
+              Dashboards$({ viewModel, currentRoute$ })
+            )
+          )
+        )
+      );
 };
 
 module.exports = App;
@@ -2706,6 +2734,8 @@ Object.assign(document.body.style, {
 });
 //const FIREBASE_API_KEY = 'AIzaSyCeGXLqw0MEwiSFHG1Wks1HfQHXRZoOuFY';
 
+const isExported = false;
+
 // Create router
 const router = new Router({
   '/': 'Projects',
@@ -2717,7 +2747,7 @@ const router = new Router({
   '/projects/<projectId:string>/dashboards/edit': 'Edit dashboards',
 });
 
-const viewModel = Model({ router });
+const viewModel = Model({ router, isExported });
 
 document.body.appendChild(
   App({
