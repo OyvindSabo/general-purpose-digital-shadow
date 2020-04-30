@@ -4,23 +4,28 @@ const ExpandCodeEditorButton$ = include(
 );
 const CanvasWidget$ = include('src/components/canvasWidget/CanvasWidget.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const { eq$, choose$ } = include('src/libraries/observable/utils.js');
+const { eq$, choose$, not$ } = include('src/libraries/observable/utils.js');
+const { If$ } = include('src/libraries/observableHtml/utils.js');
 
 const Dashboards$ = ({ viewModel, currentRoute$ }) => {
+  const { isExported } = viewModel;
   const codeEditorIsOpen$ = eq$(
     currentRoute$,
     '/projects/<projectId:string>/dashboards/edit'
   );
   return div$(
-    ExpandCodeEditorButton$({
-      icon: '+',
-      label$: choose$(codeEditorIsOpen$, 'Hide editor', 'Show editor'),
-      isOpen$: codeEditorIsOpen$,
-    }).onClick(() => {
-      location.hash = codeEditorIsOpen$.value
-        ? `#!/projects/${viewModel.selectedProjectId$.value}/dashboards`
-        : `#!/projects/${viewModel.selectedProjectId$.value}/dashboards/edit`;
-    }),
+    If$(
+      not$(isExported),
+      ExpandCodeEditorButton$({
+        icon: '+',
+        label$: choose$(codeEditorIsOpen$, 'Hide editor', 'Show editor'),
+        isOpen$: codeEditorIsOpen$,
+      }).onClick(() => {
+        location.hash = codeEditorIsOpen$.value
+          ? `#!/projects/${viewModel.selectedProjectId$.value}/dashboards`
+          : `#!/projects/${viewModel.selectedProjectId$.value}/dashboards/edit`;
+      })
+    ),
     div$(
       CodeEditor$(viewModel.selectedWidgetsCode$)
         .onInput(({ value }) => {

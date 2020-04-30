@@ -4,23 +4,28 @@ const ExpandCodeEditorButton$ = include(
 );
 const ValueWidget$ = include('src/components/valueWidget/ValueWidget.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const { eq$, choose$ } = include('src/libraries/observable/utils.js');
+const { eq$, choose$, not$ } = include('src/libraries/observable/utils.js');
+const { If$ } = include('src/libraries/observableHtml/utils.js');
 
 const Values$ = ({ viewModel, currentRoute$ }) => {
+  const { isExported } = viewModel;
   const codeEditorIsOpen$ = eq$(
     currentRoute$,
     '/projects/<projectId:string>/values/edit'
   );
   return div$(
-    ExpandCodeEditorButton$({
-      icon: '{}',
-      label$: choose$(codeEditorIsOpen$, 'Hide editor', 'Show editor'),
-      isOpen$: codeEditorIsOpen$,
-    }).onClick(() => {
-      location.hash = codeEditorIsOpen$.value
-        ? `#!/projects/${viewModel.selectedProjectId$.value}/values`
-        : `#!/projects/${viewModel.selectedProjectId$.value}/values/edit`;
-    }),
+    If$(
+      not$(isExported),
+      ExpandCodeEditorButton$({
+        icon: '{}',
+        label$: choose$(codeEditorIsOpen$, 'Hide editor', 'Show editor'),
+        isOpen$: codeEditorIsOpen$,
+      }).onClick(() => {
+        location.hash = codeEditorIsOpen$.value
+          ? `#!/projects/${viewModel.selectedProjectId$.value}/values`
+          : `#!/projects/${viewModel.selectedProjectId$.value}/values/edit`;
+      })
+    ),
     div$(
       CodeEditor$(viewModel.selectedDerivedValuesCode$)
         .onInput(({ value }) => {
