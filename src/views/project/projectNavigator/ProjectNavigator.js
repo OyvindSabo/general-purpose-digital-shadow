@@ -4,43 +4,63 @@ const HorizontalNavigatorButton$ = include(
 const HorizontalNavigator$ = include(
   'src/components/horizontalNavigator/HorizontalNavigator.js'
 );
-const { eq$, or$, startsWith$, add$ } = include(
+const { choose$, eq$, not$, or$, startsWith$, add$ } = include(
   'src/libraries/observable/utils.js'
 );
 const { getViewTitle$ } = include('src/app/utils.js');
+const { If$ } = include('src/libraries/observableHtml/utils.js');
 
-const ProjectNavigator$ = ({ currentRoute$, viewModel }) =>
-  HorizontalNavigator$(
-    HorizontalNavigatorButton$({
-      label: getViewTitle$('/projects/<projectId:string>/data-sources'),
-      route$: add$('/projects/', viewModel.selectedProjectId$, '/data-sources'),
-      isActive$: or$(
-        eq$(currentRoute$, '/projects/<projectId:string>'),
-        eq$(currentRoute$, '/projects/<projectId:string>/data-sources')
-      ),
-      labelColor$: 'slategray',
-      highlightLabelColor$: 'darkslategray',
-    }),
+const ProjectNavigator$ = ({ currentRoute$, viewModel }) => {
+  const { isExported } = viewModel;
+  return HorizontalNavigator$(
+    If$(
+      not$(isExported),
+      HorizontalNavigatorButton$({
+        label: getViewTitle$('/projects/<projectId:string>/data-sources'),
+        route$: add$(
+          '/projects/',
+          viewModel.selectedProjectId$,
+          '/data-sources'
+        ),
+        isActive$: or$(
+          eq$(currentRoute$, '/projects/<projectId:string>'),
+          eq$(currentRoute$, '/projects/<projectId:string>/data-sources')
+        ),
+        labelColor$: 'slategray',
+        highlightLabelColor$: 'darkslategray',
+      })
+    ),
     HorizontalNavigatorButton$({
       label: getViewTitle$('/projects/<projectId:string>/values'),
-      route$: add$('/projects/', viewModel.selectedProjectId$, '/values'),
-      isActive$: startsWith$(
-        currentRoute$,
-        '/projects/<projectId:string>/values'
+      route$: choose$(
+        isExported,
+        '/values',
+        add$('/projects/', viewModel.selectedProjectId$, '/values')
+      ),
+      isActive$: choose$(
+        isExported,
+        eq$(currentRoute$, '/values'),
+        startsWith$(currentRoute$, '/projects/<projectId:string>/values')
       ),
       labelColor$: 'slategray',
       highlightLabelColor$: 'darkslategray',
     }),
     HorizontalNavigatorButton$({
       label: getViewTitle$('/projects/<projectId:string>/dashboards'),
-      route$: add$('/projects/', viewModel.selectedProjectId$, '/dashboards'),
-      isActive$: startsWith$(
-        currentRoute$,
-        '/projects/<projectId:string>/dashboards'
+      route$: choose$(
+        isExported,
+        '/dashboards',
+        add$('/projects/', viewModel.selectedProjectId$, '/dashboards')
+      ),
+      isActive$: choose$(
+        isExported,
+        or$(eq$(currentRoute$, '/'), eq$(currentRoute$, '/dashboards')),
+        startsWith$(currentRoute$, '/projects/<projectId:string>/dashboards')
       ),
       labelColor$: 'slategray',
       highlightLabelColor$: 'darkslategray',
     })
   );
+};
 
 module.exports = ProjectNavigator$;
