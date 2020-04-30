@@ -13,15 +13,21 @@ Object.assign(document.body.style, {
 const isExported = false;
 
 // Create router
-const router = new Router({
-  '/': 'Projects',
-  '/projects/<projectId:string>': 'Data sources',
-  '/projects/<projectId:string>/data-sources': 'Data sources',
-  '/projects/<projectId:string>/values': 'Values',
-  '/projects/<projectId:string>/values/edit': 'Edit values',
-  '/projects/<projectId:string>/dashboards': 'Dashboards',
-  '/projects/<projectId:string>/dashboards/edit': 'Edit dashboards',
-});
+const router = isExported
+  ? new Router({
+      '/': 'Dashboards',
+      '/values': 'Values',
+      '/dashboards': 'Dashboards',
+    })
+  : new Router({
+      '/': 'Projects',
+      '/projects/<projectId:string>': 'Data sources',
+      '/projects/<projectId:string>/data-sources': 'Data sources',
+      '/projects/<projectId:string>/values': 'Values',
+      '/projects/<projectId:string>/values/edit': 'Edit values',
+      '/projects/<projectId:string>/dashboards': 'Dashboards',
+      '/projects/<projectId:string>/dashboards/edit': 'Edit dashboards',
+    });
 
 const viewModel = Model({ router, isExported });
 

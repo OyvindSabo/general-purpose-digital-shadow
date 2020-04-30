@@ -35,6 +35,7 @@ const TitleBar$ = ({ currentRoute$, viewModel }) => {
     ),
     ExportButton$('Export').onClick(() => {
       const element = document.createElement('a');
+      // SInce just the first occurrence of the code will be replaced, we need to make sure that this code does not replace itself, so we construct the match on call time
       const fileContent = document.head.innerHTML.replace(
         '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *f*a*l*s*e*;*'
           .split('*')

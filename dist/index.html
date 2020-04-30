@@ -1503,6 +1503,7 @@ const TitleBar$ = ({ currentRoute$, viewModel }) => {
     ),
     ExportButton$('Export').onClick(() => {
       const element = document.createElement('a');
+      // SInce just the first occurrence of the code will be replaced, we need to make sure that this code does not replace itself, so we construct the match on call time
       const fileContent = document.head.innerHTML.replace(
         '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *f*a*l*s*e*;*'
           .split('*')
@@ -2737,15 +2738,21 @@ Object.assign(document.body.style, {
 const isExported = false;
 
 // Create router
-const router = new Router({
-  '/': 'Projects',
-  '/projects/<projectId:string>': 'Data sources',
-  '/projects/<projectId:string>/data-sources': 'Data sources',
-  '/projects/<projectId:string>/values': 'Values',
-  '/projects/<projectId:string>/values/edit': 'Edit values',
-  '/projects/<projectId:string>/dashboards': 'Dashboards',
-  '/projects/<projectId:string>/dashboards/edit': 'Edit dashboards',
-});
+const router = isExported
+  ? new Router({
+      '/': 'Dashboards',
+      '/values': 'Values',
+      '/dashboards': 'Dashboards',
+    })
+  : new Router({
+      '/': 'Projects',
+      '/projects/<projectId:string>': 'Data sources',
+      '/projects/<projectId:string>/data-sources': 'Data sources',
+      '/projects/<projectId:string>/values': 'Values',
+      '/projects/<projectId:string>/values/edit': 'Edit values',
+      '/projects/<projectId:string>/dashboards': 'Dashboards',
+      '/projects/<projectId:string>/dashboards/edit': 'Edit dashboards',
+    });
 
 const viewModel = Model({ router, isExported });
 
