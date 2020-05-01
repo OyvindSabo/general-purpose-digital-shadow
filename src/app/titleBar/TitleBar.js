@@ -27,11 +27,13 @@ const TitleBar$ = ({ currentRoute$, viewModel }) => {
         )
       )
         .setStyle({
-          color: choose$(
-            startsWith$(currentRoute$, '/projects/<projectId:string>'),
-            'darkslategray',
-            'lightgray'
-          ),
+          color: isExported
+            ? 'darkslategray'
+            : choose$(
+                startsWith$(currentRoute$, '/projects/<projectId:string>'),
+                'darkslategray',
+                'lightgray'
+              ),
         })
         .onClick(() => {
           if (isExported) {
