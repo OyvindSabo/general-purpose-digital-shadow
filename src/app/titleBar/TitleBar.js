@@ -38,6 +38,7 @@ const TitleBar$ = ({ currentRoute$, viewModel }) => {
         .onClick(() => {
           if (isExported) {
             location.hash = '#!/';
+            return;
           }
           location.hash = `#!/projects/${viewModel.selectedProjectId$.value}/${
             viewModel.lastVisitedProjectView$.value || ''
