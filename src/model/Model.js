@@ -77,7 +77,6 @@ const Model = ({ router, isExported }) => {
 
   viewModel.loadAllProjects = () => {
     dataModel.projects = isExported ? getExportedProject() : getAllProjects();
-    console.log('dataModel.projects: ', dataModel.projects);
     for (let i = 0; i < MAX_AMOUNT_OF_PROJECTS; i++) {
       viewModel.projects[i].id$.value = '';
       viewModel.projects[i].name$.value = '';
@@ -275,8 +274,6 @@ const Model = ({ router, isExported }) => {
   window.addEventListener(viewModel.selectedWidgetsCode$.id, updateValues);
 
   const fetchDataFromApi = () => {
-    console.log('fetchDataFromApi');
-    console.log('viewModel: ', viewModel);
     fetch(viewModel.selectedApiUrl$.value)
       .then((response) => response.json())
       .then((jsonResponse) => {

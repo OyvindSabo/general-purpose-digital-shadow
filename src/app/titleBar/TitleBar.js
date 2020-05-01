@@ -76,7 +76,10 @@ const TitleBar$ = ({ currentRoute$, viewModel }) => {
           );
         const file = new Blob([fileContent], { type: 'text/plain' });
         element.href = URL.createObjectURL(file);
-        element.download = `${viewModel.selectedProjectName$.value}.html`;
+        element.download = `${viewModel.selectedProjectName$.value
+          .toLowerCase()
+          .split(' ')
+          .join('-')}.html`;
         document.body.appendChild(element); // Required for this to work in FireFox
         element.click();
       })
