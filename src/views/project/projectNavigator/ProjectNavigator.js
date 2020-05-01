@@ -32,31 +32,23 @@ const ProjectNavigator$ = ({ currentRoute$, viewModel }) => {
     ),
     HorizontalNavigatorButton$({
       label: getViewTitle$('/projects/<projectId:string>/values'),
-      route$: choose$(
-        isExported,
-        '/values',
-        add$('/projects/', viewModel.selectedProjectId$, '/values')
-      ),
-      isActive$: choose$(
-        isExported,
-        eq$(currentRoute$, '/values'),
-        startsWith$(currentRoute$, '/projects/<projectId:string>/values')
-      ),
+      route$: isExported
+        ? '/values'
+        : add$('/projects/', viewModel.selectedProjectId$, '/values'),
+      isActive$: isExported
+        ? eq$(currentRoute$, '/values')
+        : startsWith$(currentRoute$, '/projects/<projectId:string>/values'),
       labelColor$: 'slategray',
       highlightLabelColor$: 'darkslategray',
     }),
     HorizontalNavigatorButton$({
       label: getViewTitle$('/projects/<projectId:string>/dashboards'),
-      route$: choose$(
-        isExported,
-        '/dashboards',
-        add$('/projects/', viewModel.selectedProjectId$, '/dashboards')
-      ),
-      isActive$: choose$(
-        isExported,
-        or$(eq$(currentRoute$, '/'), eq$(currentRoute$, '/dashboards')),
-        startsWith$(currentRoute$, '/projects/<projectId:string>/dashboards')
-      ),
+      route$: isExported
+        ? '/dashboards'
+        : add$('/projects/', viewModel.selectedProjectId$, '/dashboards'),
+      isActive$: isExported
+        ? or$(eq$(currentRoute$, '/'), eq$(currentRoute$, '/dashboards'))
+        : startsWith$(currentRoute$, '/projects/<projectId:string>/dashboards'),
       labelColor$: 'slategray',
       highlightLabelColor$: 'darkslategray',
     })

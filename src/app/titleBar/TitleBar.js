@@ -20,11 +20,9 @@ const TitleBar$ = ({ currentRoute$, viewModel }) => {
       span$(
         choose$(
           viewModel.selectedProjectName$,
-          choose$(
-            isExported,
-            viewModel.selectedProjectName$,
-            add$(' / ', viewModel.selectedProjectName$)
-          ),
+          isExported
+            ? viewModel.selectedProjectName$
+            : add$(' / ', viewModel.selectedProjectName$),
           ''
         )
       )
@@ -49,14 +47,33 @@ const TitleBar$ = ({ currentRoute$, viewModel }) => {
       ExportButton$('Export').onClick(() => {
         const element = document.createElement('a');
         // SInce just the first occurrence of the code will be replaced, we need to make sure that this code does not replace itself, so we construct the match on call time
-        const fileContent = document.head.innerHTML.replace(
-          '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *f*a*l*s*e*;*'
-            .split('*')
-            .join(''),
-          '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *t*r*u*e*;*'
-            .split('*')
-            .join('')
-        );
+        const fileContent = document.head.innerHTML
+          .replace(
+            '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *f*a*l*s*e*;*'
+              .split('*')
+              .join(''),
+            '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *t*r*u*e*;*'
+              .split('*')
+              .join('')
+          )
+          .replace(
+            '*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>* *[*]*;*'
+              .split('*')
+              .join(''),
+            `*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>*`
+              .split('*')
+              .join('') +
+              JSON.stringify([
+                {
+                  id: viewModel.selectedProjectId$.value,
+                  name: viewModel.selectedProjectName$.value,
+                  apiUrl: viewModel.selectedApiUrl$.value,
+                  apiInterval: viewModel.selectedApiInterval$.value,
+                  derivedValuesCode: viewModel.selectedDerivedValuesCode$.value,
+                  widgetsCode: viewModel.selectedWidgetsCode$.value,
+                },
+              ])
+          );
         const file = new Blob([fileContent], { type: 'text/plain' });
         element.href = URL.createObjectURL(file);
         element.download = `${viewModel.selectedProjectName$.value}.html`;

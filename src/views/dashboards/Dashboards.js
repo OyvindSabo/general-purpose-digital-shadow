@@ -62,7 +62,7 @@ const Dashboards$ = ({ viewModel, currentRoute$ }) => {
     ).setStyle({
       display: 'inline-block',
       position: 'absolute',
-      paddingLeft: choose$(codeEditorIsOpen$, '0', '64px'),
+      paddingLeft: choose$(codeEditorIsOpen$, '0', isExported ? '0' : '64px'),
       transition: '0.5s',
       height: 'calc(100% - 64px)',
       overflowY: 'auto',

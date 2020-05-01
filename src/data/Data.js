@@ -12,6 +12,8 @@ const getAllProjects = () => {
   );
 };
 
+const getExportedProject = () => [];
+
 const getProjectById = (projectIdId) =>
   JSON.parse(localStorage.getItem('projects')).find(
     ({ id }) => id == projectId
@@ -48,6 +50,7 @@ const deleteProjectById = (projectId) => {
 
 module.exports = {
   getAllProjects,
+  getExportedProject,
   getProjectById,
   createProject,
   updateProjectById,

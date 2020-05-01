@@ -274,6 +274,8 @@ modules['src/data/Data.js'] = (() => {
   );
 };
 
+const getExportedProject = () => [];
+
 const getProjectById = (projectIdId) =>
   JSON.parse(localStorage.getItem('projects')).find(
     ({ id }) => id == projectId
@@ -310,6 +312,7 @@ const deleteProjectById = (projectId) => {
 
 module.exports = {
   getAllProjects,
+  getExportedProject,
   getProjectById,
   createProject,
   updateProjectById,
@@ -323,6 +326,7 @@ modules['src/model/Model.js'] = (() => {
   const module = { exports: {} };
   const Observable = include('src/libraries/observable/Observable.js');
 const {
+  getExportedProject,
   getAllProjects,
   getProjectById,
   createProject,
@@ -398,7 +402,8 @@ const Model = ({ router, isExported }) => {
   };
 
   viewModel.loadAllProjects = () => {
-    dataModel.projects = getAllProjects();
+    dataModel.projects = isExported ? getExportedProject() : getAllProjects();
+    console.log('dataModel.projects: ', dataModel.projects);
     for (let i = 0; i < MAX_AMOUNT_OF_PROJECTS; i++) {
       viewModel.projects[i].id$.value = '';
       viewModel.projects[i].name$.value = '';
@@ -412,6 +417,9 @@ const Model = ({ router, isExported }) => {
         viewModel.projects[index].name$.value = name;
         viewModel.projects[index].nameInputValue$.value = name;
         viewModel.projects[index].isEmpty$.value = false;
+        if (isExported) {
+          viewModel.selectedProjectId$.value = id;
+        }
       }
     );
     const selectedProject = dataModel.projects.find(
@@ -593,6 +601,8 @@ const Model = ({ router, isExported }) => {
   window.addEventListener(viewModel.selectedWidgetsCode$.id, updateValues);
 
   const fetchDataFromApi = () => {
+    console.log('fetchDataFromApi');
+    console.log('viewModel: ', viewModel);
     fetch(viewModel.selectedApiUrl$.value)
       .then((response) => response.json())
       .then((jsonResponse) => {
@@ -1412,31 +1422,23 @@ const ProjectNavigator$ = ({ currentRoute$, viewModel }) => {
     ),
     HorizontalNavigatorButton$({
       label: getViewTitle$('/projects/<projectId:string>/values'),
-      route$: choose$(
-        isExported,
-        '/values',
-        add$('/projects/', viewModel.selectedProjectId$, '/values')
-      ),
-      isActive$: choose$(
-        isExported,
-        eq$(currentRoute$, '/values'),
-        startsWith$(currentRoute$, '/projects/<projectId:string>/values')
-      ),
+      route$: isExported
+        ? '/values'
+        : add$('/projects/', viewModel.selectedProjectId$, '/values'),
+      isActive$: isExported
+        ? eq$(currentRoute$, '/values')
+        : startsWith$(currentRoute$, '/projects/<projectId:string>/values'),
       labelColor$: 'slategray',
       highlightLabelColor$: 'darkslategray',
     }),
     HorizontalNavigatorButton$({
       label: getViewTitle$('/projects/<projectId:string>/dashboards'),
-      route$: choose$(
-        isExported,
-        '/dashboards',
-        add$('/projects/', viewModel.selectedProjectId$, '/dashboards')
-      ),
-      isActive$: choose$(
-        isExported,
-        or$(eq$(currentRoute$, '/'), eq$(currentRoute$, '/dashboards')),
-        startsWith$(currentRoute$, '/projects/<projectId:string>/dashboards')
-      ),
+      route$: isExported
+        ? '/dashboards'
+        : add$('/projects/', viewModel.selectedProjectId$, '/dashboards'),
+      isActive$: isExported
+        ? or$(eq$(currentRoute$, '/'), eq$(currentRoute$, '/dashboards'))
+        : startsWith$(currentRoute$, '/projects/<projectId:string>/dashboards'),
       labelColor$: 'slategray',
       highlightLabelColor$: 'darkslategray',
     })
@@ -1508,11 +1510,9 @@ const TitleBar$ = ({ currentRoute$, viewModel }) => {
       span$(
         choose$(
           viewModel.selectedProjectName$,
-          choose$(
-            isExported,
-            viewModel.selectedProjectName$,
-            add$(' / ', viewModel.selectedProjectName$)
-          ),
+          isExported
+            ? viewModel.selectedProjectName$
+            : add$(' / ', viewModel.selectedProjectName$),
           ''
         )
       )
@@ -1537,14 +1537,33 @@ const TitleBar$ = ({ currentRoute$, viewModel }) => {
       ExportButton$('Export').onClick(() => {
         const element = document.createElement('a');
         // SInce just the first occurrence of the code will be replaced, we need to make sure that this code does not replace itself, so we construct the match on call time
-        const fileContent = document.head.innerHTML.replace(
-          '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *f*a*l*s*e*;*'
-            .split('*')
-            .join(''),
-          '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *t*r*u*e*;*'
-            .split('*')
-            .join('')
-        );
+        const fileContent = document.head.innerHTML
+          .replace(
+            '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *f*a*l*s*e*;*'
+              .split('*')
+              .join(''),
+            '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *t*r*u*e*;*'
+              .split('*')
+              .join('')
+          )
+          .replace(
+            '*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>* *[*]*;*'
+              .split('*')
+              .join(''),
+            `*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>*`
+              .split('*')
+              .join('') +
+              JSON.stringify([
+                {
+                  id: viewModel.selectedProjectId$.value,
+                  name: viewModel.selectedProjectName$.value,
+                  apiUrl: viewModel.selectedApiUrl$.value,
+                  apiInterval: viewModel.selectedApiInterval$.value,
+                  derivedValuesCode: viewModel.selectedDerivedValuesCode$.value,
+                  widgetsCode: viewModel.selectedWidgetsCode$.value,
+                },
+              ])
+          );
         const file = new Blob([fileContent], { type: 'text/plain' });
         element.href = URL.createObjectURL(file);
         element.download = `${viewModel.selectedProjectName$.value}.html`;
@@ -2232,7 +2251,7 @@ const Values$ = ({ viewModel, currentRoute$ }) => {
     ).setStyle({
       display: 'inline-block',
       position: 'absolute',
-      paddingLeft: choose$(codeEditorIsOpen$, '0', '64px'),
+      paddingLeft: choose$(codeEditorIsOpen$, '0', isExported ? '0' : '64px'),
       transition: '0.5s',
       height: 'calc(100% - 64px)',
       overflowY: 'auto',
@@ -2684,7 +2703,7 @@ const Dashboards$ = ({ viewModel, currentRoute$ }) => {
     ).setStyle({
       display: 'inline-block',
       position: 'absolute',
-      paddingLeft: choose$(codeEditorIsOpen$, '0', '64px'),
+      paddingLeft: choose$(codeEditorIsOpen$, '0', isExported ? '0' : '64px'),
       transition: '0.5s',
       height: 'calc(100% - 64px)',
       overflowY: 'auto',
