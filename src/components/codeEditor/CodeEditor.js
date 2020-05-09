@@ -5,8 +5,8 @@ const FullWidthCard$ = include('src/components/fullWidthCard/FullWidthCard.js');
 const CodeEditor$ = (value) => {
   const textAreaElement = textArea$(value).setStyle({
     padding: '20px',
-    width: '100%',
-    height: '100%',
+    width: 'calc(100% - 96px)',
+    height: 'calc(100% - 32px)',
     fontFamily: '"Courier New", Courier, monospace',
     fontSize: '14px',
     lineHeight: '20px',
@@ -17,6 +17,7 @@ const CodeEditor$ = (value) => {
   const element = FullWidthCard$(textAreaElement).setStyle({
     height: 'calc(100% - 64px)',
     boxSizing: 'border-box',
+    overflow: 'auto',
   });
   element.onInput = textAreaElement.onInput;
   return element;

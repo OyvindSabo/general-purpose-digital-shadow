@@ -34,12 +34,12 @@ const Dashboards$ = ({ viewModel, currentRoute$ }) => {
             value
           );
         })
-        .setStyle({ marginLeft: '96px' })
+        .setStyle({ margin: '32px 0 0 96px' })
     ).setStyle({
       display: 'inline-block',
       width: choose$(codeEditorIsOpen$, '50%', '0'),
       transition: '0.5s',
-      height: 'calc(100% - 64px)',
+      height: 'calc(100% - 96px)',
       overflow: 'hidden',
     }),
     div$(
