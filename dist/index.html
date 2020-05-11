@@ -1545,6 +1545,7 @@ modules['src/libraries/simpleUI/Constants.js'] = (() => {
 };
 
 const Sizes = {
+  FontSize: 15,
   Padding: 10,
   Unit: 20,
 };
@@ -1702,21 +1703,20 @@ module.exports = ProjectNavigator$;
   return module.exports;
 })();
 
-modules['src/libraries/simpleUI/ExpandingTextArea.js'] = (() => {
+modules['src/libraries/simpleUI/TextArea.js'] = (() => {
   const module = { exports: {} };
   const { doAddInnerShadow } = include('src/libraries/simpleHTML/SimpleHTML.js');
 const { Sizes } = include('src/libraries/simpleUI/Constants.js');
 
-const ExpandingTextArea = () => {
+const TextArea = () => {
   const textArea = document.createElement('textarea');
 
   Object.assign(textArea.style, {
     borderRadius: '5px',
     fontFamily: `"Courier New", Courier, monospace`,
-    background: 'rgba(0, 0, 0, 0.1)',
-    minHeight: '10em',
-    overflow: 'hidden',
+    background: 'rgba(0, 0, 0, 0.05)',
     outline: 'none',
+    fontSize: `${Sizes.FontSize}px`,
     padding: `${Sizes.Padding}px`,
     border: 'none',
     resize: 'none',
@@ -1730,31 +1730,15 @@ const ExpandingTextArea = () => {
       textArea.style.maxWidth = `${widthUnits * Sizes.Unit}px`;
     },
   });
-  Object.defineProperty(textArea, 'minHeightUnits', {
+  Object.defineProperty(textArea, 'heightUnits', {
     set: (heightUnits) => {
-      textArea.style.minHeight = `${heightUnits * Sizes.Unit}px`;
+      textArea.style.height = `${heightUnits * Sizes.Unit}px`;
     },
   });
-  Object.defineProperty(textArea, 'maxHeightUnits', {
-    set: (heightUnits) => {
-      textArea.style.maxHeight = `${heightUnits * Sizes.Unit}px`;
-    },
-  });
-
-  const updateTextAreaHeight = () => {
-    const previousClientHeight = textArea.clientHeight;
-    const { scrollX, scrollY } = window;
-    textArea.style.height = 'auto';
-    textArea.style.height = `${textArea.scrollHeight}px`;
-    const newClientHeight = textArea.clientHeight;
-    const scrollChange = newClientHeight - previousClientHeight;
-    window.scrollTo(scrollX, scrollY + scrollChange);
-  };
-  textArea.addEventListener('input', updateTextAreaHeight);
   return textArea;
 };
 
-module.exports = ExpandingTextArea;
+module.exports = TextArea;
 
   return module.exports;
 })();
@@ -2677,9 +2661,7 @@ modules['src/views/dashboard/Dashboard.js'] = (() => {
 const ValueWidget$ = include('src/components/valueWidget/ValueWidget.js');
 const { eq$ } = include('src/libraries/observable/utils.js');
 const { Choose$ } = include('src/libraries/observableHtml/utils.js');
-const ExpandingTextArea = include(
-  'src/libraries/simpleUI/ExpandingTextArea.js'
-);
+const TextArea = include('src/libraries/simpleUI/TextArea.js');
 const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
 const Container = include('src/libraries/simpleUI/Container.js');
 const PaddedContainer = include('src/libraries/simpleUI/PaddedContainer.js');
@@ -2717,10 +2699,9 @@ const Dashboard$ = ({ viewModel, currentRoute$ }) => {
     currentRoute$,
     '/projects/<projectId:string>/dashboard/edit'
   );
-  const codeEditor = Object.assign(ExpandingTextArea(), {
+  const codeEditor = Object.assign(TextArea(), {
     value: viewModel.selectedWidgetsCode$.value,
-    minHeightUnits: 5,
-    maxHeightUnits: 20,
+    heightUnits: 15,
   });
 
   codeEditor.addEventListener('input', ({ target }) => {

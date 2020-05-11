@@ -2,9 +2,7 @@ const CanvasWidget$ = include('src/components/canvasWidget/CanvasWidget.js');
 const ValueWidget$ = include('src/components/valueWidget/ValueWidget.js');
 const { eq$ } = include('src/libraries/observable/utils.js');
 const { Choose$ } = include('src/libraries/observableHtml/utils.js');
-const ExpandingTextArea = include(
-  'src/libraries/simpleUI/ExpandingTextArea.js'
-);
+const TextArea = include('src/libraries/simpleUI/TextArea.js');
 const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
 const Container = include('src/libraries/simpleUI/Container.js');
 const PaddedContainer = include('src/libraries/simpleUI/PaddedContainer.js');
@@ -42,10 +40,9 @@ const Dashboard$ = ({ viewModel, currentRoute$ }) => {
     currentRoute$,
     '/projects/<projectId:string>/dashboard/edit'
   );
-  const codeEditor = Object.assign(ExpandingTextArea(), {
+  const codeEditor = Object.assign(TextArea(), {
     value: viewModel.selectedWidgetsCode$.value,
-    minHeightUnits: 5,
-    maxHeightUnits: 20,
+    heightUnits: 15,
   });
 
   codeEditor.addEventListener('input', ({ target }) => {
