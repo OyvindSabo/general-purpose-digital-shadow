@@ -19,10 +19,10 @@ const App = ({ currentRoute$, viewModel }) => {
         TitleBar$({ currentRoute$, viewModel }),
         ProjectContainer$(
           ProjectNavigator$({ currentRoute$, viewModel }),
-          If$(
+          /*If$(
             startsWith$(currentRoute$, '/values'),
             Values$({ viewModel, currentRoute$ })
-          ),
+          ),*/
           If$(
             or$(
               eq$(currentRoute$, '/'),
@@ -46,10 +46,10 @@ const App = ({ currentRoute$, viewModel }) => {
               ),
               DataSources$({ viewModel })
             ),
-            If$(
+            /*If$(
               startsWith$(currentRoute$, '/projects/<projectId:string>/values'),
               Values$({ viewModel, currentRoute$ })
-            ),
+            ),*/
             If$(
               startsWith$(
                 currentRoute$,

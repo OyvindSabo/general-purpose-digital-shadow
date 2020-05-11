@@ -10,19 +10,15 @@ const {
 
 const MAX_AMOUNT_OF_PROJECTS = 100;
 const MAX_AMOUNT_OF_VALUES = 100;
-const MAX_AMOUNT_OF_DERIVED_VALUES = 100;
 const MAX_AMOUNT_OF_WIDGETS = 100;
 
-const evaluateCode = (apiResponse, derivedValuesCode, widgetsCode) =>
-  eval(`
-    let apiResponse = {};
-    let derivedValues = {};
-    let widgets = {};
-    apiResponse = ${apiResponse || "''"};
-    ${derivedValuesCode}
-    ${widgetsCode}
-    result = { apiResponse, derivedValues, widgets };
-  `);
+const evaluateCode = (apiResponse, widgetsCode) => {
+  const evaluatedCode = eval(widgetsCode);
+  const evaluatedCodeCalledWithApiResponse = evaluatedCode(
+    JSON.parse(apiResponse)
+  );
+  return evaluatedCodeCalledWithApiResponse;
+};
 
 const Model = ({ router, isExported }) => {
   const dataModel = { projects: [] };
@@ -53,20 +49,10 @@ const Model = ({ router, isExported }) => {
     selectedDerivedValuesCode$: new Observable(''),
     selectedWidgetsCode$: new Observable(''),
 
-    values: [...new Array(MAX_AMOUNT_OF_VALUES).keys()].map(() => ({
-      label$: new Observable(''),
-      value$: new Observable(0),
-      isEmpty$: new Observable(true),
-    })),
-    derivedValues: [...new Array(MAX_AMOUNT_OF_DERIVED_VALUES).keys()].map(
-      () => ({
-        label$: new Observable(''),
-        value$: new Observable(0),
-        isEmpty$: new Observable(true),
-      })
-    ),
     widgets: [...new Array(MAX_AMOUNT_OF_WIDGETS).keys()].map(() => ({
       label$: new Observable(''),
+      type$: new Observable(''),
+      value$: new Observable(0),
       edges$: new Observable([]),
       surfaces$: new Observable([]),
       center$: new Observable([0, 0, 0]),
@@ -227,41 +213,30 @@ const Model = ({ router, isExported }) => {
     try {
       evaluatedCode = evaluateCode(
         viewModel.apiResponse$.value,
-        viewModel.selectedDerivedValuesCode$.value,
         viewModel.selectedWidgetsCode$.value
       );
+      console.log('evaluateCode: ', evaluatedCode);
     } catch (e) {
-      evaluatedCode = { derivedValues: {}, widgets: {} };
+      console.log('Failed to evaluate code: ', e);
+      evaluatedCode = [];
     }
 
-    const derivedValuesEntries = Object.entries(evaluatedCode.derivedValues);
-    viewModel.derivedValues.forEach(({ label$, value$, isEmpty$ }, index) => {
-      label$.value = derivedValuesEntries[index]
-        ? derivedValuesEntries[index][0]
-        : '';
-      value$.value = derivedValuesEntries[index]
-        ? derivedValuesEntries[index][1]
-        : 0;
-      isEmpty$.value = !derivedValuesEntries[index];
-    });
-
-    const widgetsEntries = Object.entries(evaluatedCode.widgets);
+    const widgets = evaluatedCode;
     viewModel.widgets.forEach(
-      ({ label$, edges$, surfaces$, is3d$, center$, isEmpty$ }, index) => {
-        label$.value = widgetsEntries[index] ? widgetsEntries[index][0] : '';
-        edges$.value = widgetsEntries[index]
-          ? widgetsEntries[index][1].edges || []
-          : [];
-        surfaces$.value = widgetsEntries[index]
-          ? widgetsEntries[index][1].surfaces || []
-          : [];
-        center$.value = widgetsEntries[index]
-          ? widgetsEntries[index][1].center || [0, 0, 0]
+      (
+        { label$, type$, value$, edges$, surfaces$, is3d$, center$, isEmpty$ },
+        index
+      ) => {
+        label$.value = widgets[index] ? widgets[index].label : '';
+        type$.value = widgets[index] ? widgets[index].type : '';
+        value$.value = widgets[index] ? widgets[index].value : 0;
+        edges$.value = widgets[index] ? widgets[index].edges || [] : [];
+        surfaces$.value = widgets[index] ? widgets[index].surfaces || [] : [];
+        center$.value = widgets[index]
+          ? widgets[index].center || [0, 0, 0]
           : [0, 0, 0]; // TODO
-        is3d$.value = widgetsEntries[index]
-          ? widgetsEntries[index][1].is3d || false
-          : false; // TODO
-        isEmpty$.value = !widgetsEntries[index];
+        is3d$.value = widgets[index] ? widgets[index].is3d || false : false; // TODO
+        isEmpty$.value = !widgets[index];
       }
     );
   };

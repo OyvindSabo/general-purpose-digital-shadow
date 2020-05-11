@@ -336,19 +336,15 @@ const {
 
 const MAX_AMOUNT_OF_PROJECTS = 100;
 const MAX_AMOUNT_OF_VALUES = 100;
-const MAX_AMOUNT_OF_DERIVED_VALUES = 100;
 const MAX_AMOUNT_OF_WIDGETS = 100;
 
-const evaluateCode = (apiResponse, derivedValuesCode, widgetsCode) =>
-  eval(`
-    let apiResponse = {};
-    let derivedValues = {};
-    let widgets = {};
-    apiResponse = ${apiResponse || "''"};
-    ${derivedValuesCode}
-    ${widgetsCode}
-    result = { apiResponse, derivedValues, widgets };
-  `);
+const evaluateCode = (apiResponse, widgetsCode) => {
+  const evaluatedCode = eval(widgetsCode);
+  const evaluatedCodeCalledWithApiResponse = evaluatedCode(
+    JSON.parse(apiResponse)
+  );
+  return evaluatedCodeCalledWithApiResponse;
+};
 
 const Model = ({ router, isExported }) => {
   const dataModel = { projects: [] };
@@ -379,20 +375,10 @@ const Model = ({ router, isExported }) => {
     selectedDerivedValuesCode$: new Observable(''),
     selectedWidgetsCode$: new Observable(''),
 
-    values: [...new Array(MAX_AMOUNT_OF_VALUES).keys()].map(() => ({
-      label$: new Observable(''),
-      value$: new Observable(0),
-      isEmpty$: new Observable(true),
-    })),
-    derivedValues: [...new Array(MAX_AMOUNT_OF_DERIVED_VALUES).keys()].map(
-      () => ({
-        label$: new Observable(''),
-        value$: new Observable(0),
-        isEmpty$: new Observable(true),
-      })
-    ),
     widgets: [...new Array(MAX_AMOUNT_OF_WIDGETS).keys()].map(() => ({
       label$: new Observable(''),
+      type$: new Observable(''),
+      value$: new Observable(0),
       edges$: new Observable([]),
       surfaces$: new Observable([]),
       center$: new Observable([0, 0, 0]),
@@ -553,41 +539,30 @@ const Model = ({ router, isExported }) => {
     try {
       evaluatedCode = evaluateCode(
         viewModel.apiResponse$.value,
-        viewModel.selectedDerivedValuesCode$.value,
         viewModel.selectedWidgetsCode$.value
       );
+      console.log('evaluateCode: ', evaluatedCode);
     } catch (e) {
-      evaluatedCode = { derivedValues: {}, widgets: {} };
+      console.log('Failed to evaluate code: ', e);
+      evaluatedCode = [];
     }
 
-    const derivedValuesEntries = Object.entries(evaluatedCode.derivedValues);
-    viewModel.derivedValues.forEach(({ label$, value$, isEmpty$ }, index) => {
-      label$.value = derivedValuesEntries[index]
-        ? derivedValuesEntries[index][0]
-        : '';
-      value$.value = derivedValuesEntries[index]
-        ? derivedValuesEntries[index][1]
-        : 0;
-      isEmpty$.value = !derivedValuesEntries[index];
-    });
-
-    const widgetsEntries = Object.entries(evaluatedCode.widgets);
+    const widgets = evaluatedCode;
     viewModel.widgets.forEach(
-      ({ label$, edges$, surfaces$, is3d$, center$, isEmpty$ }, index) => {
-        label$.value = widgetsEntries[index] ? widgetsEntries[index][0] : '';
-        edges$.value = widgetsEntries[index]
-          ? widgetsEntries[index][1].edges || []
-          : [];
-        surfaces$.value = widgetsEntries[index]
-          ? widgetsEntries[index][1].surfaces || []
-          : [];
-        center$.value = widgetsEntries[index]
-          ? widgetsEntries[index][1].center || [0, 0, 0]
+      (
+        { label$, type$, value$, edges$, surfaces$, is3d$, center$, isEmpty$ },
+        index
+      ) => {
+        label$.value = widgets[index] ? widgets[index].label : '';
+        type$.value = widgets[index] ? widgets[index].type : '';
+        value$.value = widgets[index] ? widgets[index].value : 0;
+        edges$.value = widgets[index] ? widgets[index].edges || [] : [];
+        surfaces$.value = widgets[index] ? widgets[index].surfaces || [] : [];
+        center$.value = widgets[index]
+          ? widgets[index].center || [0, 0, 0]
           : [0, 0, 0]; // TODO
-        is3d$.value = widgetsEntries[index]
-          ? widgetsEntries[index][1].is3d || false
-          : false; // TODO
-        isEmpty$.value = !widgetsEntries[index];
+        is3d$.value = widgets[index] ? widgets[index].is3d || false : false; // TODO
+        isEmpty$.value = !widgets[index];
       }
     );
   };
@@ -1239,7 +1214,7 @@ const Choose$ = (observable, element1, element2) => {
       // TODO: Make it possible to set a specific child of an observable
       newElement = valueOf$(observable) ? element1 : element2;
 
-      if (newElement !== element) {
+      if (newElement !== element && element.parentNode) {
         element.parentNode.replaceChild(newElement, element);
         element = newElement;
       }
@@ -2648,9 +2623,10 @@ const ExpandCodeEditorButton$ = include(
   'src/components/expandCodeEditorButton/ExpandCodeEditorButton.js'
 );
 const CanvasWidget$ = include('src/components/canvasWidget/CanvasWidget.js');
+const ValueWidget$ = include('src/components/valueWidget/ValueWidget.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { eq$, choose$, not$ } = include('src/libraries/observable/utils.js');
-const { If$ } = include('src/libraries/observableHtml/utils.js');
+const { If$, Choose$ } = include('src/libraries/observableHtml/utils.js');
 
 const Dashboards$ = ({ viewModel, currentRoute$ }) => {
   const { isExported } = viewModel;
@@ -2690,15 +2666,31 @@ const Dashboards$ = ({ viewModel, currentRoute$ }) => {
     div$(
       div$(
         ...viewModel.widgets.map(
-          ({ label$, surfaces$, edges$, is3d$, center$, isEmpty$ }) =>
-            CanvasWidget$({
-              label$,
-              surfaces$,
-              edges$,
-              is3d$,
-              center$,
-              isEmpty$,
-            })
+          ({
+            label$,
+            type$,
+            value$,
+            surfaces$,
+            edges$,
+            is3d$,
+            center$,
+            isEmpty$,
+          }) =>
+            Choose$(
+              eq$(type$, 'canvas-widget'),
+              CanvasWidget$({
+                label$,
+                type$,
+                value$,
+                surfaces$,
+                edges$,
+                is3d$,
+                center$,
+                isEmpty$,
+              }),
+              // eq$(type$, 'number-widget')
+              ValueWidget$({ label$, value$, isEmpty$ })
+            )
         )
       ).setStyle({
         position: 'relative',
@@ -2743,10 +2735,10 @@ const App = ({ currentRoute$, viewModel }) => {
         TitleBar$({ currentRoute$, viewModel }),
         ProjectContainer$(
           ProjectNavigator$({ currentRoute$, viewModel }),
-          If$(
+          /*If$(
             startsWith$(currentRoute$, '/values'),
             Values$({ viewModel, currentRoute$ })
-          ),
+          ),*/
           If$(
             or$(
               eq$(currentRoute$, '/'),
@@ -2770,10 +2762,10 @@ const App = ({ currentRoute$, viewModel }) => {
               ),
               DataSources$({ viewModel })
             ),
-            If$(
+            /*If$(
               startsWith$(currentRoute$, '/projects/<projectId:string>/values'),
               Values$({ viewModel, currentRoute$ })
-            ),
+            ),*/
             If$(
               startsWith$(
                 currentRoute$,

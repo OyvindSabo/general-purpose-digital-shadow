@@ -10,7 +10,7 @@ const Choose$ = (observable, element1, element2) => {
       // TODO: Make it possible to set a specific child of an observable
       newElement = valueOf$(observable) ? element1 : element2;
 
-      if (newElement !== element) {
+      if (newElement !== element && element.parentNode) {
         element.parentNode.replaceChild(newElement, element);
         element = newElement;
       }

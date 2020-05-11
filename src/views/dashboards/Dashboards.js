@@ -3,9 +3,10 @@ const ExpandCodeEditorButton$ = include(
   'src/components/expandCodeEditorButton/ExpandCodeEditorButton.js'
 );
 const CanvasWidget$ = include('src/components/canvasWidget/CanvasWidget.js');
+const ValueWidget$ = include('src/components/valueWidget/ValueWidget.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { eq$, choose$, not$ } = include('src/libraries/observable/utils.js');
-const { If$ } = include('src/libraries/observableHtml/utils.js');
+const { If$, Choose$ } = include('src/libraries/observableHtml/utils.js');
 
 const Dashboards$ = ({ viewModel, currentRoute$ }) => {
   const { isExported } = viewModel;
@@ -45,15 +46,31 @@ const Dashboards$ = ({ viewModel, currentRoute$ }) => {
     div$(
       div$(
         ...viewModel.widgets.map(
-          ({ label$, surfaces$, edges$, is3d$, center$, isEmpty$ }) =>
-            CanvasWidget$({
-              label$,
-              surfaces$,
-              edges$,
-              is3d$,
-              center$,
-              isEmpty$,
-            })
+          ({
+            label$,
+            type$,
+            value$,
+            surfaces$,
+            edges$,
+            is3d$,
+            center$,
+            isEmpty$,
+          }) =>
+            Choose$(
+              eq$(type$, 'canvas-widget'),
+              CanvasWidget$({
+                label$,
+                type$,
+                value$,
+                surfaces$,
+                edges$,
+                is3d$,
+                center$,
+                isEmpty$,
+              }),
+              // eq$(type$, 'number-widget')
+              ValueWidget$({ label$, value$, isEmpty$ })
+            )
         )
       ).setStyle({
         position: 'relative',
