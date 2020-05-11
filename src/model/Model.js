@@ -215,7 +215,6 @@ const Model = ({ router, isExported }) => {
         viewModel.apiResponse$.value,
         viewModel.selectedWidgetsCode$.value
       );
-      console.log('evaluateCode: ', evaluatedCode);
     } catch (e) {
       console.log('Failed to evaluate code: ', e);
       evaluatedCode = [];

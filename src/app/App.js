@@ -16,23 +16,7 @@ const App = ({ currentRoute$, viewModel }) => {
   return viewModel.isExported
     ? div$(
         TitleBar$({ currentRoute$, viewModel }),
-        ProjectContainer$(
-          If(
-            viewModel.isExported,
-            ProjectNavigator$({ currentRoute$, viewModel })
-          ),
-          /*If$(
-            startsWith$(currentRoute$, '/values'),
-            Values$({ viewModel, currentRoute$ })
-          ),*/
-          If$(
-            or$(
-              eq$(currentRoute$, '/'),
-              startsWith$(currentRoute$, '/dashboard')
-            ),
-            Dashboard$({ viewModel, currentRoute$ })
-          )
-        )
+        ProjectContainer$(Dashboard$({ viewModel, currentRoute$ }))
       )
     : div$(
         TitleBar$({ currentRoute$, viewModel }),

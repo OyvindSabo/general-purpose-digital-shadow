@@ -5,7 +5,8 @@ const Colors = {
 };
 
 const Sizes = {
-  Padding: '5px',
+  Padding: 10,
+  Unit: 20,
 };
 
 module.exports = {

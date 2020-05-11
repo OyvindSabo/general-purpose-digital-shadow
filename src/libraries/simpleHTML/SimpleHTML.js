@@ -1,3 +1,11 @@
+const doAddInnerShadow = (element) => {
+  element.style.boxShadow = 'inset rgba(0, 0, 0, 0.25) 0 0 10px -5px';
+};
+
+const doAddShadow = (element) => {
+  element.style.boxShadow = 'rgba(0, 0, 0, 0.25) 0 0 10px -5px';
+};
+
 const doUpdateChildren = (element, newChildren) => {
   newChildren.forEach((newChild, index) => {
     if (element.childNodes[index] === newChild) return;
@@ -7,15 +15,16 @@ const doUpdateChildren = (element, newChildren) => {
     ) {
       element.removeChild(element.childNodes[index]);
     }
-    if (index === 0) {
-      element.appendChild(newChild);
+    if (element.childNodes[index]) {
+      element.insertBefore(newChild, element.childNodes[index]);
       return;
     }
-    element.childNodes[index - 1].insertAdjacentElement('afterEnd', newChild);
+    element.appendChild(newChild);
+    return;
   });
   while (newChildren.length < element.childNodes.length) {
     element.removeChild(element.childNodes[newChildren.length]);
   }
 };
 
-module.exports = { doUpdateChildren };
+module.exports = { doAddInnerShadow, doAddShadow, doUpdateChildren };

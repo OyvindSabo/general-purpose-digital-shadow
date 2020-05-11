@@ -1,12 +1,40 @@
-const CodeEditor$ = include('src/components/codeEditor/CodeEditor.js');
-const ExpandCodeEditorButton$ = include(
-  'src/components/expandCodeEditorButton/ExpandCodeEditorButton.js'
-);
 const CanvasWidget$ = include('src/components/canvasWidget/CanvasWidget.js');
 const ValueWidget$ = include('src/components/valueWidget/ValueWidget.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const { eq$, choose$, not$ } = include('src/libraries/observable/utils.js');
-const { If$, Choose$ } = include('src/libraries/observableHtml/utils.js');
+const { eq$ } = include('src/libraries/observable/utils.js');
+const { Choose$ } = include('src/libraries/observableHtml/utils.js');
+const ExpandingTextArea = include(
+  'src/libraries/simpleUI/ExpandingTextArea.js'
+);
+const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const Container = include('src/libraries/simpleUI/Container.js');
+const PaddedContainer = include('src/libraries/simpleUI/PaddedContainer.js');
+
+const Widget$ = ({
+  label$,
+  type$,
+  value$,
+  surfaces$,
+  edges$,
+  is3d$,
+  center$,
+  isEmpty$,
+}) => {
+  return Choose$(
+    eq$(type$, 'canvas-widget'),
+    CanvasWidget$({
+      label$,
+      type$,
+      value$,
+      surfaces$,
+      edges$,
+      is3d$,
+      center$,
+      isEmpty$,
+    }),
+    // eq$(type$, 'number-widget')
+    ValueWidget$({ label$, value$, isEmpty$ })
+  );
+};
 
 const Dashboard$ = ({ viewModel, currentRoute$ }) => {
   const { isExported } = viewModel;
@@ -14,77 +42,46 @@ const Dashboard$ = ({ viewModel, currentRoute$ }) => {
     currentRoute$,
     '/projects/<projectId:string>/dashboard/edit'
   );
-  return div$(
-    If$(
-      not$(isExported),
-      ExpandCodeEditorButton$({
-        icon: '+',
-        label$: choose$(codeEditorIsOpen$, 'Hide editor', 'Show editor'),
-        isOpen$: codeEditorIsOpen$,
-      }).onClick(() => {
-        location.hash = codeEditorIsOpen$.value
-          ? `#!/projects/${viewModel.selectedProjectId$.value}/dashboard`
-          : `#!/projects/${viewModel.selectedProjectId$.value}/dashboard/edit`;
-      })
-    ),
-    div$(
-      CodeEditor$(viewModel.selectedWidgetsCode$)
-        .onInput(({ value }) => {
-          viewModel.updateWidgetsCode(
-            viewModel.selectedProjectId$.value,
-            value
-          );
-        })
-        .setStyle({ margin: '32px 0 0 96px' })
-    ).setStyle({
-      display: 'inline-block',
-      width: choose$(codeEditorIsOpen$, '50%', '0'),
-      transition: '0.5s',
-      height: 'calc(100% - 96px)',
-      overflow: 'hidden',
-    }),
-    div$(
-      div$(
-        ...viewModel.widgets.map(
-          ({
-            label$,
-            type$,
-            value$,
-            surfaces$,
-            edges$,
-            is3d$,
-            center$,
-            isEmpty$,
-          }) =>
-            Choose$(
-              eq$(type$, 'canvas-widget'),
-              CanvasWidget$({
-                label$,
-                type$,
-                value$,
-                surfaces$,
-                edges$,
-                is3d$,
-                center$,
-                isEmpty$,
-              }),
-              // eq$(type$, 'number-widget')
-              ValueWidget$({ label$, value$, isEmpty$ })
-            )
-        )
-      ).setStyle({
-        position: 'relative',
-        top: '0',
-      })
-    ).setStyle({
-      display: 'inline-block',
-      position: 'absolute',
-      paddingLeft: choose$(codeEditorIsOpen$, '0', isExported ? '0' : '64px'),
-      transition: '0.5s',
-      height: 'calc(100% - 64px)',
-      overflowY: 'auto',
-    })
-  ).setStyle({ width: '100%' });
+  const codeEditor = Object.assign(ExpandingTextArea(), {
+    value: viewModel.selectedWidgetsCode$.value,
+    minHeightUnits: 5,
+    maxHeightUnits: 20,
+  });
+
+  codeEditor.addEventListener('input', ({ target }) => {
+    viewModel.updateWidgetsCode(
+      viewModel.selectedProjectId$.value,
+      target.value
+    );
+  });
+
+  const widgets = [...viewModel.widgets.map(Widget$)];
+
+  const codeEditorContainer = Object.assign(PaddedContainer(), {
+    children: [codeEditor],
+  });
+
+  const widgetsContainer = Object.assign(PaddedContainer(), {
+    children: [...widgets],
+  });
+
+  const getDashboardChildren = () =>
+    codeEditorIsOpen$.value && !isExported
+      ? [codeEditorContainer, widgetsContainer]
+      : [widgetsContainer];
+
+  const dashboardContainer = Object.assign(PaddedContainer(), {
+    children: getDashboardChildren(),
+  });
+
+  addEventListener(codeEditorIsOpen$.id, () => {
+    doUpdateChildren(dashboardContainer, getDashboardChildren());
+  });
+  addEventListener(viewModel.selectedWidgetsCode$.id, () => {
+    codeEditor.value = viewModel.selectedWidgetsCode$.value;
+  });
+
+  return dashboardContainer;
 };
 
 module.exports = Dashboard$;

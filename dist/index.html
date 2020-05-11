@@ -541,7 +541,6 @@ const Model = ({ router, isExported }) => {
         viewModel.apiResponse$.value,
         viewModel.selectedWidgetsCode$.value
       );
-      console.log('evaluateCode: ', evaluatedCode);
     } catch (e) {
       console.log('Failed to evaluate code: ', e);
       evaluatedCode = [];
@@ -1447,47 +1446,92 @@ module.exports = NewProject$;
   return module.exports;
 })();
 
-modules['src/components/expandCodeEditorButton/ExpandCodeEditorButton.js'] = (() => {
+modules['src/libraries/simpleHTML/SimpleHTML.js'] = (() => {
   const module = { exports: {} };
-  const Observable = include('src/libraries/observable/Observable.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const { choose$ } = include('src/libraries/observable/utils.js');
-
-const ExpandCodeEditorButton$ = ({ icon, label$, isOpen$ }) => {
-  const isHovered$ = new Observable(false);
-  return div$(
-    div$(choose$(isOpen$, '−', '+')).setStyle({
-      fontSize: '30px',
-      textAlign: 'center',
-      marginTop: '15px',
-      pointerEvents: 'none',
-      userSelect: 'none',
-      transform: choose$(isOpen$, 'rotate(180deg)', 'rotate(0deg)'),
-      transition: '0.5s',
-    })
-  )
-    .setStyle({
-      position: 'absolute',
-      background: choose$(isHovered$, 'dodgerblue', 'royalblue'),
-      borderRadius: '50%',
-      color: 'white',
-      height: '60px',
-      width: '60px',
-      margin: '10px',
-      overflow: 'hidden',
-      transition: '0.5s',
-      cursor: 'pointer',
-      zIndex: '1',
-    })
-    .onMouseEnter(element => {
-      isHovered$.value = true;
-    })
-    .onMouseLeave(element => {
-      isHovered$.value = false;
-    });
+  const doAddInnerShadow = (element) => {
+  element.style.boxShadow = 'inset rgba(0, 0, 0, 0.25) 0 0 10px -5px';
 };
 
-module.exports = ExpandCodeEditorButton$;
+const doAddShadow = (element) => {
+  element.style.boxShadow = 'rgba(0, 0, 0, 0.25) 0 0 10px -5px';
+};
+
+const doUpdateChildren = (element, newChildren) => {
+  newChildren.forEach((newChild, index) => {
+    if (element.childNodes[index] === newChild) return;
+    while (
+      element.childNodes[index] &&
+      !newChildren.includes(element.childNodes[index])
+    ) {
+      element.removeChild(element.childNodes[index]);
+    }
+    if (element.childNodes[index]) {
+      element.insertBefore(newChild, element.childNodes[index]);
+      return;
+    }
+    element.appendChild(newChild);
+    return;
+  });
+  while (newChildren.length < element.childNodes.length) {
+    element.removeChild(element.childNodes[newChildren.length]);
+  }
+};
+
+module.exports = { doAddInnerShadow, doAddShadow, doUpdateChildren };
+
+  return module.exports;
+})();
+
+modules['src/libraries/simpleUI/HorizontalNavigator.js'] = (() => {
+  const module = { exports: {} };
+  const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const HorizontalNavigator = () => {
+  // Create base element
+  const divElement = document.createElement('div');
+
+  // Define setters
+  Object.defineProperty(divElement, 'heightUnits', {
+    set: (heightUnits) => {
+      divElement.style.height = `${heightUnits * 20}px`;
+    },
+  });
+  Object.defineProperty(divElement, 'children', {
+    set: (children) => {
+      doUpdateChildren(divElement, children);
+    },
+  });
+  return divElement;
+};
+
+module.exports = HorizontalNavigator;
+
+  return module.exports;
+})();
+
+modules['src/libraries/simpleUI/Container.js'] = (() => {
+  const module = { exports: {} };
+  const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const Container = () => {
+  // Create base element
+  const divElement = document.createElement('div');
+
+  // Define setters
+  Object.defineProperty(divElement, 'widthUnits', {
+    set: (widthUnits) => {
+      divElement.style.maxWidth = `${widthUnits * 20}px`;
+    },
+  });
+  Object.defineProperty(divElement, 'children', {
+    set: (children) => {
+      doUpdateChildren(divElement, children);
+    },
+  });
+  return divElement;
+};
+
+module.exports = Container;
 
   return module.exports;
 })();
@@ -1501,7 +1545,8 @@ modules['src/libraries/simpleUI/Constants.js'] = (() => {
 };
 
 const Sizes = {
-  Padding: '5px',
+  Padding: 10,
+  Unit: 20,
 };
 
 module.exports = {
@@ -1590,60 +1635,6 @@ module.exports = NavigationButton;
   return module.exports;
 })();
 
-modules['src/libraries/simpleHTML/SimpleHTML.js'] = (() => {
-  const module = { exports: {} };
-  const doUpdateChildren = (element, newChildren) => {
-  newChildren.forEach((newChild, index) => {
-    if (element.childNodes[index] === newChild) return;
-    while (
-      element.childNodes[index] &&
-      !newChildren.includes(element.childNodes[index])
-    ) {
-      element.removeChild(element.childNodes[index]);
-    }
-    if (index === 0) {
-      element.appendChild(newChild);
-      return;
-    }
-    element.childNodes[index - 1].insertAdjacentElement('afterEnd', newChild);
-  });
-  while (newChildren.length < element.childNodes.length) {
-    element.removeChild(element.childNodes[newChildren.length]);
-  }
-};
-
-module.exports = { doUpdateChildren };
-
-  return module.exports;
-})();
-
-modules['src/libraries/simpleUI/HorizontalNavigator.js'] = (() => {
-  const module = { exports: {} };
-  const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const HorizontalNavigator = () => {
-  // Create base element
-  const divElement = document.createElement('div');
-
-  // Define setters
-  Object.defineProperty(divElement, 'heightUnits', {
-    set: (heightUnits) => {
-      divElement.style.height = `${heightUnits * 20}px`;
-    },
-  });
-  Object.defineProperty(divElement, 'children', {
-    set: (children) => {
-      doUpdateChildren(divElement, children);
-    },
-  });
-  return divElement;
-};
-
-module.exports = HorizontalNavigator;
-
-  return module.exports;
-})();
-
 modules['src/views/project/projectNavigator/ProjectNavigator.js'] = (() => {
   const module = { exports: {} };
   const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
@@ -1707,6 +1698,92 @@ const ProjectNavigator$ = ({ currentRoute$, viewModel }) => {
 };
 
 module.exports = ProjectNavigator$;
+
+  return module.exports;
+})();
+
+modules['src/libraries/simpleUI/ExpandingTextArea.js'] = (() => {
+  const module = { exports: {} };
+  const { doAddInnerShadow } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const { Sizes } = include('src/libraries/simpleUI/Constants.js');
+
+const ExpandingTextArea = () => {
+  const textArea = document.createElement('textarea');
+
+  Object.assign(textArea.style, {
+    borderRadius: '5px',
+    fontFamily: `"Courier New", Courier, monospace`,
+    background: 'rgba(0, 0, 0, 0.1)',
+    minHeight: '10em',
+    overflow: 'hidden',
+    outline: 'none',
+    padding: `${Sizes.Padding}px`,
+    border: 'none',
+    resize: 'none',
+    width: '100%',
+  });
+
+  doAddInnerShadow(textArea);
+
+  Object.defineProperty(textArea, 'widthUnits', {
+    set: (widthUnits) => {
+      textArea.style.maxWidth = `${widthUnits * Sizes.Unit}px`;
+    },
+  });
+  Object.defineProperty(textArea, 'minHeightUnits', {
+    set: (heightUnits) => {
+      textArea.style.minHeight = `${heightUnits * Sizes.Unit}px`;
+    },
+  });
+  Object.defineProperty(textArea, 'maxHeightUnits', {
+    set: (heightUnits) => {
+      textArea.style.maxHeight = `${heightUnits * Sizes.Unit}px`;
+    },
+  });
+
+  const updateTextAreaHeight = () => {
+    const previousClientHeight = textArea.clientHeight;
+    const { scrollX, scrollY } = window;
+    textArea.style.height = 'auto';
+    textArea.style.height = `${textArea.scrollHeight}px`;
+    const newClientHeight = textArea.clientHeight;
+    const scrollChange = newClientHeight - previousClientHeight;
+    window.scrollTo(scrollX, scrollY + scrollChange);
+  };
+  textArea.addEventListener('input', updateTextAreaHeight);
+  return textArea;
+};
+
+module.exports = ExpandingTextArea;
+
+  return module.exports;
+})();
+
+modules['src/libraries/simpleUI/PaddedContainer.js'] = (() => {
+  const module = { exports: {} };
+  const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const { Sizes } = include('src/libraries/simpleUI/Constants.js');
+
+const PaddedContainer = () => {
+  // Create base element
+  const divElement = document.createElement('div');
+  divElement.style.padding = `${Sizes.Padding}px`;
+
+  // Define setters
+  Object.defineProperty(divElement, 'widthUnits', {
+    set: (widthUnits) => {
+      divElement.style.maxWidth = `${widthUnits * 20}px`;
+    },
+  });
+  Object.defineProperty(divElement, 'children', {
+    set: (children) => {
+      doUpdateChildren(divElement, children);
+    },
+  });
+  return divElement;
+};
+
+module.exports = PaddedContainer;
 
   return module.exports;
 })();
@@ -2011,38 +2088,6 @@ const FullWidthCard$ = withShadow(
 );
 
 module.exports = FullWidthCard$;
-
-  return module.exports;
-})();
-
-modules['src/components/codeEditor/CodeEditor.js'] = (() => {
-  const module = { exports: {} };
-  const styled = include('src/libraries/styled/styled.js');
-const { textArea$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const FullWidthCard$ = include('src/components/fullWidthCard/FullWidthCard.js');
-
-const CodeEditor$ = (value) => {
-  const textAreaElement = textArea$(value).setStyle({
-    padding: '20px',
-    width: 'calc(100% - 96px)',
-    height: 'calc(100% - 32px)',
-    fontFamily: '"Courier New", Courier, monospace',
-    fontSize: '14px',
-    lineHeight: '20px',
-    whiteSpace: 'nowrap',
-    border: 'none',
-    color: 'darkslategray',
-  });
-  const element = FullWidthCard$(textAreaElement).setStyle({
-    height: 'calc(100% - 64px)',
-    boxSizing: 'border-box',
-    overflow: 'auto',
-  });
-  element.onInput = textAreaElement.onInput;
-  return element;
-};
-
-module.exports = CodeEditor$;
 
   return module.exports;
 })();
@@ -2628,15 +2673,43 @@ module.exports = CanvasWidget$;
 
 modules['src/views/dashboard/Dashboard.js'] = (() => {
   const module = { exports: {} };
-  const CodeEditor$ = include('src/components/codeEditor/CodeEditor.js');
-const ExpandCodeEditorButton$ = include(
-  'src/components/expandCodeEditorButton/ExpandCodeEditorButton.js'
-);
-const CanvasWidget$ = include('src/components/canvasWidget/CanvasWidget.js');
+  const CanvasWidget$ = include('src/components/canvasWidget/CanvasWidget.js');
 const ValueWidget$ = include('src/components/valueWidget/ValueWidget.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const { eq$, choose$, not$ } = include('src/libraries/observable/utils.js');
-const { If$, Choose$ } = include('src/libraries/observableHtml/utils.js');
+const { eq$ } = include('src/libraries/observable/utils.js');
+const { Choose$ } = include('src/libraries/observableHtml/utils.js');
+const ExpandingTextArea = include(
+  'src/libraries/simpleUI/ExpandingTextArea.js'
+);
+const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const Container = include('src/libraries/simpleUI/Container.js');
+const PaddedContainer = include('src/libraries/simpleUI/PaddedContainer.js');
+
+const Widget$ = ({
+  label$,
+  type$,
+  value$,
+  surfaces$,
+  edges$,
+  is3d$,
+  center$,
+  isEmpty$,
+}) => {
+  return Choose$(
+    eq$(type$, 'canvas-widget'),
+    CanvasWidget$({
+      label$,
+      type$,
+      value$,
+      surfaces$,
+      edges$,
+      is3d$,
+      center$,
+      isEmpty$,
+    }),
+    // eq$(type$, 'number-widget')
+    ValueWidget$({ label$, value$, isEmpty$ })
+  );
+};
 
 const Dashboard$ = ({ viewModel, currentRoute$ }) => {
   const { isExported } = viewModel;
@@ -2644,77 +2717,46 @@ const Dashboard$ = ({ viewModel, currentRoute$ }) => {
     currentRoute$,
     '/projects/<projectId:string>/dashboard/edit'
   );
-  return div$(
-    If$(
-      not$(isExported),
-      ExpandCodeEditorButton$({
-        icon: '+',
-        label$: choose$(codeEditorIsOpen$, 'Hide editor', 'Show editor'),
-        isOpen$: codeEditorIsOpen$,
-      }).onClick(() => {
-        location.hash = codeEditorIsOpen$.value
-          ? `#!/projects/${viewModel.selectedProjectId$.value}/dashboard`
-          : `#!/projects/${viewModel.selectedProjectId$.value}/dashboard/edit`;
-      })
-    ),
-    div$(
-      CodeEditor$(viewModel.selectedWidgetsCode$)
-        .onInput(({ value }) => {
-          viewModel.updateWidgetsCode(
-            viewModel.selectedProjectId$.value,
-            value
-          );
-        })
-        .setStyle({ margin: '32px 0 0 96px' })
-    ).setStyle({
-      display: 'inline-block',
-      width: choose$(codeEditorIsOpen$, '50%', '0'),
-      transition: '0.5s',
-      height: 'calc(100% - 96px)',
-      overflow: 'hidden',
-    }),
-    div$(
-      div$(
-        ...viewModel.widgets.map(
-          ({
-            label$,
-            type$,
-            value$,
-            surfaces$,
-            edges$,
-            is3d$,
-            center$,
-            isEmpty$,
-          }) =>
-            Choose$(
-              eq$(type$, 'canvas-widget'),
-              CanvasWidget$({
-                label$,
-                type$,
-                value$,
-                surfaces$,
-                edges$,
-                is3d$,
-                center$,
-                isEmpty$,
-              }),
-              // eq$(type$, 'number-widget')
-              ValueWidget$({ label$, value$, isEmpty$ })
-            )
-        )
-      ).setStyle({
-        position: 'relative',
-        top: '0',
-      })
-    ).setStyle({
-      display: 'inline-block',
-      position: 'absolute',
-      paddingLeft: choose$(codeEditorIsOpen$, '0', isExported ? '0' : '64px'),
-      transition: '0.5s',
-      height: 'calc(100% - 64px)',
-      overflowY: 'auto',
-    })
-  ).setStyle({ width: '100%' });
+  const codeEditor = Object.assign(ExpandingTextArea(), {
+    value: viewModel.selectedWidgetsCode$.value,
+    minHeightUnits: 5,
+    maxHeightUnits: 20,
+  });
+
+  codeEditor.addEventListener('input', ({ target }) => {
+    viewModel.updateWidgetsCode(
+      viewModel.selectedProjectId$.value,
+      target.value
+    );
+  });
+
+  const widgets = [...viewModel.widgets.map(Widget$)];
+
+  const codeEditorContainer = Object.assign(PaddedContainer(), {
+    children: [codeEditor],
+  });
+
+  const widgetsContainer = Object.assign(PaddedContainer(), {
+    children: [...widgets],
+  });
+
+  const getDashboardChildren = () =>
+    codeEditorIsOpen$.value && !isExported
+      ? [codeEditorContainer, widgetsContainer]
+      : [widgetsContainer];
+
+  const dashboardContainer = Object.assign(PaddedContainer(), {
+    children: getDashboardChildren(),
+  });
+
+  addEventListener(codeEditorIsOpen$.id, () => {
+    doUpdateChildren(dashboardContainer, getDashboardChildren());
+  });
+  addEventListener(viewModel.selectedWidgetsCode$.id, () => {
+    codeEditor.value = viewModel.selectedWidgetsCode$.value;
+  });
+
+  return dashboardContainer;
 };
 
 module.exports = Dashboard$;
@@ -2742,23 +2784,7 @@ const App = ({ currentRoute$, viewModel }) => {
   return viewModel.isExported
     ? div$(
         TitleBar$({ currentRoute$, viewModel }),
-        ProjectContainer$(
-          If(
-            viewModel.isExported,
-            ProjectNavigator$({ currentRoute$, viewModel })
-          ),
-          /*If$(
-            startsWith$(currentRoute$, '/values'),
-            Values$({ viewModel, currentRoute$ })
-          ),*/
-          If$(
-            or$(
-              eq$(currentRoute$, '/'),
-              startsWith$(currentRoute$, '/dashboard')
-            ),
-            Dashboard$({ viewModel, currentRoute$ })
-          )
-        )
+        ProjectContainer$(Dashboard$({ viewModel, currentRoute$ }))
       )
     : div$(
         TitleBar$({ currentRoute$, viewModel }),
