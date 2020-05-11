@@ -1,58 +1,61 @@
-const HorizontalNavigatorButton$ = include(
-  'src/components/horizontalNavigatorButton/HorizontalNavigatorButton.js'
+const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
+const HorizontalNavigator = include(
+  'src/libraries/simpleUI/HorizontalNavigator.js'
 );
-const HorizontalNavigator$ = include(
-  'src/components/horizontalNavigator/HorizontalNavigator.js'
-);
-const { choose$, eq$, not$, or$, startsWith$, add$ } = include(
-  'src/libraries/observable/utils.js'
-);
-const { getViewTitle$ } = include('src/app/utils.js');
-const { If$ } = include('src/libraries/observableHtml/utils.js');
+
+const button = (title) =>
+  Object.assign(NavigationButton(), {
+    widthUnits: 8,
+    heightUnits: 2,
+    title,
+  });
+
+const Navigator = (children) =>
+  Object.assign(HorizontalNavigator(), {
+    heightUnits: 2,
+    children,
+  });
 
 const ProjectNavigator$ = ({ currentRoute$, viewModel }) => {
-  const { isExported } = viewModel;
-  return HorizontalNavigator$(
-    If$(
-      not$(isExported),
-      HorizontalNavigatorButton$({
-        label: getViewTitle$('/projects/<projectId:string>/data-sources'),
-        route$: add$(
-          '/projects/',
-          viewModel.selectedProjectId$,
-          '/data-sources'
-        ),
-        isActive$: or$(
-          eq$(currentRoute$, '/projects/<projectId:string>'),
-          eq$(currentRoute$, '/projects/<projectId:string>/data-sources')
-        ),
-        labelColor$: 'slategray',
-        highlightLabelColor$: 'darkslategray',
-      })
-    ),
-    HorizontalNavigatorButton$({
-      label: getViewTitle$('/projects/<projectId:string>/values'),
-      route$: isExported
-        ? '/values'
-        : add$('/projects/', viewModel.selectedProjectId$, '/values'),
-      isActive$: isExported
-        ? eq$(currentRoute$, '/values')
-        : startsWith$(currentRoute$, '/projects/<projectId:string>/values'),
-      labelColor$: 'slategray',
-      highlightLabelColor$: 'darkslategray',
-    }),
-    HorizontalNavigatorButton$({
-      label: getViewTitle$('/projects/<projectId:string>/dashboards'),
-      route$: isExported
-        ? '/dashboards'
-        : add$('/projects/', viewModel.selectedProjectId$, '/dashboards'),
-      isActive$: isExported
-        ? or$(eq$(currentRoute$, '/'), eq$(currentRoute$, '/dashboards'))
-        : startsWith$(currentRoute$, '/projects/<projectId:string>/dashboards'),
-      labelColor$: 'slategray',
-      highlightLabelColor$: 'darkslategray',
-    })
-  );
+  const dataSourcesButton = button('Data sources');
+  const dashboardEditorButton = button('Dashboard editor');
+  const dashboardButton = button('Dashboard');
+  const navigator = Navigator([
+    dataSourcesButton,
+    dashboardEditorButton,
+    dashboardButton,
+  ]);
+
+  const doUpdateIsSelected = (currentRoute) => {
+    dataSourcesButton.isSelected = [
+      '/projects/<projectId:string>',
+      '/projects/<projectId:string>/data-sources',
+    ].includes(currentRoute);
+    dashboardEditorButton.isSelected =
+      currentRoute === '/projects/<projectId:string>/dashboard/edit';
+    dashboardButton.isSelected =
+      currentRoute === '/projects/<projectId:string>/dashboard';
+  };
+
+  const doUpdateHref = (selectedProjectId) => {
+    dataSourcesButton.href = `#!/projects/${selectedProjectId}/data-sources`;
+    dashboardEditorButton.href = `#!/projects/${selectedProjectId}/dashboard/edit`;
+    dashboardButton.href = `#!/projects/${selectedProjectId}/dashboard`;
+  };
+
+  addEventListener(currentRoute$.id, () => {
+    doUpdateIsSelected(currentRoute$.value);
+  });
+
+  addEventListener(viewModel.selectedProjectId$.id, () => {
+    doUpdateHref(viewModel.selectedProjectId$.value);
+  });
+
+  // When this component becomes purely imperative, these will no longer be needed
+  doUpdateIsSelected(currentRoute$.value);
+  doUpdateHref(viewModel.selectedProjectId$.value);
+
+  return navigator;
 };
 
 module.exports = ProjectNavigator$;

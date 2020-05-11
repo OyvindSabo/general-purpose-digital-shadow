@@ -307,10 +307,10 @@ const Model = ({ router, isExported }) => {
       }
       if (
         currentRoute$.value.indexOf(
-          '/projects/<projectId:string>/dashboards'
+          '/projects/<projectId:string>/dashboard'
         ) === 0
       ) {
-        viewModel.lastVisitedProjectView$.value = 'dashboards';
+        viewModel.lastVisitedProjectView$.value = 'dashboard';
       }
     }
   };

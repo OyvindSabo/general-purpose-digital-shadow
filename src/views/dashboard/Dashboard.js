@@ -8,11 +8,11 @@ const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { eq$, choose$, not$ } = include('src/libraries/observable/utils.js');
 const { If$, Choose$ } = include('src/libraries/observableHtml/utils.js');
 
-const Dashboards$ = ({ viewModel, currentRoute$ }) => {
+const Dashboard$ = ({ viewModel, currentRoute$ }) => {
   const { isExported } = viewModel;
   const codeEditorIsOpen$ = eq$(
     currentRoute$,
-    '/projects/<projectId:string>/dashboards/edit'
+    '/projects/<projectId:string>/dashboard/edit'
   );
   return div$(
     If$(
@@ -23,8 +23,8 @@ const Dashboards$ = ({ viewModel, currentRoute$ }) => {
         isOpen$: codeEditorIsOpen$,
       }).onClick(() => {
         location.hash = codeEditorIsOpen$.value
-          ? `#!/projects/${viewModel.selectedProjectId$.value}/dashboards`
-          : `#!/projects/${viewModel.selectedProjectId$.value}/dashboards/edit`;
+          ? `#!/projects/${viewModel.selectedProjectId$.value}/dashboard`
+          : `#!/projects/${viewModel.selectedProjectId$.value}/dashboard/edit`;
       })
     ),
     div$(
@@ -87,4 +87,4 @@ const Dashboards$ = ({ viewModel, currentRoute$ }) => {
   ).setStyle({ width: '100%' });
 };
 
-module.exports = Dashboards$;
+module.exports = Dashboard$;

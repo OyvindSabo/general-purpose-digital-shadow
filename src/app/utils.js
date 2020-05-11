@@ -1,6 +1,6 @@
 const { cond$, eq$ } = include('src/libraries/observable/utils.js');
 
-const getViewTitle$ = currentRoute$ =>
+const getViewTitle$ = (currentRoute$) =>
   cond$(
     [eq$(currentRoute$, '/'), 'Projects'],
     [eq$(currentRoute$, '/projects/<projectId:string>'), 'Data sources'],
@@ -13,13 +13,10 @@ const getViewTitle$ = currentRoute$ =>
       eq$(currentRoute$, '/projects/<projectId:string>/values/edit'),
       'Edit values',
     ],
+    [eq$(currentRoute$, '/projects/<projectId:string>/dashboard'), 'Dashboard'],
     [
-      eq$(currentRoute$, '/projects/<projectId:string>/dashboards'),
-      'Dashboards',
-    ],
-    [
-      eq$(currentRoute$, '/projects/<projectId:string>/dashboards/edit'),
-      'Edit dashboards',
+      eq$(currentRoute$, '/projects/<projectId:string>/dashboard/edit'),
+      'Edit dashboard',
     ]
   );
 

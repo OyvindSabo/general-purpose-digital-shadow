@@ -633,10 +633,10 @@ const Model = ({ router, isExported }) => {
       }
       if (
         currentRoute$.value.indexOf(
-          '/projects/<projectId:string>/dashboards'
+          '/projects/<projectId:string>/dashboard'
         ) === 0
       ) {
-        viewModel.lastVisitedProjectView$.value = 'dashboards';
+        viewModel.lastVisitedProjectView$.value = 'dashboard';
       }
     }
   };
@@ -1269,49 +1269,6 @@ module.exports = ProjectContainer$;
   return module.exports;
 })();
 
-modules['src/components/horizontalNavigatorButton/HorizontalNavigatorButton.js'] = (() => {
-  const module = { exports: {} };
-  const { add$, choose$ } = include('src/libraries/observable/utils.js');
-
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const HorizontalNavigatorButton$ = ({
-  label,
-  route$,
-  isActive$,
-  labelColor$,
-  highlightLabelColor$,
-}) => {
-  return div$(label)
-    .setStyle({
-      height: '64px',
-      width: '192px',
-      display: 'inline-block',
-      textAlign: 'center',
-      lineHeight: '64px',
-      boxSizing: 'border-box',
-      borderBottom: choose$(isActive$, '2px solid deepskyblue', 'none'),
-      color: choose$(isActive$, highlightLabelColor$, labelColor$),
-      userSelect: 'none',
-    })
-    .onMouseEnter(element => {
-      element.setStyle({
-        color: highlightLabelColor$,
-      });
-    })
-    .onMouseLeave(element => {
-      element.setStyle({
-        borderBottom: choose$(isActive$, '2px solid deepskyblue', 'none'),
-        color: choose$(isActive$, highlightLabelColor$, labelColor$),
-      });
-    })
-    .onClick(() => (location.hash = add$('#!', route$).value));
-};
-
-module.exports = HorizontalNavigatorButton$;
-
-  return module.exports;
-})();
-
 modules['src/components/horizontalNavigator/HorizontalNavigator.js'] = (() => {
   const module = { exports: {} };
   const styled = include('src/libraries/styled/styled.js');
@@ -1320,104 +1277,6 @@ const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const HorizontalNavigator$ = styled({ height: '64px' })(div$);
 
 module.exports = HorizontalNavigator$;
-
-  return module.exports;
-})();
-
-modules['src/app/utils.js'] = (() => {
-  const module = { exports: {} };
-  const { cond$, eq$ } = include('src/libraries/observable/utils.js');
-
-const getViewTitle$ = currentRoute$ =>
-  cond$(
-    [eq$(currentRoute$, '/'), 'Projects'],
-    [eq$(currentRoute$, '/projects/<projectId:string>'), 'Data sources'],
-    [
-      eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
-      'Data sources',
-    ],
-    [eq$(currentRoute$, '/projects/<projectId:string>/values'), 'Values'],
-    [
-      eq$(currentRoute$, '/projects/<projectId:string>/values/edit'),
-      'Edit values',
-    ],
-    [
-      eq$(currentRoute$, '/projects/<projectId:string>/dashboards'),
-      'Dashboards',
-    ],
-    [
-      eq$(currentRoute$, '/projects/<projectId:string>/dashboards/edit'),
-      'Edit dashboards',
-    ]
-  );
-
-module.exports = {
-  getViewTitle$,
-};
-
-  return module.exports;
-})();
-
-modules['src/views/project/projectNavigator/ProjectNavigator.js'] = (() => {
-  const module = { exports: {} };
-  const HorizontalNavigatorButton$ = include(
-  'src/components/horizontalNavigatorButton/HorizontalNavigatorButton.js'
-);
-const HorizontalNavigator$ = include(
-  'src/components/horizontalNavigator/HorizontalNavigator.js'
-);
-const { choose$, eq$, not$, or$, startsWith$, add$ } = include(
-  'src/libraries/observable/utils.js'
-);
-const { getViewTitle$ } = include('src/app/utils.js');
-const { If$ } = include('src/libraries/observableHtml/utils.js');
-
-const ProjectNavigator$ = ({ currentRoute$, viewModel }) => {
-  const { isExported } = viewModel;
-  return HorizontalNavigator$(
-    If$(
-      not$(isExported),
-      HorizontalNavigatorButton$({
-        label: getViewTitle$('/projects/<projectId:string>/data-sources'),
-        route$: add$(
-          '/projects/',
-          viewModel.selectedProjectId$,
-          '/data-sources'
-        ),
-        isActive$: or$(
-          eq$(currentRoute$, '/projects/<projectId:string>'),
-          eq$(currentRoute$, '/projects/<projectId:string>/data-sources')
-        ),
-        labelColor$: 'slategray',
-        highlightLabelColor$: 'darkslategray',
-      })
-    ),
-    HorizontalNavigatorButton$({
-      label: getViewTitle$('/projects/<projectId:string>/values'),
-      route$: isExported
-        ? '/values'
-        : add$('/projects/', viewModel.selectedProjectId$, '/values'),
-      isActive$: isExported
-        ? eq$(currentRoute$, '/values')
-        : startsWith$(currentRoute$, '/projects/<projectId:string>/values'),
-      labelColor$: 'slategray',
-      highlightLabelColor$: 'darkslategray',
-    }),
-    HorizontalNavigatorButton$({
-      label: getViewTitle$('/projects/<projectId:string>/dashboards'),
-      route$: isExported
-        ? '/dashboards'
-        : add$('/projects/', viewModel.selectedProjectId$, '/dashboards'),
-      isActive$: isExported
-        ? or$(eq$(currentRoute$, '/'), eq$(currentRoute$, '/dashboards'))
-        : startsWith$(currentRoute$, '/projects/<projectId:string>/dashboards'),
-      labelColor$: 'slategray',
-      highlightLabelColor$: 'darkslategray',
-    })
-  );
-};
-
-module.exports = ProjectNavigator$;
 
   return module.exports;
 })();
@@ -1629,6 +1488,225 @@ const ExpandCodeEditorButton$ = ({ icon, label$, isOpen$ }) => {
 };
 
 module.exports = ExpandCodeEditorButton$;
+
+  return module.exports;
+})();
+
+modules['src/libraries/simpleUI/Constants.js'] = (() => {
+  const module = { exports: {} };
+  const Colors = {
+  TextColor: 'slategray',
+  HighlightedTextColor: 'darkslategray',
+  DisabledTextColor: 'lightgray',
+};
+
+const Sizes = {
+  Padding: '5px',
+};
+
+module.exports = {
+  Colors,
+  Sizes,
+};
+
+  return module.exports;
+})();
+
+modules['src/libraries/simpleUI/NavigationButton.js'] = (() => {
+  const module = { exports: {} };
+  const { Colors } = include('src/libraries/simpleUI/Constants.js');
+
+const NavigationButton = () => {
+  // Create base element
+  const spanElement = document.createElement('span');
+  const aElement = document.createElement('a');
+  Object.assign(spanElement.style, {
+    display: 'inline-block',
+    textAlign: 'center',
+    boxSizing: 'border-box',
+  });
+  Object.assign(aElement.style, {
+    textDecoration: 'none',
+    display: 'inline-block',
+    width: '100%',
+  });
+  spanElement.appendChild(aElement);
+
+  const state = {};
+
+  // Define setters
+  Object.defineProperty(spanElement, 'widthUnits', {
+    set: (widthUnits) => {
+      state.widthUnits = widthUnits;
+      spanElement.style.width = `${widthUnits * 20}px`;
+    },
+  });
+  Object.defineProperty(spanElement, 'heightUnits', {
+    set: (heightUnits) => {
+      state.heightUnits = heightUnits;
+      spanElement.style.height = `${heightUnits * 20}px`;
+      spanElement.style.lineHeight = `${heightUnits * 20}px`;
+      aElement.style.fontSize = `${(heightUnits / 2) * 15}px`;
+    },
+  });
+  Object.defineProperty(spanElement, 'title', {
+    set: (title) => {
+      state.title = title;
+      aElement.innerText = title;
+    },
+  });
+  Object.defineProperty(spanElement, 'href', {
+    set: (href) => {
+      state.href = href;
+      aElement.href = href;
+    },
+  });
+  Object.defineProperty(spanElement, 'isSelected', {
+    set: (isSelected) => {
+      state.isSelected = isSelected;
+      spanElement.style.borderBottom = isSelected
+        ? '2px solid limegreen'
+        : 'none';
+      aElement.style.color = isSelected
+        ? Colors.HighlightedTextColor
+        : Colors.TextColor;
+    },
+  });
+
+  // Define event listeners
+  aElement.onmouseenter = () => {
+    aElement.style.color = Colors.HighlightedTextColor;
+  };
+  aElement.onmouseleave = () => {
+    aElement.style.color = state.isSelected
+      ? Colors.HighlightedTextColor
+      : Colors.TextColor;
+  };
+  return spanElement;
+};
+
+module.exports = NavigationButton;
+
+  return module.exports;
+})();
+
+modules['src/libraries/simpleHTML/SimpleHTML.js'] = (() => {
+  const module = { exports: {} };
+  const doUpdateChildren = (element, newChildren) => {
+  newChildren.forEach((newChild, index) => {
+    if (element.childNodes[index] === newChild) return;
+    while (
+      element.childNodes[index] &&
+      !newChildren.includes(element.childNodes[index])
+    ) {
+      element.removeChild(element.childNodes[index]);
+    }
+    if (index === 0) {
+      element.appendChild(newChild);
+      return;
+    }
+    element.childNodes[index - 1].insertAdjacentElement('afterEnd', newChild);
+  });
+  while (newChildren.length < element.childNodes.length) {
+    element.removeChild(element.childNodes[newChildren.length]);
+  }
+};
+
+module.exports = { doUpdateChildren };
+
+  return module.exports;
+})();
+
+modules['src/libraries/simpleUI/HorizontalNavigator.js'] = (() => {
+  const module = { exports: {} };
+  const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const HorizontalNavigator = () => {
+  // Create base element
+  const divElement = document.createElement('div');
+
+  // Define setters
+  Object.defineProperty(divElement, 'heightUnits', {
+    set: (heightUnits) => {
+      divElement.style.height = `${heightUnits * 20}px`;
+    },
+  });
+  Object.defineProperty(divElement, 'children', {
+    set: (children) => {
+      doUpdateChildren(divElement, children);
+    },
+  });
+  return divElement;
+};
+
+module.exports = HorizontalNavigator;
+
+  return module.exports;
+})();
+
+modules['src/views/project/projectNavigator/ProjectNavigator.js'] = (() => {
+  const module = { exports: {} };
+  const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
+const HorizontalNavigator = include(
+  'src/libraries/simpleUI/HorizontalNavigator.js'
+);
+
+const button = (title) =>
+  Object.assign(NavigationButton(), {
+    widthUnits: 8,
+    heightUnits: 2,
+    title,
+  });
+
+const Navigator = (children) =>
+  Object.assign(HorizontalNavigator(), {
+    heightUnits: 2,
+    children,
+  });
+
+const ProjectNavigator$ = ({ currentRoute$, viewModel }) => {
+  const dataSourcesButton = button('Data sources');
+  const dashboardEditorButton = button('Dashboard editor');
+  const dashboardButton = button('Dashboard');
+  const navigator = Navigator([
+    dataSourcesButton,
+    dashboardEditorButton,
+    dashboardButton,
+  ]);
+
+  const doUpdateIsSelected = (currentRoute) => {
+    dataSourcesButton.isSelected = [
+      '/projects/<projectId:string>',
+      '/projects/<projectId:string>/data-sources',
+    ].includes(currentRoute);
+    dashboardEditorButton.isSelected =
+      currentRoute === '/projects/<projectId:string>/dashboard/edit';
+    dashboardButton.isSelected =
+      currentRoute === '/projects/<projectId:string>/dashboard';
+  };
+
+  const doUpdateHref = (selectedProjectId) => {
+    dataSourcesButton.href = `#!/projects/${selectedProjectId}/data-sources`;
+    dashboardEditorButton.href = `#!/projects/${selectedProjectId}/dashboard/edit`;
+    dashboardButton.href = `#!/projects/${selectedProjectId}/dashboard`;
+  };
+
+  addEventListener(currentRoute$.id, () => {
+    doUpdateIsSelected(currentRoute$.value);
+  });
+
+  addEventListener(viewModel.selectedProjectId$.id, () => {
+    doUpdateHref(viewModel.selectedProjectId$.value);
+  });
+
+  // When this component becomes purely imperative, these will no longer be needed
+  doUpdateIsSelected(currentRoute$.value);
+  doUpdateHref(viewModel.selectedProjectId$.value);
+
+  return navigator;
+};
+
+module.exports = ProjectNavigator$;
 
   return module.exports;
 })();
@@ -2089,6 +2167,27 @@ module.exports = DataSourcesView$;
   return module.exports;
 })();
 
+modules['src/components/widgetCard/WidgetCard.js'] = (() => {
+  const module = { exports: {} };
+  const styled = include('src/libraries/styled/styled.js');
+const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const { add$ } = include('src/libraries/observable/utils.js');
+
+const WidgetCard$ = ({ width$, height$ }) =>
+  styled({
+    margin: '32px 0 0 32px',
+    width: add$(width$, 'px'),
+    height: add$(height$, 'px'),
+    display: 'inline-block',
+    verticalAlign: 'top',
+    background: 'white',
+  })(div$);
+
+module.exports = WidgetCard$;
+
+  return module.exports;
+})();
+
 modules['src/components/widgetLabel/WidgetLabel.js'] = (() => {
   const module = { exports: {} };
   const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
@@ -2129,27 +2228,6 @@ module.exports = WidgetValue$;
   return module.exports;
 })();
 
-modules['src/components/widgetCard/WidgetCard.js'] = (() => {
-  const module = { exports: {} };
-  const styled = include('src/libraries/styled/styled.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const { add$ } = include('src/libraries/observable/utils.js');
-
-const WidgetCard$ = ({ width$, height$ }) =>
-  styled({
-    margin: '32px 0 0 32px',
-    width: add$(width$, 'px'),
-    height: add$(height$, 'px'),
-    display: 'inline-block',
-    verticalAlign: 'top',
-    background: 'white',
-  })(div$);
-
-module.exports = WidgetCard$;
-
-  return module.exports;
-})();
-
 modules['src/components/valueWidget/ValueWidget.js'] = (() => {
   const module = { exports: {} };
   const WidgetLabel$ = include('src/components/widgetLabel/WidgetLabel.js');
@@ -2171,74 +2249,6 @@ const ValueWidget$ = ({ label$, value$, isEmpty$ }) =>
   );
 
 module.exports = ValueWidget$;
-
-  return module.exports;
-})();
-
-modules['src/views/values/Values.js'] = (() => {
-  const module = { exports: {} };
-  const CodeEditor$ = include('src/components/codeEditor/CodeEditor.js');
-const ExpandCodeEditorButton$ = include(
-  'src/components/expandCodeEditorButton/ExpandCodeEditorButton.js'
-);
-const ValueWidget$ = include('src/components/valueWidget/ValueWidget.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const { eq$, choose$, not$ } = include('src/libraries/observable/utils.js');
-const { If$ } = include('src/libraries/observableHtml/utils.js');
-
-const Values$ = ({ viewModel, currentRoute$ }) => {
-  const { isExported } = viewModel;
-  const codeEditorIsOpen$ = eq$(
-    currentRoute$,
-    '/projects/<projectId:string>/values/edit'
-  );
-  return div$(
-    If$(
-      not$(isExported),
-      ExpandCodeEditorButton$({
-        icon: '{}',
-        label$: choose$(codeEditorIsOpen$, 'Hide editor', 'Show editor'),
-        isOpen$: codeEditorIsOpen$,
-      }).onClick(() => {
-        location.hash = codeEditorIsOpen$.value
-          ? `#!/projects/${viewModel.selectedProjectId$.value}/values`
-          : `#!/projects/${viewModel.selectedProjectId$.value}/values/edit`;
-      })
-    ),
-    div$(
-      CodeEditor$(viewModel.selectedDerivedValuesCode$)
-        .onInput(({ value }) => {
-          viewModel.updateDerivedValuesCode(
-            viewModel.selectedProjectId$.value,
-            value
-          );
-        })
-        .setStyle({ margin: '32px 0 0 96px' })
-    ).setStyle({
-      display: 'inline-block',
-      width: choose$(codeEditorIsOpen$, '50%', '0'),
-      height: 'calc(100% - 96px)',
-      transition: '0.5s',
-      overflow: 'hidden',
-    }),
-    div$(
-      div$(
-        ...viewModel.derivedValues.map(({ label$, value$, isEmpty$ }) =>
-          ValueWidget$({ label$, value$, isEmpty$ })
-        )
-      ).setStyle({ position: 'relative', top: '0' })
-    ).setStyle({
-      display: 'inline-block',
-      position: 'absolute',
-      paddingLeft: choose$(codeEditorIsOpen$, '0', isExported ? '0' : '64px'),
-      transition: '0.5s',
-      height: 'calc(100% - 64px)',
-      overflowY: 'auto',
-    })
-  ).setStyle({ width: '100%' });
-};
-
-module.exports = Values$;
 
   return module.exports;
 })();
@@ -2616,7 +2626,7 @@ module.exports = CanvasWidget$;
   return module.exports;
 })();
 
-modules['src/views/dashboards/Dashboards.js'] = (() => {
+modules['src/views/dashboard/Dashboard.js'] = (() => {
   const module = { exports: {} };
   const CodeEditor$ = include('src/components/codeEditor/CodeEditor.js');
 const ExpandCodeEditorButton$ = include(
@@ -2628,11 +2638,11 @@ const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { eq$, choose$, not$ } = include('src/libraries/observable/utils.js');
 const { If$, Choose$ } = include('src/libraries/observableHtml/utils.js');
 
-const Dashboards$ = ({ viewModel, currentRoute$ }) => {
+const Dashboard$ = ({ viewModel, currentRoute$ }) => {
   const { isExported } = viewModel;
   const codeEditorIsOpen$ = eq$(
     currentRoute$,
-    '/projects/<projectId:string>/dashboards/edit'
+    '/projects/<projectId:string>/dashboard/edit'
   );
   return div$(
     If$(
@@ -2643,8 +2653,8 @@ const Dashboards$ = ({ viewModel, currentRoute$ }) => {
         isOpen$: codeEditorIsOpen$,
       }).onClick(() => {
         location.hash = codeEditorIsOpen$.value
-          ? `#!/projects/${viewModel.selectedProjectId$.value}/dashboards`
-          : `#!/projects/${viewModel.selectedProjectId$.value}/dashboards/edit`;
+          ? `#!/projects/${viewModel.selectedProjectId$.value}/dashboard`
+          : `#!/projects/${viewModel.selectedProjectId$.value}/dashboard/edit`;
       })
     ),
     div$(
@@ -2707,7 +2717,7 @@ const Dashboards$ = ({ viewModel, currentRoute$ }) => {
   ).setStyle({ width: '100%' });
 };
 
-module.exports = Dashboards$;
+module.exports = Dashboard$;
 
   return module.exports;
 })();
@@ -2726,15 +2736,17 @@ const ProjectContainer$ = include(
 const TitleBar$ = include('src/app/titleBar/TitleBar.js');
 const Projects$ = include('src/views/projects/Projects.js');
 const DataSources$ = include('src/views/dataSources/DataSources.js');
-const Values$ = include('src/views/values/Values.js');
-const Dashboards$ = include('src/views/dashboards/Dashboards.js');
+const Dashboard$ = include('src/views/dashboard/Dashboard.js');
 
 const App = ({ currentRoute$, viewModel }) => {
   return viewModel.isExported
     ? div$(
         TitleBar$({ currentRoute$, viewModel }),
         ProjectContainer$(
-          ProjectNavigator$({ currentRoute$, viewModel }),
+          If(
+            viewModel.isExported,
+            ProjectNavigator$({ currentRoute$, viewModel })
+          ),
           /*If$(
             startsWith$(currentRoute$, '/values'),
             Values$({ viewModel, currentRoute$ })
@@ -2742,9 +2754,9 @@ const App = ({ currentRoute$, viewModel }) => {
           If$(
             or$(
               eq$(currentRoute$, '/'),
-              startsWith$(currentRoute$, '/dashboards')
+              startsWith$(currentRoute$, '/dashboard')
             ),
-            Dashboards$({ viewModel, currentRoute$ })
+            Dashboard$({ viewModel, currentRoute$ })
           )
         )
       )
@@ -2769,9 +2781,9 @@ const App = ({ currentRoute$, viewModel }) => {
             If$(
               startsWith$(
                 currentRoute$,
-                '/projects/<projectId:string>/dashboards'
+                '/projects/<projectId:string>/dashboard'
               ),
-              Dashboards$({ viewModel, currentRoute$ })
+              Dashboard$({ viewModel, currentRoute$ })
             )
           )
         )
@@ -2801,9 +2813,9 @@ const isExported = false;
 // Create router
 const router = isExported
   ? new Router({
-      '/': 'Dashboards',
+      '/': 'Dashboard',
       '/values': 'Values',
-      '/dashboards': 'Dashboards',
+      '/dashboard': 'Dashboard',
     })
   : new Router({
       '/': 'Projects',
@@ -2811,8 +2823,8 @@ const router = isExported
       '/projects/<projectId:string>/data-sources': 'Data sources',
       '/projects/<projectId:string>/values': 'Values',
       '/projects/<projectId:string>/values/edit': 'Edit values',
-      '/projects/<projectId:string>/dashboards': 'Dashboards',
-      '/projects/<projectId:string>/dashboards/edit': 'Edit dashboards',
+      '/projects/<projectId:string>/dashboard': 'Dashboard',
+      '/projects/<projectId:string>/dashboard/edit': 'Edit dashboard',
     });
 
 const viewModel = Model({ router, isExported });

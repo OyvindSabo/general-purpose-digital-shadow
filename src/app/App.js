@@ -10,15 +10,17 @@ const ProjectContainer$ = include(
 const TitleBar$ = include('src/app/titleBar/TitleBar.js');
 const Projects$ = include('src/views/projects/Projects.js');
 const DataSources$ = include('src/views/dataSources/DataSources.js');
-const Values$ = include('src/views/values/Values.js');
-const Dashboards$ = include('src/views/dashboards/Dashboards.js');
+const Dashboard$ = include('src/views/dashboard/Dashboard.js');
 
 const App = ({ currentRoute$, viewModel }) => {
   return viewModel.isExported
     ? div$(
         TitleBar$({ currentRoute$, viewModel }),
         ProjectContainer$(
-          ProjectNavigator$({ currentRoute$, viewModel }),
+          If(
+            viewModel.isExported,
+            ProjectNavigator$({ currentRoute$, viewModel })
+          ),
           /*If$(
             startsWith$(currentRoute$, '/values'),
             Values$({ viewModel, currentRoute$ })
@@ -26,9 +28,9 @@ const App = ({ currentRoute$, viewModel }) => {
           If$(
             or$(
               eq$(currentRoute$, '/'),
-              startsWith$(currentRoute$, '/dashboards')
+              startsWith$(currentRoute$, '/dashboard')
             ),
-            Dashboards$({ viewModel, currentRoute$ })
+            Dashboard$({ viewModel, currentRoute$ })
           )
         )
       )
@@ -53,9 +55,9 @@ const App = ({ currentRoute$, viewModel }) => {
             If$(
               startsWith$(
                 currentRoute$,
-                '/projects/<projectId:string>/dashboards'
+                '/projects/<projectId:string>/dashboard'
               ),
-              Dashboards$({ viewModel, currentRoute$ })
+              Dashboard$({ viewModel, currentRoute$ })
             )
           )
         )

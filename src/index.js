@@ -15,9 +15,9 @@ const isExported = false;
 // Create router
 const router = isExported
   ? new Router({
-      '/': 'Dashboards',
+      '/': 'Dashboard',
       '/values': 'Values',
-      '/dashboards': 'Dashboards',
+      '/dashboard': 'Dashboard',
     })
   : new Router({
       '/': 'Projects',
@@ -25,8 +25,8 @@ const router = isExported
       '/projects/<projectId:string>/data-sources': 'Data sources',
       '/projects/<projectId:string>/values': 'Values',
       '/projects/<projectId:string>/values/edit': 'Edit values',
-      '/projects/<projectId:string>/dashboards': 'Dashboards',
-      '/projects/<projectId:string>/dashboards/edit': 'Edit dashboards',
+      '/projects/<projectId:string>/dashboard': 'Dashboard',
+      '/projects/<projectId:string>/dashboard/edit': 'Edit dashboard',
     });
 
 const viewModel = Model({ router, isExported });
