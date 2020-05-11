@@ -2162,9 +2162,9 @@ const withShadow = include('src/styleWrappers/withShadow.js');
 const ValueWidget$ = ({ label$, value$, isEmpty$ }) =>
   If$(
     not$(isEmpty$),
-    // Height + margin = 4 x navigator buttons
-    // Width + margin = 6 x navigator buttons
-    withShadow(WidgetCard$({ height$: 224, width$: 352 }))(
+    // Height + margin = 5 x navigator buttons
+    // Width + margin = 7.5 x navigator buttons
+    withShadow(WidgetCard$({ height$: 288, width$: 448 }))(
       WidgetLabel$({ label$ }),
       WidgetValue$({ value$ })
     ).setStyle({ position: 'relative', color: 'dimgray' })
