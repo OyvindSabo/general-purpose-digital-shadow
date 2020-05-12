@@ -8,8 +8,10 @@ const ValueWidget = () => {
   Object.assign(valueContainer.style, {
     position: 'relative',
     color: 'dimgray',
-    height: '288px',
-    width: '448px',
+    // 24 x SizeUnit
+    width: '480px',
+    // 16 x SizeUnit
+    height: '320px',
   });
   const label$ = new Observable('');
   const value$ = new Observable('');

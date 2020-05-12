@@ -6,12 +6,18 @@ const Canvas2dWidget = include(
   'src/components/widget/canvas2dWidget/Canvas2dWidget.js'
 );
 const ValueWidget = include('src/components/widget/valueWidget/ValueWidget.js');
+const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const Widget = () => {
-  const widgetContainer = WidgetContainer();
+  const widgetContainer = document.createElement('span');
   Object.assign(widgetContainer.style, {
-    height: '288px',
-    width: '448px',
+    display: 'inline-block',
+    verticalAlign: 'top',
+    background: 'white',
+    // 24 x SizeUnit
+    width: '480px',
+    // 16 x SizeUnit
+    height: '320px',
   });
 
   Object.defineProperty(widgetContainer, 'widgetDescription', {
@@ -22,7 +28,7 @@ const Widget = () => {
       ) {
         const canvas3dWidget = Canvas3dWidget();
         canvas3dWidget.widgetDescription = widgetDescription;
-        widgetContainer.children = [canvas3dWidget];
+        doUpdateChildren(widgetContainer, [canvas3dWidget]);
       }
       if (
         widgetDescription.type === 'canvas-widget' &&
@@ -30,12 +36,12 @@ const Widget = () => {
       ) {
         const canvas2dWidget = Canvas2dWidget();
         canvas2dWidget.widgetDescription = widgetDescription;
-        widgetContainer.children = [canvas2dWidget];
+        doUpdateChildren(widgetContainer, [canvas2dWidget]);
       }
       if (widgetDescription.type === 'value-widget') {
         const valueWidget = ValueWidget();
         valueWidget.widgetDescription = widgetDescription;
-        widgetContainer.children = [valueWidget];
+        doUpdateChildren(widgetContainer, [valueWidget]);
       }
     },
   });

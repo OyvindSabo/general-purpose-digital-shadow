@@ -9,10 +9,12 @@ const doRenderVisualization = include(
 const ThreeDimVisualization$ = () => {
   const state = { mouseDown: false };
   const canvasElement = document.createElement('canvas');
-  Object.assign(canvasElement, {
+  // 16 x SizeUnit
+  canvasElement.height = 320;
+  // 24 x SizeUnit
+  canvasElement.width = 480;
+  Object.assign(canvasElement.style, {
     position: 'absolute',
-    height: '288px',
-    width: '448px',
   });
   const camera = new Camera({
     horizontalRotation$: new Observable(0),
@@ -22,7 +24,7 @@ const ThreeDimVisualization$ = () => {
   });
   const ctx = canvasElement.getContext('2d');
   const rerender = ({ surfaces, edges, center }) => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
     doRenderVisualization({
       surfaces,
       edges,
@@ -34,7 +36,7 @@ const ThreeDimVisualization$ = () => {
       focalLength: camera.focalLength$.value,
     });
   };
-  canvas.onwheel = (event) => {
+  canvasElement.onwheel = (event) => {
     camera.setDistance(camera.distance$.value + event.deltaY / 5);
   };
   window.addEventListener('mousedown', (event) => {
@@ -42,11 +44,11 @@ const ThreeDimVisualization$ = () => {
   });
   window.addEventListener(
     'mouseup',
-    (canvas.onmouseup = (event) => {
+    (canvasElement.onmouseup = (event) => {
       state.mouseDown = false;
     })
   );
-  canvas.onmousemove = (event) => {
+  canvasElement.onmousemove = (event) => {
     if (state.mouseDown) {
       camera.horizontalRotation$.value =
         camera.horizontalRotation$.value - event.movementX / 100;
@@ -93,7 +95,7 @@ const ThreeDimVisualization$ = () => {
       center: canvasElement._center,
     })
   );
-  return canvas;
+  return canvasElement;
 };
 
 module.exports = ThreeDimVisualization$;

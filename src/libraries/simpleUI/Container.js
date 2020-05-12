@@ -3,6 +3,10 @@ const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
 const Container = () => {
   // Create base element
   const divElement = document.createElement('div');
+  Object.assign(divElement.style, {
+    display: 'inline-block',
+    width: '100%',
+  });
 
   // Define setters
   Object.defineProperty(divElement, 'widthUnits', {

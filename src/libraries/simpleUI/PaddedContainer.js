@@ -4,12 +4,16 @@ const { Sizes } = include('src/libraries/simpleUI/Constants.js');
 const PaddedContainer = () => {
   // Create base element
   const divElement = document.createElement('div');
-  divElement.style.padding = `${Sizes.Padding}px`;
+  Object.assign(divElement.style, {
+    padding: `${Sizes.Padding}px`,
+    display: 'inline-block',
+    width: '100%',
+  });
 
   // Define setters
   Object.defineProperty(divElement, 'widthUnits', {
     set: (widthUnits) => {
-      divElement.style.maxWidth = `${widthUnits * 20}px`;
+      divElement.style.width = `${widthUnits * 20}px`;
     },
   });
   Object.defineProperty(divElement, 'children', {

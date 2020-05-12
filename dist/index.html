@@ -1509,6 +1509,37 @@ module.exports = HorizontalNavigator;
   return module.exports;
 })();
 
+modules['src/libraries/simpleUI/Container.js'] = (() => {
+  const module = { exports: {} };
+  const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const Container = () => {
+  // Create base element
+  const divElement = document.createElement('div');
+  Object.assign(divElement.style, {
+    display: 'inline-block',
+    width: '100%',
+  });
+
+  // Define setters
+  Object.defineProperty(divElement, 'widthUnits', {
+    set: (widthUnits) => {
+      divElement.style.maxWidth = `${widthUnits * 20}px`;
+    },
+  });
+  Object.defineProperty(divElement, 'children', {
+    set: (children) => {
+      doUpdateChildren(divElement, children);
+    },
+  });
+  return divElement;
+};
+
+module.exports = Container;
+
+  return module.exports;
+})();
+
 modules['src/libraries/simpleUI/Constants.js'] = (() => {
   const module = { exports: {} };
   const Colors = {
@@ -1724,12 +1755,16 @@ const { Sizes } = include('src/libraries/simpleUI/Constants.js');
 const PaddedContainer = () => {
   // Create base element
   const divElement = document.createElement('div');
-  divElement.style.padding = `${Sizes.Padding}px`;
+  Object.assign(divElement.style, {
+    padding: `${Sizes.Padding}px`,
+    display: 'inline-block',
+    width: '100%',
+  });
 
   // Define setters
   Object.defineProperty(divElement, 'widthUnits', {
     set: (widthUnits) => {
-      divElement.style.maxWidth = `${widthUnits * 20}px`;
+      divElement.style.width = `${widthUnits * 20}px`;
     },
   });
   Object.defineProperty(divElement, 'children', {
@@ -2256,6 +2291,64 @@ module.exports = ValueWidget$;
   return module.exports;
 })();
 
+modules['src/components/widget/WidgetContainer.js'] = (() => {
+  const module = { exports: {} };
+  const Container = include('src/libraries/simpleUI/Container.js');
+
+const WidgetContainer = () => {
+  const widgetContainer = Container();
+  Object.assign(widgetContainer.style, {
+    display: 'inline-block',
+    verticalAlign: 'top',
+    background: 'white',
+  });
+  return widgetContainer;
+};
+
+module.exports = WidgetContainer;
+
+  return module.exports;
+})();
+
+modules['src/components/widget/valueWidget/ValueWidget.js'] = (() => {
+  const module = { exports: {} };
+  const WidgetLabel$ = include('src/components/widgetLabel/WidgetLabel.js');
+const WidgetValue$ = include('src/components/widgetValue/WidgetValue.js');
+const Observable = include('src/libraries/observable/Observable.js');
+const Container = include('src/libraries/simpleUI/Container.js');
+
+const ValueWidget = () => {
+  const valueContainer = Container();
+  Object.assign(valueContainer.style, {
+    position: 'relative',
+    color: 'dimgray',
+    // 24 x SizeUnit
+    width: '480px',
+    // 16 x SizeUnit
+    height: '320px',
+  });
+  const label$ = new Observable('');
+  const value$ = new Observable('');
+
+  Object.defineProperty(valueContainer, 'widgetDescription', {
+    set: ({ label, value }) => {
+      label$.value = label;
+      value$.value = value;
+    },
+  });
+
+  valueContainer.children = [
+    WidgetLabel$({ label$ }),
+    WidgetValue$({ value$ }),
+  ];
+  return valueContainer;
+};
+
+module.exports = ValueWidget;
+
+  return module.exports;
+})();
+
 modules['src/components/visualization/threeDimVisualization/camera/Camera.js'] = (() => {
   const module = { exports: {} };
   const Observable = include('src/libraries/observable/Observable.js');
@@ -2288,89 +2381,6 @@ const Camera = function({
 };
 
 module.exports = Camera;
-
-  return module.exports;
-})();
-
-modules['src/libraries/simpleUI/Container.js'] = (() => {
-  const module = { exports: {} };
-  const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const Container = () => {
-  // Create base element
-  const divElement = document.createElement('div');
-
-  // Define setters
-  Object.defineProperty(divElement, 'widthUnits', {
-    set: (widthUnits) => {
-      divElement.style.maxWidth = `${widthUnits * 20}px`;
-    },
-  });
-  Object.defineProperty(divElement, 'children', {
-    set: (children) => {
-      doUpdateChildren(divElement, children);
-    },
-  });
-  return divElement;
-};
-
-module.exports = Container;
-
-  return module.exports;
-})();
-
-modules['src/components/widget/WidgetContainer.js'] = (() => {
-  const module = { exports: {} };
-  const Container = include('src/libraries/simpleUI/Container.js');
-
-const WidgetContainer = () => {
-  const widgetContainer = Container();
-  Object.assign(widgetContainer.style, {
-    display: 'inline-block',
-    verticalAlign: 'top',
-    background: 'white',
-  });
-  return widgetContainer;
-};
-
-module.exports = WidgetContainer;
-
-  return module.exports;
-})();
-
-modules['src/components/widget/valueWidget/ValueWidget.js'] = (() => {
-  const module = { exports: {} };
-  const WidgetLabel$ = include('src/components/widgetLabel/WidgetLabel.js');
-const WidgetValue$ = include('src/components/widgetValue/WidgetValue.js');
-const Observable = include('src/libraries/observable/Observable.js');
-const Container = include('src/libraries/simpleUI/Container.js');
-
-const ValueWidget = () => {
-  const valueContainer = Container();
-  Object.assign(valueContainer.style, {
-    position: 'relative',
-    color: 'dimgray',
-    height: '288px',
-    width: '448px',
-  });
-  const label$ = new Observable('');
-  const value$ = new Observable('');
-
-  Object.defineProperty(valueContainer, 'widgetDescription', {
-    set: ({ label, value }) => {
-      label$.value = label;
-      value$.value = value;
-    },
-  });
-
-  valueContainer.children = [
-    WidgetLabel$({ label$ }),
-    WidgetValue$({ value$ }),
-  ];
-  return valueContainer;
-};
-
-module.exports = ValueWidget;
 
   return module.exports;
 })();
@@ -2827,10 +2837,12 @@ const doRenderVisualization = include(
 const ThreeDimVisualization$ = () => {
   const state = { mouseDown: false };
   const canvasElement = document.createElement('canvas');
-  Object.assign(canvasElement, {
+  // 16 x SizeUnit
+  canvasElement.height = 320;
+  // 24 x SizeUnit
+  canvasElement.width = 480;
+  Object.assign(canvasElement.style, {
     position: 'absolute',
-    height: '288px',
-    width: '448px',
   });
   const camera = new Camera({
     horizontalRotation$: new Observable(0),
@@ -2840,7 +2852,7 @@ const ThreeDimVisualization$ = () => {
   });
   const ctx = canvasElement.getContext('2d');
   const rerender = ({ surfaces, edges, center }) => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
     doRenderVisualization({
       surfaces,
       edges,
@@ -2852,7 +2864,7 @@ const ThreeDimVisualization$ = () => {
       focalLength: camera.focalLength$.value,
     });
   };
-  canvas.onwheel = (event) => {
+  canvasElement.onwheel = (event) => {
     camera.setDistance(camera.distance$.value + event.deltaY / 5);
   };
   window.addEventListener('mousedown', (event) => {
@@ -2860,11 +2872,11 @@ const ThreeDimVisualization$ = () => {
   });
   window.addEventListener(
     'mouseup',
-    (canvas.onmouseup = (event) => {
+    (canvasElement.onmouseup = (event) => {
       state.mouseDown = false;
     })
   );
-  canvas.onmousemove = (event) => {
+  canvasElement.onmousemove = (event) => {
     if (state.mouseDown) {
       camera.horizontalRotation$.value =
         camera.horizontalRotation$.value - event.movementX / 100;
@@ -2911,7 +2923,7 @@ const ThreeDimVisualization$ = () => {
       center: canvasElement._center,
     })
   );
-  return canvas;
+  return canvasElement;
 };
 
 module.exports = ThreeDimVisualization$;
@@ -2927,11 +2939,13 @@ modules['src/components/widget/canvas2dWidget/Canvas2dWidget.js'] = (() => {
 
 const TwoDimVisualization$ = () => {
   const canvasElement = document.createElement('canvas');
-  Object.assign(canvasElement.style, {
-    position: 'absolute',
-    height: '288px',
-    width: '448px',
+  Object.assign(canvasElement, {
+    // 16 x SizeUnit
+    height: 320,
+    // 24 x SizeUnit
+    width: 480,
   });
+  canvasElement.position = 'absolute';
   const ctx = canvasElement.getContext('2d');
   const rerender = ({ surfaces, edges, center }) => {
     ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
@@ -2939,7 +2953,6 @@ const TwoDimVisualization$ = () => {
   };
   Object.defineProperty(canvasElement, 'widgetDescription', {
     set: ({ surfaces, edges, center }) => {
-      console.log('2d widget description: ', surfaces);
       rerender({ surfaces, edges, center });
     },
   });
@@ -2961,12 +2974,18 @@ const Canvas2dWidget = include(
   'src/components/widget/canvas2dWidget/Canvas2dWidget.js'
 );
 const ValueWidget = include('src/components/widget/valueWidget/ValueWidget.js');
+const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const Widget = () => {
-  const widgetContainer = WidgetContainer();
+  const widgetContainer = document.createElement('span');
   Object.assign(widgetContainer.style, {
-    height: '288px',
-    width: '448px',
+    display: 'inline-block',
+    verticalAlign: 'top',
+    background: 'white',
+    // 24 x SizeUnit
+    width: '480px',
+    // 16 x SizeUnit
+    height: '320px',
   });
 
   Object.defineProperty(widgetContainer, 'widgetDescription', {
@@ -2977,7 +2996,7 @@ const Widget = () => {
       ) {
         const canvas3dWidget = Canvas3dWidget();
         canvas3dWidget.widgetDescription = widgetDescription;
-        widgetContainer.children = [canvas3dWidget];
+        doUpdateChildren(widgetContainer, [canvas3dWidget]);
       }
       if (
         widgetDescription.type === 'canvas-widget' &&
@@ -2985,12 +3004,12 @@ const Widget = () => {
       ) {
         const canvas2dWidget = Canvas2dWidget();
         canvas2dWidget.widgetDescription = widgetDescription;
-        widgetContainer.children = [canvas2dWidget];
+        doUpdateChildren(widgetContainer, [canvas2dWidget]);
       }
       if (widgetDescription.type === 'value-widget') {
         const valueWidget = ValueWidget();
         valueWidget.widgetDescription = widgetDescription;
-        widgetContainer.children = [valueWidget];
+        doUpdateChildren(widgetContainer, [valueWidget]);
       }
     },
   });
@@ -3011,6 +3030,7 @@ const { Choose$ } = include('src/libraries/observableHtml/utils.js');
 const TextArea = include('src/libraries/simpleUI/TextArea.js');
 const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
 const PaddedContainer = include('src/libraries/simpleUI/PaddedContainer.js');
+const Container = include('src/libraries/simpleUI/Container.js');
 const Widget = include('src/components/widget/Widget.js');
 const { doAddShadow } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
@@ -3032,54 +3052,76 @@ const Dashboard$ = ({ viewModel, currentRoute$ }) => {
     );
   });
 
-  const widgets = [
-    ...viewModel.widgets.map(
-      ({
-        label$,
-        type$,
-        value$,
-        surfaces$,
-        edges$,
-        is3d$,
-        center$,
-        isEmpty$,
-      }) => {
-        const widget = Widget();
-        doAddShadow(widget);
-        const paddedContainer = PaddedContainer();
-        paddedContainer.children = [widget];
-        const updateWidgetDescription = () => {
-          widget.widgetDescription = {
-            type: type$.value,
-            label: label$.value,
-            value: value$.value,
-            surfaces: surfaces$.value,
-            edges: edges$.value,
-            is3d: is3d$.value,
-            center: center$.value,
-            isEmpty: isEmpty$.value,
-          };
-        };
-        addEventListener(type$.id, updateWidgetDescription);
-        addEventListener(label$.id, updateWidgetDescription);
-        addEventListener(value$.id, updateWidgetDescription);
-        addEventListener(surfaces$.id, updateWidgetDescription);
-        addEventListener(edges$.id, updateWidgetDescription);
-        addEventListener(is3d$.id, updateWidgetDescription);
-        addEventListener(center$.id, updateWidgetDescription);
-        addEventListener(isEmpty$.id, updateWidgetDescription);
-        return paddedContainer;
-      }
-    ),
-  ];
-
   const codeEditorContainer = Object.assign(PaddedContainer(), {
     children: [codeEditor],
   });
 
-  const widgetsContainer = Object.assign(PaddedContainer(), {
-    children: [...widgets],
-  });
+  const widgetsContainer = Container();
+
+  const updateWidgets = () => {
+    const widgets = [
+      ...viewModel.widgets
+        .filter(({ isEmpty$ }) => !isEmpty$.value)
+        .map(
+          ({
+            label$,
+            type$,
+            value$,
+            surfaces$,
+            edges$,
+            is3d$,
+            center$,
+            isEmpty$,
+          }) => {
+            const widget = Widget();
+            doAddShadow(widget);
+            const paddedContainer = document.createElement('span');
+            paddedContainer.appendChild(widget);
+            Object.assign(paddedContainer.style, {
+              padding: '10px',
+              display: 'inline-block',
+            });
+            widget.widgetDescription = {
+              type: type$.value,
+              label: label$.value,
+              value: value$.value,
+              surfaces: surfaces$.value,
+              edges: edges$.value,
+              is3d: is3d$.value,
+              center: center$.value,
+              isEmpty: isEmpty$.value,
+            };
+            return paddedContainer;
+          }
+        ),
+    ];
+    Object.assign(widgetsContainer, {
+      children: [...widgets],
+    });
+  };
+
+  // This should replaced with a single setter
+  viewModel.widgets.forEach(
+    ({
+      label$,
+      type$,
+      value$,
+      surfaces$,
+      edges$,
+      is3d$,
+      center$,
+      isEmpty$,
+    }) => {
+      addEventListener(type$.id, updateWidgets);
+      addEventListener(label$.id, updateWidgets);
+      addEventListener(value$.id, updateWidgets);
+      addEventListener(surfaces$.id, updateWidgets);
+      addEventListener(edges$.id, updateWidgets);
+      addEventListener(is3d$.id, updateWidgets);
+      addEventListener(center$.id, updateWidgets);
+      addEventListener(isEmpty$.id, updateWidgets);
+    }
+  );
 
   const getDashboardChildren = () =>
     codeEditorIsOpen$.value && !isExported
