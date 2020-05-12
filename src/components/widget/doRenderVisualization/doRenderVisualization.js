@@ -26,18 +26,18 @@ const rotate = include('src/components/visualization/render/rotate/rotate.js');
  * Defines the distance from the defined center of the structure, to the
  * camera.
  */
-const render = (
-  surfaces$,
-  edges$,
+const doRenderVisualization = ({
+  surfaces,
+  edges,
   ctx,
   center,
   rx = 0,
   ry = 0,
   d = 0,
-  focalLength = 0
-) => {
+  focalLength = 0,
+}) => {
   // Render the faces
-  surfaces$.value.forEach(({ color, points }) => {
+  surfaces.forEach(({ color, points }) => {
     points
       .map((point) => toCenterOfStructure(point, center))
       .map((point) => rotate(point, rx, ry))
@@ -64,7 +64,7 @@ const render = (
   });
 
   // Render the edges
-  edges$.value.forEach(({ color, points, width }) => {
+  edges.forEach(({ color, points, width }) => {
     // Draw the first vertex
     const startPoint = toCenterOfWidget(
       toPerspective(
@@ -93,4 +93,4 @@ const render = (
   });
 };
 
-module.exports = render;
+module.exports = doRenderVisualization;

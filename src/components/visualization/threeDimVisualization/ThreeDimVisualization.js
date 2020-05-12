@@ -38,19 +38,19 @@ const ThreeDimVisualization$ = ({
     );
   };
   rerender();
-  canvas.onwheel = event => {
+  canvas.onwheel = (event) => {
     camera.setDistance(camera.distance$.value + event.deltaY / 5);
   };
-  window.addEventListener('mousedown', event => {
+  window.addEventListener('mousedown', (event) => {
     state.mouseDown = true;
   });
   window.addEventListener(
     'mouseup',
-    (canvas.onmouseup = event => {
+    (canvas.onmouseup = (event) => {
       state.mouseDown = false;
     })
   );
-  canvas.onmousemove = event => {
+  canvas.onmousemove = (event) => {
     if (state.mouseDown) {
       camera.horizontalRotation$.value =
         camera.horizontalRotation$.value - event.movementX / 100;

@@ -5,7 +5,7 @@ const { not$ } = include('src/libraries/observable/utils.js');
 const { If$ } = include('src/libraries/observableHtml/utils.js');
 const withShadow = include('src/styleWrappers/withShadow.js');
 
-const ValueWidget$ = ({ label$, value$, isEmpty$ }) =>
+const ValueWidget$ = ({ label$, value$ }) => {
   If$(
     not$(isEmpty$),
     // Height + margin = 5 x navigator buttons
@@ -15,5 +15,6 @@ const ValueWidget$ = ({ label$, value$, isEmpty$ }) =>
       WidgetValue$({ value$ })
     ).setStyle({ position: 'relative', color: 'dimgray' })
   );
+};
 
 module.exports = ValueWidget$;

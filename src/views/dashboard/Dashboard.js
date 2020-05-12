@@ -4,35 +4,9 @@ const { eq$ } = include('src/libraries/observable/utils.js');
 const { Choose$ } = include('src/libraries/observableHtml/utils.js');
 const TextArea = include('src/libraries/simpleUI/TextArea.js');
 const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
-const Container = include('src/libraries/simpleUI/Container.js');
 const PaddedContainer = include('src/libraries/simpleUI/PaddedContainer.js');
-
-const Widget$ = ({
-  label$,
-  type$,
-  value$,
-  surfaces$,
-  edges$,
-  is3d$,
-  center$,
-  isEmpty$,
-}) => {
-  return Choose$(
-    eq$(type$, 'canvas-widget'),
-    CanvasWidget$({
-      label$,
-      type$,
-      value$,
-      surfaces$,
-      edges$,
-      is3d$,
-      center$,
-      isEmpty$,
-    }),
-    // eq$(type$, 'number-widget')
-    ValueWidget$({ label$, value$, isEmpty$ })
-  );
-};
+const Widget = include('src/components/widget/Widget.js');
+const { doAddShadow } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const Dashboard$ = ({ viewModel, currentRoute$ }) => {
   const { isExported } = viewModel;
@@ -52,7 +26,46 @@ const Dashboard$ = ({ viewModel, currentRoute$ }) => {
     );
   });
 
-  const widgets = [...viewModel.widgets.map(Widget$)];
+  const widgets = [
+    ...viewModel.widgets.map(
+      ({
+        label$,
+        type$,
+        value$,
+        surfaces$,
+        edges$,
+        is3d$,
+        center$,
+        isEmpty$,
+      }) => {
+        const widget = Widget();
+        doAddShadow(widget);
+        const paddedContainer = PaddedContainer();
+        paddedContainer.children = [widget];
+        const updateWidgetDescription = () => {
+          widget.widgetDescription = {
+            type: type$.value,
+            label: label$.value,
+            value: value$.value,
+            surfaces: surfaces$.value,
+            edges: edges$.value,
+            is3d: is3d$.value,
+            center: center$.value,
+            isEmpty: isEmpty$.value,
+          };
+        };
+        addEventListener(type$.id, updateWidgetDescription);
+        addEventListener(label$.id, updateWidgetDescription);
+        addEventListener(value$.id, updateWidgetDescription);
+        addEventListener(surfaces$.id, updateWidgetDescription);
+        addEventListener(edges$.id, updateWidgetDescription);
+        addEventListener(is3d$.id, updateWidgetDescription);
+        addEventListener(center$.id, updateWidgetDescription);
+        addEventListener(isEmpty$.id, updateWidgetDescription);
+        return paddedContainer;
+      }
+    ),
+  ];
 
   const codeEditorContainer = Object.assign(PaddedContainer(), {
     children: [codeEditor],
