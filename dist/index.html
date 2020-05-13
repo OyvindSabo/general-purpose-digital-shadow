@@ -2355,77 +2355,84 @@ module.exports = Camera;
 
 modules['src/components/widgetLabel/WidgetLabel.js'] = (() => {
   const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+  const { defineComponent, div } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
 
-const WidgetLabel$ = ({ label$ }) =>
-  div$(label$).setStyle({
-    fontSize: '20px',
-    marginTop: '20px',
-    textAlign: 'center',
-    position: 'absolute',
-    width: '100%',
-    pointerEvents: 'none',
-    userSelect: 'none',
-  });
+const WidgetLabel = defineComponent(({ label }) => {
+  return div(
+    {
+      style: {
+        fontSize: '20px',
+        marginTop: '20px',
+        textAlign: 'center',
+        position: 'absolute',
+        width: '100%',
+        pointerEvents: 'none',
+        userSelect: 'none',
+      },
+    },
+    label
+  );
+});
 
-module.exports = WidgetLabel$;
+module.exports = WidgetLabel;
 
   return module.exports;
 })();
 
 modules['src/components/widgetValue/WidgetValue.js'] = (() => {
   const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const { Number$, toFixed$ } = include('src/libraries/observable/utils.js');
+  const { defineComponent, div } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
 
-const WidgetValue$ = ({ value$ }) =>
-  div$(toFixed$(Number$(value$), 2)).setStyle({
-    fontSize: '60px',
-    textAlign: 'center',
-    width: '100%',
-    position: 'absolute',
-    top: '50%',
-    transform: 'translate(0, -50%)',
-  });
+const WidgetValue = defineComponent(({ value }) => {
+  return div(
+    {
+      style: {
+        fontSize: '60px',
+        textAlign: 'center',
+        width: '100%',
+        position: 'absolute',
+        top: '50%',
+        transform: 'translate(0, -50%)',
+      },
+    },
+    Number(value).toFixed(2)
+  );
+});
 
-module.exports = WidgetValue$;
+module.exports = WidgetValue;
 
   return module.exports;
 })();
 
 modules['src/components/widget/valueWidget/ValueWidget.js'] = (() => {
   const module = { exports: {} };
-  const WidgetLabel$ = include('src/components/widgetLabel/WidgetLabel.js');
-const WidgetValue$ = include('src/components/widgetValue/WidgetValue.js');
-const Observable = include('src/libraries/observable/Observable.js');
-const Container = include('src/libraries/simpleUI/Container.js');
+  const WidgetLabel = include('src/components/widgetLabel/WidgetLabel.js');
+const WidgetValue = include('src/components/widgetValue/WidgetValue.js');
+const { defineComponent, span } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
 
-const ValueWidget = () => {
-  const valueContainer = Container();
-  Object.assign(valueContainer.style, {
-    position: 'relative',
-    color: 'dimgray',
-    // 24 x SizeUnit
-    width: '480px',
-    // 16 x SizeUnit
-    height: '320px',
-  });
-  const label$ = new Observable('');
-  const value$ = new Observable('');
-
-  Object.defineProperty(valueContainer, 'widgetDescription', {
-    set: ({ label, value }) => {
-      label$.value = label;
-      value$.value = value;
+const ValueWidget = defineComponent(({ label, value }) => {
+  return span(
+    {
+      style: {
+        display: 'inline-block',
+        position: 'relative',
+        color: 'dimgray',
+        // 24 x SizeUnit
+        width: '480px',
+        // 16 x SizeUnit
+        height: '320px',
+      },
     },
-  });
-
-  valueContainer.children = [
-    WidgetLabel$({ label$ }),
-    WidgetValue$({ value$ }),
-  ];
-  return valueContainer;
-};
+    WidgetLabel({ label }),
+    WidgetValue({ value })
+  );
+});
 
 module.exports = ValueWidget;
 
@@ -2715,7 +2722,15 @@ modules['src/components/widget/canvas2dWidget/Canvas2dWidget.js'] = (() => {
   'src/components/widget/doRenderVisualization/doRenderVisualization.js'
 );
 
-const TwoDimVisualization$ = () => {
+const TwoDimVisualization$ = ({
+  type,
+  label,
+  value,
+  surfaces,
+  edges,
+  is3d,
+  center,
+}) => {
   const canvasElement = document.createElement('canvas');
   Object.assign(canvasElement, {
     // 16 x SizeUnit
@@ -2723,17 +2738,15 @@ const TwoDimVisualization$ = () => {
     // 24 x SizeUnit
     width: 480,
   });
-  canvasElement.position = 'absolute';
+  canvasElement.style.position = 'absolute';
   const ctx = canvasElement.getContext('2d');
   const rerender = ({ surfaces, edges, center }) => {
     ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
     doRenderVisualization({ surfaces, edges, center, ctx });
   };
-  Object.defineProperty(canvasElement, 'widgetDescription', {
-    set: ({ surfaces, edges, center }) => {
-      rerender({ surfaces, edges, center });
-    },
-  });
+  canvasElement.update = ({ surfaces, edges, center }) => {
+    rerender({ surfaces, edges, center });
+  };
   return canvasElement;
 };
 
@@ -2752,47 +2765,31 @@ const Canvas2dWidget = include(
   'src/components/widget/canvas2dWidget/Canvas2dWidget.js'
 );
 const ValueWidget = include('src/components/widget/valueWidget/ValueWidget.js');
-const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const { defineComponent, span } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
 
-const Widget = () => {
-  const widgetContainer = document.createElement('span');
-  Object.assign(widgetContainer.style, {
-    display: 'inline-block',
-    verticalAlign: 'top',
-    background: 'white',
-    // 24 x SizeUnit
-    width: '480px',
-    // 16 x SizeUnit
-    height: '320px',
-  });
-
-  Object.defineProperty(widgetContainer, 'widgetDescription', {
-    set: (widgetDescription) => {
-      if (
-        widgetDescription.type === 'canvas-widget' &&
-        widgetDescription.is3d
-      ) {
-        const canvas3dWidget = Canvas3dWidget();
-        canvas3dWidget.widgetDescription = widgetDescription;
-        doUpdateChildren(widgetContainer, [canvas3dWidget]);
-      }
-      if (
-        widgetDescription.type === 'canvas-widget' &&
-        !widgetDescription.is3d
-      ) {
-        const canvas2dWidget = Canvas2dWidget();
-        canvas2dWidget.widgetDescription = widgetDescription;
-        doUpdateChildren(widgetContainer, [canvas2dWidget]);
-      }
-      if (widgetDescription.type === 'value-widget') {
-        const valueWidget = ValueWidget();
-        valueWidget.widgetDescription = widgetDescription;
-        doUpdateChildren(widgetContainer, [valueWidget]);
-      }
+const Widget = defineComponent((props) => {
+  const { type, is3d } = props;
+  return span(
+    {
+      style: {
+        display: 'inline-block',
+        verticalAlign: 'top',
+        background: 'white', // 24 x SizeUnit
+        width: '480px',
+        // 16 x SizeUnit
+        height: '320px',
+        boxShadow: 'rgba(0, 0, 0, 0.25) 0 0 10px -5px',
+      },
     },
-  });
-  return widgetContainer;
-};
+    ...[
+      type === 'canvas-widget' && is3d ? Canvas3dWidget(props) : null,
+      type === 'canvas-widget' && !is3d ? Canvas2dWidget(props) : null,
+      type === 'value-widget' ? ValueWidget(props) : null,
+    ].filter(Boolean)
+  );
+});
 
 module.exports = Widget;
 
@@ -2851,9 +2848,8 @@ const Dashboard = defineComponent(({ state, viewModel }) => {
       ...state.widgets.map(
         ({ type, label, value, surfaces, edges, is3d, center }) => {
           return span(
-            { style: { padding: '10px', display: 'inline-block' } },
-            `Widget({
-              style: { boxShadow: 'rgba(0, 0, 0, 0.25) 0 0 10px -5px' },
+            { style: { padding: '10px' } },
+            Widget({
               type,
               label,
               value,
@@ -2861,7 +2857,7 @@ const Dashboard = defineComponent(({ state, viewModel }) => {
               edges,
               is3d,
               center,
-            })`
+            })
           );
         }
       ),

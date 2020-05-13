@@ -6,46 +6,30 @@ const Canvas2dWidget = include(
   'src/components/widget/canvas2dWidget/Canvas2dWidget.js'
 );
 const ValueWidget = include('src/components/widget/valueWidget/ValueWidget.js');
-const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const { defineComponent, span } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
 
-const Widget = () => {
-  const widgetContainer = document.createElement('span');
-  Object.assign(widgetContainer.style, {
-    display: 'inline-block',
-    verticalAlign: 'top',
-    background: 'white',
-    // 24 x SizeUnit
-    width: '480px',
-    // 16 x SizeUnit
-    height: '320px',
-  });
-
-  Object.defineProperty(widgetContainer, 'widgetDescription', {
-    set: (widgetDescription) => {
-      if (
-        widgetDescription.type === 'canvas-widget' &&
-        widgetDescription.is3d
-      ) {
-        const canvas3dWidget = Canvas3dWidget();
-        canvas3dWidget.widgetDescription = widgetDescription;
-        doUpdateChildren(widgetContainer, [canvas3dWidget]);
-      }
-      if (
-        widgetDescription.type === 'canvas-widget' &&
-        !widgetDescription.is3d
-      ) {
-        const canvas2dWidget = Canvas2dWidget();
-        canvas2dWidget.widgetDescription = widgetDescription;
-        doUpdateChildren(widgetContainer, [canvas2dWidget]);
-      }
-      if (widgetDescription.type === 'value-widget') {
-        const valueWidget = ValueWidget();
-        valueWidget.widgetDescription = widgetDescription;
-        doUpdateChildren(widgetContainer, [valueWidget]);
-      }
+const Widget = defineComponent((props) => {
+  const { type, is3d } = props;
+  return span(
+    {
+      style: {
+        display: 'inline-block',
+        verticalAlign: 'top',
+        background: 'white', // 24 x SizeUnit
+        width: '480px',
+        // 16 x SizeUnit
+        height: '320px',
+        boxShadow: 'rgba(0, 0, 0, 0.25) 0 0 10px -5px',
+      },
     },
-  });
-  return widgetContainer;
-};
+    ...[
+      type === 'canvas-widget' && is3d ? Canvas3dWidget(props) : null,
+      type === 'canvas-widget' && !is3d ? Canvas2dWidget(props) : null,
+      type === 'value-widget' ? ValueWidget(props) : null,
+    ].filter(Boolean)
+  );
+});
 
 module.exports = Widget;

@@ -1,14 +1,22 @@
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const { defineComponent, div } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
 
-const WidgetLabel$ = ({ label$ }) =>
-  div$(label$).setStyle({
-    fontSize: '20px',
-    marginTop: '20px',
-    textAlign: 'center',
-    position: 'absolute',
-    width: '100%',
-    pointerEvents: 'none',
-    userSelect: 'none',
-  });
+const WidgetLabel = defineComponent(({ label }) => {
+  return div(
+    {
+      style: {
+        fontSize: '20px',
+        marginTop: '20px',
+        textAlign: 'center',
+        position: 'absolute',
+        width: '100%',
+        pointerEvents: 'none',
+        userSelect: 'none',
+      },
+    },
+    label
+  );
+});
 
-module.exports = WidgetLabel$;
+module.exports = WidgetLabel;

@@ -48,9 +48,8 @@ const Dashboard = defineComponent(({ state, viewModel }) => {
       ...state.widgets.map(
         ({ type, label, value, surfaces, edges, is3d, center }) => {
           return span(
-            { style: { padding: '10px', display: 'inline-block' } },
-            `Widget({
-              style: { boxShadow: 'rgba(0, 0, 0, 0.25) 0 0 10px -5px' },
+            { style: { padding: '10px' } },
+            Widget({
               type,
               label,
               value,
@@ -58,7 +57,7 @@ const Dashboard = defineComponent(({ state, viewModel }) => {
               edges,
               is3d,
               center,
-            })`
+            })
           );
         }
       ),
