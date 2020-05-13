@@ -1,4 +1,5 @@
-const Router = include('src/libraries/router/Router.js');
+const Router = include('src/libraries/simpleRouter/SimpleRouter.js');
+const simpleState = include('src/libraries/simpleState/SimpleState.js');
 const Model = include('src/model/Model.js');
 const App = include('src/app/App.js');
 
@@ -16,8 +17,6 @@ const isExported = false;
 const router = isExported
   ? new Router({
       '/': 'Dashboard',
-      '/values': 'Values',
-      '/dashboard': 'Dashboard',
     })
   : new Router({
       '/': 'Projects',
@@ -29,20 +28,27 @@ const router = isExported
       '/projects/<projectId:string>/dashboard/edit': 'Edit dashboard',
     });
 
-const viewModel = Model({ router, isExported });
+const { state, setState, withState } = simpleState({
+  currentRoute: router.currentRoute,
+  params: router.params,
+  isExported,
+  projects: [],
+  selectedProjectId: null,
+  selectedProjectName: '',
+  lastVisitedProjectView: null,
+  selectedApiUrl: '',
+  selectedApiUrlTestPreview: '',
+  selectedApiInterval: null,
+  apiResponse: '',
+  selectedDerivedValuesCode: '',
+  selectedWidgetsCode: '',
+  widgets: [],
+});
 
-document.body.appendChild(
-  App({
-    viewModel,
-    params: router.getParams,
-    currentRoute$: router.currentRoute$,
-  })
+const viewModel = Model({ router, isExported, state, setState });
+
+const app = withState(({ state, setState }) =>
+  App({ state, setState, viewModel })
 );
-document.body.update = (props) =>
-  document.body.childNodes.forEach((childNode) => {
-    if (typeof childNode.update === 'function') {
-      childNode.update(props);
-    }
-  });
 
-router.subscribe(() => document.body.update());
+document.body.appendChild(app);

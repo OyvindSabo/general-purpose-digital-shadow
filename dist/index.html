@@ -4,6 +4,459 @@
 const modules = {}
 const include = path => modules[path];
 
+modules['src/libraries/simpleRouter/SimpleRouter.js'] = (() => {
+  const module = { exports: {} };
+  function SimpleRouter(routes) {
+  /**
+   * @param {string} routes
+   */
+  this.setRoutes = function (routes) {
+    Object.entries(routes).forEach(([route, title]) => {
+      this.routes[route] = route;
+      this.titles[route] = title;
+      if (route === '/') {
+        this.routes[''] = route;
+        this.titles[''] = title;
+      }
+    });
+    this.syncWithHash();
+  };
+  SimpleRouter.getTokens = function (hash) {
+    return hash
+      .split('/')
+      .filter(Boolean)
+      .filter((element) => element !== '#')
+      .filter((element) => element !== '#!');
+  };
+  /**
+   * @param {string} token
+   * @returns {boolean}
+   */
+  SimpleRouter.isParameterRouteToken = function (token) {
+    if (
+      token.indexOf('<') !== 0 ||
+      !token.slice(2, -4).includes(':') ||
+      token.indexOf('>') !== token.length - 1
+    ) {
+      return false;
+    }
+    const [parameter, type] = token
+      .slice(token.indexOf('<') + 1, token.indexOf('>'))
+      .split(':');
+
+    if (!['int', 'string', 'number'].includes(type)) {
+      return false;
+    }
+    return true;
+  };
+  SimpleRouter.appendTokenToHash = function (hash, token) {
+    return `${hash}/${token}`;
+  };
+  SimpleRouter.parseParameterRouteToken = function (token) {
+    const [parameter, type] = token
+      .slice(token.indexOf('<') + 1, token.indexOf('>'))
+      .split(':');
+    return {
+      parameter,
+      type,
+    };
+  };
+  // (hash: string, route: string) => false | { [key: string]: number | string }
+  SimpleRouter.getMatch = function (hash, route) {
+    const hashTokens = SimpleRouter.getTokens(hash);
+    const routeTokens = SimpleRouter.getTokens(route);
+    const params = {};
+    let reconstructedHash = '#!';
+    if (hashTokens.length !== routeTokens.length) return false;
+    for (let i of Object.keys(hashTokens)) {
+      const hashToken = hashTokens[i];
+      const routeToken = routeTokens[i];
+      if (SimpleRouter.isParameterRouteToken(routeToken)) {
+        const { parameter, type } = SimpleRouter.parseParameterRouteToken(
+          routeToken
+        );
+        if (type === 'int') {
+          if (!Router.isInt(hashToken)) return false;
+          params[parameter] = parseInt(hashToken);
+          reconstructedHash = SimpleRouter.appendTokenToHash(
+            reconstructedHash,
+            hashToken
+          );
+        } else if (type === 'number' && !Router.isNumber(hasToken)) {
+          if (!Router.isNumber(hashToken)) return false;
+          params[parameter] = Number(hashToken);
+          reconstructedHash = SimpleRouter.appendTokenToHash(
+            reconstructedHash,
+            hashToken
+          );
+        } else if (type === 'string') {
+          params[parameter] = hashToken;
+          reconstructedHash = SimpleRouter.appendTokenToHash(
+            reconstructedHash,
+            hashToken
+          );
+        }
+      } else {
+        if (hashToken !== routeToken) return false;
+        reconstructedHash = SimpleRouter.appendTokenToHash(
+          reconstructedHash,
+          hashToken
+        );
+      }
+    }
+    return { params, reconstructedHash };
+  };
+  SimpleRouter.getRouteAndParamsFromHash = function (hash, routes) {
+    for (let route of Object.keys(routes)) {
+      const match = SimpleRouter.getMatch(hash, route);
+      if (match) {
+        const { params, reconstructedHash } = match;
+        return { route, params, reconstructedHash };
+      }
+    }
+    return { route: '', params: {}, reconstructedHash: '' };
+  };
+  /**
+   * @param {Object.<string, number | string>} params
+   */
+  this.setParams = function (params) {
+    this.params = params;
+    // Todo: Maybe dispatch some kind of event
+  };
+  this.setCurrentRoute = function (route) {
+    this.currentRoute = route;
+  };
+  this.setCurrentTitle = function (title) {
+    this.currentTitle = title;
+  };
+  SimpleRouter.removeHash = function () {
+    return history.replaceState(null, null, ' ');
+  };
+  this.syncWithHash = function () {
+    const { hash } = location;
+    const {
+      route,
+      params,
+      reconstructedHash,
+    } = SimpleRouter.getRouteAndParamsFromHash(hash, this.routes);
+    this.setParams(params);
+    this.setCurrentRoute(this.routes[route]);
+    this.setCurrentTitle(this.titles[route]);
+    if (reconstructedHash === '#!') {
+      SimpleRouter.removeHash();
+    } else {
+      history.replaceState(undefined, undefined, reconstructedHash);
+    }
+    document.title = this.currentTitle;
+  };
+  this.params = {};
+  this.currentRoute = '';
+  this.routes = {};
+  this.titles = {};
+  this.hashChangeListeners = [];
+  this.setRoutes(routes);
+  window.addEventListener('hashchange', () => {
+    this.syncWithHash();
+    this.callHashChangeListeners();
+  });
+  /**
+   * @param {string} route
+   * One of the registered routes, without hashbang
+   */
+  this.navigateTo = (route) => {
+    location.hash = `#!${route}`;
+  };
+
+  this.refresh = () => this.syncWithHash();
+
+  // @possiblyNumber: string
+  SimpleRouter.isNumber = function (possiblyNumber) {
+    return !isNaN(Number(possiblyNumber));
+  };
+  SimpleRouter.isInt = function (possiblyInt) {
+    return (
+      SimpleRouter.isNumber(possiblyInt) &&
+      parseInt(possiblyInt) === Number(possiblyInt)
+    );
+  };
+  this.onHashChange = (callback) => {
+    this.hashChangeListeners.push(callback);
+    this.callHashChangeListeners();
+  };
+  this.callHashChangeListeners = function () {
+    this.hashChangeListeners.forEach((hashChangeListener) =>
+      hashChangeListener({
+        params: this.params,
+        currentRoute: this.currentRoute,
+      })
+    );
+  };
+  this.getParams = () => this.params;
+  this.getCurrentTitle = () => this.currentTitle;
+  SimpleRouter.isProp = (propsOrChild) =>
+    !(propsOrChild instanceof HTMLElement || typeof propsOrChild === 'string');
+}
+
+module.exports = SimpleRouter;
+
+  return module.exports;
+})();
+
+modules['src/libraries/simpleHTML/SimpleHTML.js'] = (() => {
+  const module = { exports: {} };
+  const doAddInnerShadow = (element) => {
+  element.style.boxShadow = 'inset rgba(0, 0, 0, 0.25) 0 0 10px -5px';
+};
+
+const doAddShadow = (element) => {
+  element.style.boxShadow = 'rgba(0, 0, 0, 0.25) 0 0 10px -5px';
+};
+
+const doUpdateChildren = (element, newChildren) => {
+  newChildren.forEach((newChild, index) => {
+    if (element.childNodes[index] === newChild) return;
+    while (
+      element.childNodes[index] &&
+      !newChildren.includes(element.childNodes[index])
+    ) {
+      element.removeChild(element.childNodes[index]);
+    }
+    if (element.childNodes[index]) {
+      element.insertBefore(newChild, element.childNodes[index]);
+      return;
+    }
+    element.appendChild(newChild);
+    return;
+  });
+  while (newChildren.length < element.childNodes.length) {
+    element.removeChild(element.childNodes[newChildren.length]);
+  }
+};
+
+const isNullish = (value) => value === null || value === undefined;
+const nullishCoalesce = (primaryValue, backupValue) =>
+  isNullish(primaryValue) ? secondaryValue : primaryValue;
+
+class SimpleHTML {
+  static isProp = (propsOrChild) =>
+    !(propsOrChild instanceof HTMLElement || typeof propsOrChild === 'string');
+  static makeElement(elementType, propsOrChild, ...maybeAllChildren) {
+    const element = document.createElement(elementType);
+    const hasProps = SimpleHTML.isProp(propsOrChild);
+    const props = hasProps ? propsOrChild || {} : {};
+    const children = hasProps
+      ? maybeAllChildren
+      : [propsOrChild, ...maybeAllChildren];
+    Object.entries(props).forEach(([attribute, value]) => {
+      if (attribute === 'style') {
+        Object.assign(element.style, value);
+      } else if (attribute === 'onClick') {
+        element.onclick = value;
+      } else if (attribute === 'onInput') {
+        element.oninput = value;
+      } else {
+        element[attribute] = value;
+      }
+    });
+    children
+      .filter(Boolean)
+      .map((child) =>
+        typeof child === 'string' ? document.createTextNode(child) : child
+      )
+      .forEach((child) => {
+        element.appendChild(child);
+      });
+    return element;
+  }
+}
+
+const doMerge = (oldElement, newElement) => {
+  if (!oldElement.parentNode) return;
+  const oldChildren = Array.from(oldElement.childNodes);
+  const newChildren = Array.from(newElement.childNodes);
+  newChildren.forEach((newChild, i) => {
+    let foundMatchingOldChild = false;
+    while (oldChildren.length && !foundMatchingOldChild) {
+      oldChild = oldChildren.shift();
+      if (
+        oldChild.component === newChild.component &&
+        oldChild instanceof Element
+      ) {
+        const selectionStart = oldChild.selectionStart;
+        const selectionEnd = oldChild.selectionEnd;
+        oldChild.value = newChild.value;
+        oldChild.selectionStart = selectionStart;
+        oldChild.selectionEnd = selectionEnd;
+
+        oldChild.update(...newChild.propsAndChildren);
+        if (Object.keys(newChild.propsAndChildren[0]).includes('style')) {
+          if (!oldChild.style) {
+            Object.keys(oldChild.parentNode.style).forEach((property) => {
+              if (!newChild.propsAndChildren[0].style[property]) {
+                oldChild.parentNode.style[property] = null;
+              }
+            });
+            Object.assign(
+              oldChild.parentNode.style,
+              newChild.propsAndChildren[0].style
+            );
+          } else {
+            Object.keys(oldChild.parentNode.style).forEach((property) => {
+              if (!newChild.propsAndChildren[0].style[property]) {
+                oldChild.style[property] = null;
+              }
+            });
+            Object.assign(oldChild.style, newChild.propsAndChildren[0].style);
+          }
+        }
+        oldChild.innerText = newChild.innerText;
+        foundMatchingOldChild = true;
+      } else if (
+        !(oldChild instanceof Element) &&
+        !(newChild instanceof Element)
+      ) {
+        if (oldChild.data === newChild.data) {
+          foundMatchingOldChild = true;
+        } else {
+          oldChild.data = newChild.data;
+        }
+        foundMatchingOldChild = true;
+      } else {
+        oldElement.removeChild(oldChild);
+      }
+    }
+    if (!foundMatchingOldChild) {
+      while (oldElement.childNodes[i]) {
+        oldElement.removeChild(oldElement.childNodes[i]);
+      }
+      oldElement.appendChild(newChild);
+    }
+  });
+  while (newChildren.length < oldElement.childNodes.length) {
+    oldElement.removeChild(oldElement.childNodes[newChildren.length]);
+  }
+};
+
+const defineComponent = (elementFunction) => {
+  const component = (...propsAndChildren) => {
+    const element = elementFunction(...propsAndChildren);
+    element.component = component;
+    element.propsAndChildren = propsAndChildren;
+    element.update = (...newPropsAndChildren) => {
+      element.propsAndChildren = newPropsAndChildren;
+      doMerge(element, component(...newPropsAndChildren));
+    };
+    return element;
+  };
+  return component;
+};
+
+const div = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('div', props, ...children)
+);
+
+const span = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('span', props, ...children)
+);
+
+const a = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('a', props, ...children)
+);
+
+const p = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('p', props, ...children)
+);
+
+const h1 = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('h1', props, ...children)
+);
+
+const h2 = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('h2', props, ...children)
+);
+
+const img = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('img', props, ...children)
+);
+
+const form = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('form', props, ...children)
+);
+
+const input = defineComponent((props) =>
+  SimpleHTML.makeElement('input', props)
+);
+
+const textarea = defineComponent((props) =>
+  SimpleHTML.makeElement('textarea', props)
+);
+
+const br = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('br', props, ...children)
+);
+
+const button = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('button', props, ...children)
+);
+// And so on, fill in more as needed...
+
+module.exports = {
+  doMerge,
+  defineComponent,
+  div,
+  span,
+  a,
+  p,
+  h1,
+  h2,
+  img,
+  form,
+  input,
+  textarea,
+  br,
+  button,
+  doAddInnerShadow,
+  doAddShadow,
+  doUpdateChildren,
+};
+
+  return module.exports;
+})();
+
+modules['src/libraries/simpleState/SimpleState.js'] = (() => {
+  const module = { exports: {} };
+  const { defineComponent } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const simpleState = (initialState) => {
+  const state = initialState;
+  const connectedElements = [];
+  const emit = () => {
+    connectedElements.forEach((connectedElement) => {
+      console.log('connectedElement: ', connectedElement);
+      connectedElement.update({ state, setState });
+    });
+  };
+  const setState = (newState) => {
+    Object.assign(state, newState);
+    emit();
+  };
+  const withState = (elementFunction) => {
+    const element = defineComponent(elementFunction)({ state, setState });
+    connectedElements.push(element);
+    return element;
+  };
+  return {
+    state,
+    setState,
+    withState,
+  };
+};
+
+module.exports = simpleState;
+
+  return module.exports;
+})();
+
 modules['src/libraries/observable/Observable.js'] = (() => {
   const module = { exports: {} };
   class Observable {
@@ -34,226 +487,6 @@ modules['src/libraries/observable/Observable.js'] = (() => {
 }
 
 module.exports = Observable;
-
-  return module.exports;
-})();
-
-modules['src/libraries/router/Router.js'] = (() => {
-  const module = { exports: {} };
-  const Observable = include('src/libraries/observable/Observable.js');
-
-function Router(routes) {
-  /**
-   * @param {string} routes
-   */
-  this.setRoutes = function(routes) {
-    Object.entries(routes).forEach(([route, title]) => {
-      this.routes[route] = route;
-      this.titles[route] = title;
-      if (route === '/') {
-        this.routes[''] = route;
-        this.titles[''] = title;
-      }
-    });
-    this.syncWithHash();
-  };
-  Router.getTokens = function(hash) {
-    return hash
-      .split('/')
-      .filter(Boolean)
-      .filter(element => element !== '#')
-      .filter(element => element !== '#!');
-  };
-  /**
-   * @param {string} token
-   * @returns {boolean}
-   */
-  Router.isParameterRouteToken = function(token) {
-    if (
-      token.indexOf('<') !== 0 ||
-      !token.slice(2, -4).includes(':') ||
-      token.indexOf('>') !== token.length - 1
-    ) {
-      return false;
-    }
-    const [parameter, type] = token
-      .slice(token.indexOf('<') + 1, token.indexOf('>'))
-      .split(':');
-
-    if (!['int', 'string', 'number'].includes(type)) {
-      return false;
-    }
-    return true;
-  };
-  Router.appendTokenToHash = function(hash, token) {
-    return `${hash}/${token}`;
-  };
-  Router.parseParameterRouteToken = function(token) {
-    const [parameter, type] = token
-      .slice(token.indexOf('<') + 1, token.indexOf('>'))
-      .split(':');
-    return {
-      parameter,
-      type,
-    };
-  };
-  // (hash: string, route: string) => false | { [key: string]: number | string }
-  Router.getMatch = function(hash, route) {
-    const hashTokens = Router.getTokens(hash);
-    const routeTokens = Router.getTokens(route);
-    const params = {};
-    let reconstructedHash = '#!';
-    if (hashTokens.length !== routeTokens.length) return false;
-    for (let i of Object.keys(hashTokens)) {
-      const hashToken = hashTokens[i];
-      const routeToken = routeTokens[i];
-      if (Router.isParameterRouteToken(routeToken)) {
-        const { parameter, type } = Router.parseParameterRouteToken(routeToken);
-        if (type === 'int') {
-          if (!Router.isInt(hashToken)) return false;
-          params[parameter] = parseInt(hashToken);
-          reconstructedHash = Router.appendTokenToHash(
-            reconstructedHash,
-            hashToken
-          );
-        } else if (type === 'number' && !Router.isNumber(hasToken)) {
-          if (!Router.isNumber(hashToken)) return false;
-          params[parameter] = Number(hashToken);
-          reconstructedHash = Router.appendTokenToHash(
-            reconstructedHash,
-            hashToken
-          );
-        } else if (type === 'string') {
-          params[parameter] = hashToken;
-          reconstructedHash = Router.appendTokenToHash(
-            reconstructedHash,
-            hashToken
-          );
-        }
-      } else {
-        if (hashToken !== routeToken) return false;
-        reconstructedHash = Router.appendTokenToHash(
-          reconstructedHash,
-          hashToken
-        );
-      }
-    }
-    return { params, reconstructedHash };
-  };
-  Router.getRouteAndParamsFromHash = function(hash, routes) {
-    for (let route of Object.keys(routes)) {
-      const match = Router.getMatch(hash, route);
-      if (match) {
-        const { params, reconstructedHash } = match;
-        return { route, params, reconstructedHash };
-      }
-    }
-    return { route: '', params: {}, reconstructedHash: '' };
-  };
-  /**
-   * @param {Object.<string, number | string>} params
-   */
-  this.setParams = function(params) {
-    this.params = params;
-    // Todo: Maybe dispatch some kind of event
-  };
-  this.setCurrentRoute = function(route) {
-    this.currentRoute$.value = route;
-  };
-  this.setCurrentTitle = function(title) {
-    this.currentTitle = title;
-  };
-  Router.removeHash = function() {
-    return history.replaceState(null, null, ' ');
-  };
-  // Rather than passing data, this one should pass a string saying which attribute has been updated
-  this.emit = function() {
-    this.observers.forEach(observer => {
-      if (!observer)
-        console.warn('Non-existing element registered as router observer');
-
-      observer({ currentRoute$: this.currentRoute$, params: this.params });
-    });
-  };
-  this.syncWithHash = function() {
-    const { hash } = location;
-    const {
-      route,
-      params,
-      reconstructedHash,
-    } = Router.getRouteAndParamsFromHash(hash, this.routes);
-    this.setParams(params);
-    this.setCurrentRoute(this.routes[route]);
-    this.setCurrentTitle(this.titles[route]);
-    if (reconstructedHash === '#!') {
-      Router.removeHash();
-    } else {
-      history.replaceState(undefined, undefined, reconstructedHash);
-    }
-    document.title = this.currentTitle;
-    this.emit();
-  };
-  this.params = {};
-  this.currentRoute$ = new Observable('');
-  this.routes = {};
-  this.titles = {};
-  this.observers = [];
-  this.hashChangeListeners = [];
-  this.setRoutes(routes);
-  window.addEventListener('hashchange', () => {
-    this.syncWithHash();
-    this.callHashChangeListeners();
-  });
-  /**
-   * @param {string} route
-   * One of the registered routes, without hashbang
-   */
-  this.navigateTo = route => {
-    location.hash = `#!${route}`;
-  };
-
-  this.refresh = () => this.syncWithHash();
-
-  // @possiblyNumber: string
-  Router.isNumber = function(possiblyNumber) {
-    return !isNaN(Number(possiblyNumber));
-  };
-  Router.isInt = function(possiblyInt) {
-    return (
-      Router.isNumber(possiblyInt) &&
-      parseInt(possiblyInt) === Number(possiblyInt)
-    );
-  };
-  this.onHashChange = callback => {
-    this.hashChangeListeners.push(callback);
-    this.callHashChangeListeners();
-  };
-  this.callHashChangeListeners = function() {
-    this.hashChangeListeners.forEach(hashChangeListener =>
-      hashChangeListener({
-        params: this.params,
-        currentRoute$: this.currentRoute$,
-      })
-    );
-  };
-  this.getParams = () => this.params;
-  this.getCurrentTitle = () => this.currentTitle;
-  Router.isProp = propsOrChild =>
-    !(propsOrChild instanceof HTMLElement || typeof propsOrChild === 'string');
-
-  /**
-   * @param {function({ params: Object.<string, string | number> }): void} observer
-   */
-  this.subscribe = observer => {
-    observer({
-      currentRoute$: this.currentRoute$,
-      params: this.params,
-    });
-    this.observers.push(observer);
-  };
-}
-
-module.exports = Router;
 
   return module.exports;
 })();
@@ -296,6 +529,8 @@ const createProject = (newProject) => {
 const updateProjectById = (projectId, project) => {
   const projects = getAllProjects();
   const projectIndex = projects.findIndex(({ id }) => id === projectId);
+  console.log('projectId: ', projectId);
+  console.log('project: ', project);
   if (projectIndex === -1) {
     console.warn('Tried to update nonexistent project');
     return;
@@ -334,10 +569,6 @@ const {
   deleteProjectById,
 } = include('src/data/Data.js');
 
-const MAX_AMOUNT_OF_PROJECTS = 100;
-const MAX_AMOUNT_OF_VALUES = 100;
-const MAX_AMOUNT_OF_WIDGETS = 100;
-
 const evaluateCode = (apiResponse, widgetsCode) => {
   const evaluatedCode = eval(widgetsCode);
   const evaluatedCodeCalledWithApiResponse = evaluatedCode(
@@ -346,85 +577,46 @@ const evaluateCode = (apiResponse, widgetsCode) => {
   return evaluatedCodeCalledWithApiResponse;
 };
 
-const Model = ({ router, isExported }) => {
+const Model = ({ router, isExported, state, setState }) => {
   const dataModel = { projects: [] };
-  const viewModel = {
-    isExported, // When exporting the code, this will be true in the exported code
-
-    // All values
-    projects: [...new Array(MAX_AMOUNT_OF_PROJECTS).keys()].map(() => ({
-      id$: new Observable(''),
-      name$: new Observable(''),
-      nameInputValue$: new Observable(''),
-      isEditing$: new Observable(false),
-      isEmpty$: new Observable(true),
-    })),
-
-    // Selected values
-    selectedProjectId$: new Observable(null),
-    selectedProjectName$: new Observable(null),
-
-    lastVisitedProjectView$: new Observable(null),
-
-    derivedValuesEditorIsOpen$: new Observable(false),
-
-    selectedApiUrl$: new Observable(''),
-    selectedApiUrlTestPreview$: new Observable(''),
-    selectedApiInterval$: new Observable(''),
-    apiResponse$: new Observable(''),
-    selectedDerivedValuesCode$: new Observable(''),
-    selectedWidgetsCode$: new Observable(''),
-
-    widgets: [...new Array(MAX_AMOUNT_OF_WIDGETS).keys()].map(() => ({
-      label$: new Observable(''),
-      type$: new Observable(''),
-      value$: new Observable(0),
-      edges$: new Observable([]),
-      surfaces$: new Observable([]),
-      center$: new Observable([0, 0, 0]),
-      isEmpty$: new Observable(true),
-      is3d$: new Observable(false),
-    })),
-  };
+  const viewModel = {};
 
   viewModel.loadAllProjects = () => {
-    dataModel.projects = isExported ? getExportedProject() : getAllProjects();
-    for (let i = 0; i < MAX_AMOUNT_OF_PROJECTS; i++) {
-      viewModel.projects[i].id$.value = '';
-      viewModel.projects[i].name$.value = '';
-      viewModel.projects[i].nameInputValue$.value = '';
-      viewModel.projects[i].isEditing$.value = false;
-      viewModel.projects[i].isEmpty$.value = true;
+    dataModel.projects = state.isExported
+      ? getExportedProject()
+      : getAllProjects();
+    setState({
+      projects: dataModel.projects.map(
+        ({ id, name, apiRequests, derivedValuesCode, widgetsCode }, index) => ({
+          id,
+          name,
+          nameInputValue: name,
+        })
+      ),
+    });
+    if (state.isExported) {
+      setState({ selectedProjectId: dataModel.projects[0].id });
     }
-    dataModel.projects.forEach(
-      ({ id, name, apiRequests, derivedValuesCode, widgetsCode }, index) => {
-        viewModel.projects[index].id$.value = id;
-        viewModel.projects[index].name$.value = name;
-        viewModel.projects[index].nameInputValue$.value = name;
-        viewModel.projects[index].isEmpty$.value = false;
-        if (isExported) {
-          viewModel.selectedProjectId$.value = id;
-        }
-      }
-    );
+    // I am here now
     const selectedProject = dataModel.projects.find(
-      ({ id }) => id === viewModel.selectedProjectId$.value
+      ({ id }) => id === state.selectedProjectId
     );
     if (!selectedProject) {
-      viewModel.selectedProjectId$.value = null;
-      viewModel.selectedProjectName$.value = null;
-      viewModel.selectedApiUrl$.value$ = '';
-      viewModel.selectedApiInterval$.value = null;
-      viewModel.selectedDerivedValuesCode$.value = '';
-      viewModel.selectedWidgetsCode$.value = '';
+      setState({
+        selectedProjectId: null,
+        selectedProjectName: null,
+        selectedApiUrl: '',
+        selectedApiInterval: null,
+        selectedWidgetsCode: '',
+      });
       return;
     }
-    viewModel.selectedProjectName$.value /***/ = selectedProject.name;
-    viewModel.selectedApiUrl$.value /********/ = selectedProject.apiUrl;
-    viewModel.selectedApiInterval$.value /***/ = selectedProject.apiInterval;
-    viewModel.selectedDerivedValuesCode$.value =
-      selectedProject.derivedValuesCode;
-    viewModel.selectedWidgetsCode$.value /***/ = selectedProject.widgetsCode;
+    setState({
+      selectedProjectName: selectedProject.name,
+      selectedApiUrl: selectedProject.apiUrl,
+      selectedAPiInterval: selectedProject.apiInterval,
+      selectedWidgetsCode: selectedProject.widgetsCode,
+    });
   };
   viewModel.loadAllProjects();
 
@@ -433,53 +625,46 @@ const Model = ({ router, isExported }) => {
       name: 'Untitled project',
       apiUrl: '',
       apiInterval: 0,
-      derivedValuesCode: '',
       widgetsCode: '',
     });
     viewModel.loadAllProjects();
   };
 
   viewModel.setProjectNameInputValue = (projectId, inputValue) => {
-    const project = viewModel.projects.find(
-      ({ id$ }) => id$.value === projectId
-    );
-    if (!project) {
-      console.warn(
-        'Tried to update project name input value of nonexistent project.'
-      );
-    }
-    project.nameInputValue$.value = inputValue;
+    setState({
+      projects: state.projects.map((project) => {
+        if (project.id === projectId) {
+          return { ...project, nameInputValue: inputValue };
+        }
+        return project;
+      }),
+    });
   };
 
   viewModel.editProjectName = (projectId) => {
-    const project = viewModel.projects.find(
-      ({ id$ }) => id$.value === projectId
-    );
-    if (!project) {
-      console.warn(
-        'Tried to cancel editing the name input value of nonexistent project.'
-      );
-    }
-    project.isEditing$.value = true;
+    setState({
+      projects: state.projects.map((project) => {
+        if (project.id === projectId) {
+          return { ...project, isEditing: true };
+        }
+        return project;
+      }),
+    });
   };
 
   viewModel.cancelEditingProjectName = (projectId) => {
-    const project = viewModel.projects.find(
-      ({ id$ }) => id$.value === projectId
-    );
-    if (!project) {
-      console.warn(
-        'Tried to cancel editing the name input value of nonexistent project.'
-      );
-    }
-    project.nameInputValue$.value = project.name$.value;
-    project.isEditing$.value = false;
+    setState({
+      projects: state.projects.map((project) => {
+        if (project.id === projectId) {
+          return { ...project, nameInputValue: project.name, isEditing: false };
+        }
+        return project;
+      }),
+    });
   };
 
   viewModel.saveProjectName = (projectId) => {
-    const project = viewModel.projects.find(
-      ({ id$ }) => id$.value === projectId
-    );
+    const project = state.projects.find(({ id$ }) => id$.value === projectId);
     updateProjectById(projectId, {
       name: project.nameInputValue$.value,
     });
@@ -512,25 +697,19 @@ const Model = ({ router, isExported }) => {
     viewModel.loadAllProjects();
   };
 
-  viewModel.updateDerivedValuesCode = (projectId, derivedValuesCode) => {
-    updateProjectById(projectId, { derivedValuesCode });
-    viewModel.loadAllProjects();
-  };
-
   viewModel.updateWidgetsCode = (projectId, widgetsCode) => {
     updateProjectById(projectId, { widgetsCode });
     viewModel.loadAllProjects();
+    updateValues();
   };
 
   viewModel.testApiUrlInput = () => {
-    fetch(viewModel.selectedApiUrl$.value)
+    fetch(state.selectedApiUrl)
       .then((response) => response.json())
       .then((jsonResponse) => {
-        viewModel.selectedApiUrlTestPreview$.value = JSON.stringify(
-          jsonResponse,
-          null,
-          2
-        );
+        setState({
+          selectedApiUrlTestPreview: JSON.stringify(jsonResponse, null, 2),
+        });
       });
   };
 
@@ -538,61 +717,43 @@ const Model = ({ router, isExported }) => {
     let evaluatedCode;
     try {
       evaluatedCode = evaluateCode(
-        viewModel.apiResponse$.value,
-        viewModel.selectedWidgetsCode$.value
+        state.apiResponse,
+        state.selectedWidgetsCode
       );
     } catch (e) {
       console.log('Failed to evaluate code: ', e);
       evaluatedCode = [];
     }
 
-    const widgets = evaluatedCode;
-    viewModel.widgets.forEach(
-      (
-        { label$, type$, value$, edges$, surfaces$, is3d$, center$, isEmpty$ },
-        index
-      ) => {
-        label$.value = widgets[index] ? widgets[index].label : '';
-        type$.value = widgets[index] ? widgets[index].type : '';
-        value$.value = widgets[index] ? widgets[index].value : 0;
-        edges$.value = widgets[index] ? widgets[index].edges || [] : [];
-        surfaces$.value = widgets[index] ? widgets[index].surfaces || [] : [];
-        center$.value = widgets[index]
-          ? widgets[index].center || [0, 0, 0]
-          : [0, 0, 0]; // TODO
-        is3d$.value = widgets[index] ? widgets[index].is3d || false : false; // TODO
-        isEmpty$.value = !widgets[index];
-      }
-    );
+    setState({
+      widgets: evaluatedCode,
+    });
   };
 
-  window.addEventListener(viewModel.apiResponse$.id, updateValues);
-  window.addEventListener(
-    viewModel.selectedDerivedValuesCode$.id,
-    updateValues
-  );
-  window.addEventListener(viewModel.selectedWidgetsCode$.id, updateValues);
-
   const fetchDataFromApi = () => {
-    fetch(viewModel.selectedApiUrl$.value)
+    fetch(state.selectedApiUrl)
       .then((response) => response.json())
       .then((jsonResponse) => {
-        viewModel.apiResponse$.value = JSON.stringify(jsonResponse, null, 2);
+        setState({
+          apiResponse: JSON.stringify(jsonResponse, null, 2),
+        });
+        updateValues();
       });
   };
 
   const repeatedlyFetchDataFromApi = (timeoutInSeconds) =>
     setTimeout(() => {
       console.log('repeatedly fetch data from api');
-      if (viewModel.selectedApiInterval$.value !== 0) {
+      if (state.selectedApiInterval !== 0) {
         fetchDataFromApi();
       }
-      if (timeoutInSeconds === viewModel.selectedApiInterval$.value) {
+      if (timeoutInSeconds === state.selectedApiInterval) {
         repeatedlyFetchDataFromApi(timeoutInSeconds);
       }
     }, timeoutInSeconds * 1000);
   repeatedlyFetchDataFromApi();
 
+  /** TODO
   addEventListener(viewModel.selectedApiInterval$.id, () =>
     setTimeout(() => {
       fetchDataFromApi();
@@ -605,37 +766,38 @@ const Model = ({ router, isExported }) => {
       repeatedlyFetchDataFromApi(viewModel.selectedApiInterval$.value);
     }, 1000)
   );
+  */
 
-  const syncSelectedProjectWithRouter = ({ params, currentRoute$ }) => {
-    if (currentRoute$.value.indexOf('/projects/<projectId:string>') === 0) {
+  const syncSelectedProjectWithRouter = ({ params, currentRoute }) => {
+    setState({ currentRoute, params });
+    if (currentRoute.indexOf('/projects/<projectId:string>') === 0) {
       const selectedProject = dataModel.projects.find(
         ({ id }) => id === params.projectId
       );
-      viewModel.selectedProjectId$.value = selectedProject.id;
-      viewModel.selectedProjectName$.value = selectedProject.name;
-      viewModel.selectedApiUrl$.value = selectedProject.apiUrl;
-      viewModel.selectedApiInterval$.value = selectedProject.apiInterval;
-      viewModel.selectedDerivedValuesCode$.value =
-        selectedProject.derivedValuesCode;
-      viewModel.selectedWidgetsCode$.value = selectedProject.widgetsCode;
-      if (
-        currentRoute$.value.indexOf(
-          '/projects/<projectId:string>/data-sources'
-        ) === 0
-      ) {
-        viewModel.lastVisitedProjectView$.value = 'data-sources';
+      setState({
+        selectedProjectId: selectedProject.id,
+        selectedProjectName: selectedProject.name,
+        selectedApiUrl: selectedProject.apiUrl,
+        selectedApiInterval: selectedProject.apiInterval,
+        selectedWidgetsCode: selectedProject.widgetsCode,
+      });
+      if (currentRoute === '/projects/<projectId:string>/data-sources') {
+        setState({
+          lastVisitedProjectView: 'data-sources',
+        });
       }
       if (
-        currentRoute$.value.indexOf('/projects/<projectId:string>/values') === 0
+        currentRoute.indexOf('/projects/<projectId:string>/dashboard/edit') ===
+        0
       ) {
-        viewModel.lastVisitedProjectView$.value = 'values';
+        setState({
+          lastVisitedProjectView: 'edit-dashboard', // TODO: Check that this works
+        });
       }
-      if (
-        currentRoute$.value.indexOf(
-          '/projects/<projectId:string>/dashboard'
-        ) === 0
-      ) {
-        viewModel.lastVisitedProjectView$.value = 'dashboard';
+      if (currentRoute === '/projects/<projectId:string>/dashboard') {
+        setState({
+          lastVisitedProjectView: 'dashboard',
+        });
       }
     }
   };
@@ -644,6 +806,7 @@ const Model = ({ router, isExported }) => {
 
   return viewModel;
 };
+
 module.exports = Model;
 
   return module.exports;
@@ -1189,6 +1352,31 @@ module.exports = {
   return module.exports;
 })();
 
+modules['src/views/project/projectContainer/ProjectContainer.js'] = (() => {
+  const module = { exports: {} };
+  const { defineComponent, div } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
+
+const ProjectContainer = defineComponent((props, ...children) => {
+  return div(
+    {
+      style: {
+        height: 'calc(100% - 64px)',
+        position: 'absolute',
+        left: '0',
+        right: '0',
+      },
+    },
+    ...children
+  );
+});
+
+module.exports = ProjectContainer;
+
+  return module.exports;
+})();
+
 modules['src/libraries/styled/styled.js'] = (() => {
   const module = { exports: {} };
   const styled = style => Component => (...children) =>
@@ -1251,31 +1439,55 @@ module.exports = {
   return module.exports;
 })();
 
-modules['src/views/project/projectContainer/ProjectContainer.js'] = (() => {
+modules['src/libraries/simpleUI/HorizontalNavigator.js'] = (() => {
   const module = { exports: {} };
-  const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const styled = include('src/libraries/styled/styled.js');
+  const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const ProjectContainer$ = styled({
-  height: 'calc(100% - 64px)',
-  position: 'absolute',
-  left: '0',
-  right: '0',
-})(div$);
+const HorizontalNavigator = () => {
+  // Create base element
+  const divElement = document.createElement('div');
 
-module.exports = ProjectContainer$;
+  // Define setters
+  Object.defineProperty(divElement, 'heightUnits', {
+    set: (heightUnits) => {
+      divElement.style.height = `${heightUnits * 20}px`;
+    },
+  });
+  Object.defineProperty(divElement, 'children', {
+    set: (children) => {
+      doUpdateChildren(divElement, children);
+    },
+  });
+  return divElement;
+};
+
+module.exports = HorizontalNavigator;
 
   return module.exports;
 })();
 
 modules['src/components/horizontalNavigator/HorizontalNavigator.js'] = (() => {
   const module = { exports: {} };
-  const styled = include('src/libraries/styled/styled.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+  const { defineComponent, div } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
 
-const HorizontalNavigator$ = styled({ height: '64px' })(div$);
+const HorizontalNavigator = defineComponent((props, ...children) => {
+  return div(
+    {
+      ...props,
+      style: {
+        height: '64px',
+        boxShadow: 'rgba(0, 0, 0, 0.25) 0 0 10px -5px',
+        background: 'white',
+        color: 'darkslategray',
+      },
+    },
+    ...children
+  );
+});
 
-module.exports = HorizontalNavigator$;
+module.exports = HorizontalNavigator;
 
   return module.exports;
 })();
@@ -1284,21 +1496,37 @@ modules['src/app/titleBar/atoms.js'] = (() => {
   const module = { exports: {} };
   const { div$, a$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const styled = include('src/libraries/styled/styled.js');
+const { defineComponent, div, span } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
 
-const ViewTitle$ = styled({
-  fontSize: '32px',
-  padding: '16px',
-  display: 'inline-block',
-})(div$);
+const ViewTitle = defineComponent((props, ...children) => {
+  return div(
+    {
+      ...props,
+      style: { fontSize: '32px', padding: '16px', display: 'inline-block' },
+    },
+    ...children
+  );
+});
 
-const ExportButton$ = styled({
-  fontSize: '16px',
-  padding: '0 16px',
-  float: 'right',
-  lineHeight: '64px',
-})(div$);
+const ExportButton = defineComponent((props, ...children) => {
+  return div(
+    {
+      ...props,
+      style: {
+        fontSize: '16px',
+        padding: '0 16px',
+        float: 'right',
+        lineHeight: '64px',
+        cursor: 'pointer',
+      },
+    },
+    ...children
+  );
+});
 
-module.exports = { ViewTitle$, ExportButton$ };
+module.exports = { ViewTitle, ExportButton };
 
   return module.exports;
 })();
@@ -1318,10 +1546,10 @@ module.exports = withShadow;
 
 modules['src/app/titleBar/TitleBar.js'] = (() => {
   const module = { exports: {} };
-  const HorizontalNavigator$ = include(
+  const HorizontalNavigator = include(
   'src/components/horizontalNavigator/HorizontalNavigator.js'
 );
-const { ViewTitle$, ExportButton$ } = include('src/app/titleBar/atoms.js');
+const { ViewTitle, ExportButton } = include('src/app/titleBar/atoms.js');
 const withShadow = include('src/styleWrappers/withShadow.js');
 const { add$, startsWith$, choose$, not$ } = include(
   'src/libraries/observable/utils.js'
@@ -1329,91 +1557,106 @@ const { add$, startsWith$, choose$, not$ } = include(
 const { If$ } = include('src/libraries/observableHtml/utils.js');
 const { span$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
-const TitleBar$ = ({ currentRoute$, viewModel }) => {
-  const { isExported } = viewModel;
-  return withShadow(HorizontalNavigator$)(
-    ViewTitle$(
-      If$(
-        not$(isExported),
-        span$('Projects').onClick(() => (location.hash = '#!/projects'))
-      ),
-      span$(
-        choose$(
-          viewModel.selectedProjectName$,
-          isExported
-            ? viewModel.selectedProjectName$
-            : add$(' / ', viewModel.selectedProjectName$),
-          ''
-        )
-      )
-        .setStyle({
-          color: isExported
-            ? 'darkslategray'
-            : choose$(
-                startsWith$(currentRoute$, '/projects/<projectId:string>'),
-                'darkslategray',
-                'lightgray'
-              ),
-        })
-        .onClick(() => {
-          if (isExported) {
-            location.hash = '#!/';
-            return;
-          }
-          location.hash = `#!/projects/${viewModel.selectedProjectId$.value}/${
-            viewModel.lastVisitedProjectView$.value || ''
-          }`;
-        })
-    ),
-    If$(
-      not$(isExported),
-      ExportButton$('Export').onClick(() => {
-        const element = document.createElement('a');
-        // SInce just the first occurrence of the code will be replaced, we need to make sure that this code does not replace itself, so we construct the match on call time
-        const fileContent = document.head.innerHTML
-          .replace(
-            '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *f*a*l*s*e*;*'
-              .split('*')
-              .join(''),
-            '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *t*r*u*e*;*'
-              .split('*')
-              .join('')
-          )
-          .replace(
-            '*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>* *[*]*;*'
-              .split('*')
-              .join(''),
-            `*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>*`
-              .split('*')
-              .join('') +
-              JSON.stringify([
-                {
-                  id: viewModel.selectedProjectId$.value,
-                  name: viewModel.selectedProjectName$.value,
-                  apiUrl: viewModel.selectedApiUrl$.value,
-                  apiInterval: viewModel.selectedApiInterval$.value,
-                  derivedValuesCode: viewModel.selectedDerivedValuesCode$.value,
-                  widgetsCode: viewModel.selectedWidgetsCode$.value,
-                },
-              ])
-          );
-        const file = new Blob([fileContent], { type: 'text/plain' });
-        element.href = URL.createObjectURL(file);
-        element.download = `${viewModel.selectedProjectName$.value
-          .toLowerCase()
-          .split(' ')
-          .join('-')}.html`;
-        document.body.appendChild(element); // Required for this to work in FireFox
-        element.click();
-      })
-    )
-  ).setStyle({
-    background: 'white',
-    color: 'darkslategray',
-  });
-};
+const { defineComponent, div, span } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
 
-module.exports = TitleBar$;
+const TitleBar = defineComponent(({ viewModel, state }) => {
+  const { isExported, currentRoute } = state;
+  return HorizontalNavigator(
+    {},
+    ...[
+      ViewTitle(
+        {},
+        ...[
+          !isExported
+            ? span(
+                {
+                  onClick: () => (location.hash = '#!/projects'),
+                  style: { cursor: 'pointer' },
+                },
+                'Projects'
+              )
+            : null,
+          span(
+            {
+              style: {
+                color: isExported
+                  ? 'darkslategray'
+                  : currentRoute.indexOf('/projects/<projectId:string>') === 0
+                  ? 'darkslategray'
+                  : 'lightgray',
+                cursor: 'pointer',
+              },
+              onClick: () => {
+                if (isExported) {
+                  location.hash = '#!/';
+                  return;
+                }
+                location.hash = `#!/projects/${state.selectedProjectId}/${
+                  viewModel.lastVisitedProjectView || ''
+                }`;
+              },
+            },
+            state.selectedProjectName
+              ? isExported
+                ? state.selectedProjectName
+                : ` / ${state.selectedProjectName}`
+              : ''
+          ),
+        ].filter(Boolean)
+      ),
+      !isExported
+        ? ExportButton(
+            {
+              onClick: () => {
+                const element = document.createElement('a');
+                // SInce just the first occurrence of the code will be replaced, we need to make sure that this code does not replace itself, so we construct the match on call time
+                const fileContent = document.head.innerHTML
+                  .replace(
+                    '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *f*a*l*s*e*;*'
+                      .split('*')
+                      .join(''),
+                    '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *t*r*u*e*;*'
+                      .split('*')
+                      .join('')
+                  )
+                  .replace(
+                    '*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>* *[*]*;*'
+                      .split('*')
+                      .join(''),
+                    `*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>*`
+                      .split('*')
+                      .join('') +
+                      JSON.stringify([
+                        {
+                          id: state.selectedProjectId,
+                          name: state.selectedProjectName,
+                          apiUrl: state.selectedApiUrl,
+                          apiInterval: state.selectedApiInterval,
+                          derivedValuesCode: state.selectedDerivedValuesCode,
+                          widgetsCode: state.selectedWidgetsCode,
+                        },
+                      ])
+                  );
+                const file = new Blob([fileContent], { type: 'text/plain' });
+                element.href = URL.createObjectURL(file);
+                element.download = `${state.selectedProjectName
+                  .toLowerCase()
+                  .split(' ')
+                  .join('-')}.html`;
+                document.body.appendChild(element); // Required for this to work in FireFox
+                element.click();
+              },
+            },
+            'Export'
+          )
+        : null,
+    ]
+  );
+});
+
+module.exports = TitleBar;
 
   return module.exports;
 })();
@@ -1442,100 +1685,6 @@ const NewProject$ = ({ viewModel }) => {
 };
 
 module.exports = NewProject$;
-
-  return module.exports;
-})();
-
-modules['src/libraries/simpleHTML/SimpleHTML.js'] = (() => {
-  const module = { exports: {} };
-  const doAddInnerShadow = (element) => {
-  element.style.boxShadow = 'inset rgba(0, 0, 0, 0.25) 0 0 10px -5px';
-};
-
-const doAddShadow = (element) => {
-  element.style.boxShadow = 'rgba(0, 0, 0, 0.25) 0 0 10px -5px';
-};
-
-const doUpdateChildren = (element, newChildren) => {
-  newChildren.forEach((newChild, index) => {
-    if (element.childNodes[index] === newChild) return;
-    while (
-      element.childNodes[index] &&
-      !newChildren.includes(element.childNodes[index])
-    ) {
-      element.removeChild(element.childNodes[index]);
-    }
-    if (element.childNodes[index]) {
-      element.insertBefore(newChild, element.childNodes[index]);
-      return;
-    }
-    element.appendChild(newChild);
-    return;
-  });
-  while (newChildren.length < element.childNodes.length) {
-    element.removeChild(element.childNodes[newChildren.length]);
-  }
-};
-
-module.exports = { doAddInnerShadow, doAddShadow, doUpdateChildren };
-
-  return module.exports;
-})();
-
-modules['src/libraries/simpleUI/HorizontalNavigator.js'] = (() => {
-  const module = { exports: {} };
-  const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const HorizontalNavigator = () => {
-  // Create base element
-  const divElement = document.createElement('div');
-
-  // Define setters
-  Object.defineProperty(divElement, 'heightUnits', {
-    set: (heightUnits) => {
-      divElement.style.height = `${heightUnits * 20}px`;
-    },
-  });
-  Object.defineProperty(divElement, 'children', {
-    set: (children) => {
-      doUpdateChildren(divElement, children);
-    },
-  });
-  return divElement;
-};
-
-module.exports = HorizontalNavigator;
-
-  return module.exports;
-})();
-
-modules['src/libraries/simpleUI/Container.js'] = (() => {
-  const module = { exports: {} };
-  const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const Container = () => {
-  // Create base element
-  const divElement = document.createElement('div');
-  Object.assign(divElement.style, {
-    display: 'inline-block',
-    width: '100%',
-  });
-
-  // Define setters
-  Object.defineProperty(divElement, 'widthUnits', {
-    set: (widthUnits) => {
-      divElement.style.maxWidth = `${widthUnits * 20}px`;
-    },
-  });
-  Object.defineProperty(divElement, 'children', {
-    set: (children) => {
-      doUpdateChildren(divElement, children);
-    },
-  });
-  return divElement;
-};
-
-module.exports = Container;
 
   return module.exports;
 })();
@@ -1646,136 +1795,50 @@ modules['src/views/project/projectNavigator/ProjectNavigator.js'] = (() => {
 const HorizontalNavigator = include(
   'src/libraries/simpleUI/HorizontalNavigator.js'
 );
+const { defineComponent } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const button = (title) =>
-  Object.assign(NavigationButton(), {
-    widthUnits: 8,
-    heightUnits: 2,
-    title,
-  });
+const Navigator = defineComponent(({}, ...children) => {
+  return HorizontalNavigator({ style: { height: '40px' } }, ...children);
+});
 
-const Navigator = (children) =>
-  Object.assign(HorizontalNavigator(), {
-    heightUnits: 2,
-    children,
-  });
+const DataSourcesButton = defineComponent(({ state }) => {
+  const { currentRoute, selectedProjectId } = state;
+  const style = { width: '160px', height: '40px' };
+  const isSelected = [
+    '/projects/<projectId:string>',
+    '/projects/<projectId:string>/data-sources',
+  ].includes(currentRoute);
+  const href = `#!/projects/${selectedProjectId}/data-sources`;
+  return NavigationButton({ style, isSelected, href }, 'Data sources');
+});
 
-const ProjectNavigator$ = ({ currentRoute$, viewModel }) => {
-  const dataSourcesButton = button('Data sources');
-  const dashboardEditorButton = button('Dashboard editor');
-  const dashboardButton = button('Dashboard');
-  const navigator = Navigator([
-    dataSourcesButton,
-    dashboardEditorButton,
-    dashboardButton,
-  ]);
+const DashboardEditorButton = defineComponent(({ state }) => {
+  const { currentRoute, selectedProjectId } = state;
+  const style = { width: '160px', height: '40px' };
+  const isSelected =
+    currentRoute === '/projects/<projectId:string>/dashboard/edit';
+  const href = `#!/projects/${selectedProjectId}/dashboard/edit`;
+  return NavigationButton({ style, isSelected, href }, 'Dashboard editor');
+});
 
-  const doUpdateIsSelected = (currentRoute) => {
-    dataSourcesButton.isSelected = [
-      '/projects/<projectId:string>',
-      '/projects/<projectId:string>/data-sources',
-    ].includes(currentRoute);
-    dashboardEditorButton.isSelected =
-      currentRoute === '/projects/<projectId:string>/dashboard/edit';
-    dashboardButton.isSelected =
-      currentRoute === '/projects/<projectId:string>/dashboard';
-  };
+const DashboardButton = defineComponent(({ state }) => {
+  const { currentRoute, selectedProjectId } = state;
+  const style = { width: '160px', height: '40px' };
+  const isSelected = currentRoute === '/projects/<projectId:string>/dashboard';
+  const href = `#!/projects/${selectedProjectId}/dashboard`;
+  return NavigationButton({ style, isSelected, href }, 'Dashboard');
+});
 
-  const doUpdateHref = (selectedProjectId) => {
-    dataSourcesButton.href = `#!/projects/${selectedProjectId}/data-sources`;
-    dashboardEditorButton.href = `#!/projects/${selectedProjectId}/dashboard/edit`;
-    dashboardButton.href = `#!/projects/${selectedProjectId}/dashboard`;
-  };
+const ProjectNavigator = defineComponent(({ state }) => {
+  return Navigator(
+    {},
+    DataSourcesButton({ state }),
+    DashboardEditorButton({ state }),
+    DashboardButton({ state })
+  );
+});
 
-  addEventListener(currentRoute$.id, () => {
-    doUpdateIsSelected(currentRoute$.value);
-  });
-
-  addEventListener(viewModel.selectedProjectId$.id, () => {
-    doUpdateHref(viewModel.selectedProjectId$.value);
-  });
-
-  // When this component becomes purely imperative, these will no longer be needed
-  doUpdateIsSelected(currentRoute$.value);
-  doUpdateHref(viewModel.selectedProjectId$.value);
-
-  return navigator;
-};
-
-module.exports = ProjectNavigator$;
-
-  return module.exports;
-})();
-
-modules['src/libraries/simpleUI/TextArea.js'] = (() => {
-  const module = { exports: {} };
-  const { doAddInnerShadow } = include('src/libraries/simpleHTML/SimpleHTML.js');
-const { Sizes } = include('src/libraries/simpleUI/Constants.js');
-
-const TextArea = () => {
-  const textArea = document.createElement('textarea');
-
-  Object.assign(textArea.style, {
-    borderRadius: '5px',
-    fontFamily: `"Courier New", Courier, monospace`,
-    background: 'rgba(0, 0, 0, 0.05)',
-    outline: 'none',
-    fontSize: `${Sizes.FontSize}px`,
-    padding: `${Sizes.Padding}px`,
-    border: 'none',
-    resize: 'none',
-    width: '100%',
-  });
-
-  doAddInnerShadow(textArea);
-
-  Object.defineProperty(textArea, 'widthUnits', {
-    set: (widthUnits) => {
-      textArea.style.maxWidth = `${widthUnits * Sizes.Unit}px`;
-    },
-  });
-  Object.defineProperty(textArea, 'heightUnits', {
-    set: (heightUnits) => {
-      textArea.style.height = `${heightUnits * Sizes.Unit}px`;
-    },
-  });
-  return textArea;
-};
-
-module.exports = TextArea;
-
-  return module.exports;
-})();
-
-modules['src/libraries/simpleUI/PaddedContainer.js'] = (() => {
-  const module = { exports: {} };
-  const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
-const { Sizes } = include('src/libraries/simpleUI/Constants.js');
-
-const PaddedContainer = () => {
-  // Create base element
-  const divElement = document.createElement('div');
-  Object.assign(divElement.style, {
-    padding: `${Sizes.Padding}px`,
-    display: 'inline-block',
-    width: '100%',
-  });
-
-  // Define setters
-  Object.defineProperty(divElement, 'widthUnits', {
-    set: (widthUnits) => {
-      divElement.style.width = `${widthUnits * 20}px`;
-    },
-  });
-  Object.defineProperty(divElement, 'children', {
-    set: (children) => {
-      doUpdateChildren(divElement, children);
-    },
-  });
-  return divElement;
-};
-
-module.exports = PaddedContainer;
+module.exports = ProjectNavigator;
 
   return module.exports;
 })();
@@ -2204,23 +2267,88 @@ module.exports = DataSourcesView$;
   return module.exports;
 })();
 
-modules['src/components/widgetCard/WidgetCard.js'] = (() => {
+modules['src/libraries/simpleUI/Container.js'] = (() => {
   const module = { exports: {} };
-  const styled = include('src/libraries/styled/styled.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const { add$ } = include('src/libraries/observable/utils.js');
+  const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const WidgetCard$ = ({ width$, height$ }) =>
-  styled({
-    margin: '32px 0 0 32px',
-    width: add$(width$, 'px'),
-    height: add$(height$, 'px'),
+const Container = () => {
+  // Create base element
+  const divElement = document.createElement('div');
+  Object.assign(divElement.style, {
+    display: 'inline-block',
+    width: '100%',
+  });
+
+  // Define setters
+  Object.defineProperty(divElement, 'widthUnits', {
+    set: (widthUnits) => {
+      divElement.style.maxWidth = `${widthUnits * 20}px`;
+    },
+  });
+  Object.defineProperty(divElement, 'children', {
+    set: (children) => {
+      doUpdateChildren(divElement, children);
+    },
+  });
+  return divElement;
+};
+
+module.exports = Container;
+
+  return module.exports;
+})();
+
+modules['src/components/widget/WidgetContainer.js'] = (() => {
+  const module = { exports: {} };
+  const Container = include('src/libraries/simpleUI/Container.js');
+
+const WidgetContainer = () => {
+  const widgetContainer = Container();
+  Object.assign(widgetContainer.style, {
     display: 'inline-block',
     verticalAlign: 'top',
     background: 'white',
-  })(div$);
+  });
+  return widgetContainer;
+};
 
-module.exports = WidgetCard$;
+module.exports = WidgetContainer;
+
+  return module.exports;
+})();
+
+modules['src/components/visualization/threeDimVisualization/camera/Camera.js'] = (() => {
+  const module = { exports: {} };
+  const Observable = include('src/libraries/observable/Observable.js');
+
+const Camera = function({
+  target = new Observable([0, 0, 0]),
+  horizontalRotation$ = new Observable(0),
+  verticalRotation$ = new Observable(0),
+  distance$ = new Observabe(100),
+  focalLength$ = new Observable(100),
+}) {
+  this.target = target;
+  this.horizontalRotation$ = horizontalRotation$;
+  this.verticalRotation$ = new Observable(
+    Math.max(Math.min(verticalRotation$.value, Math.PI / 4), -Math.PI / 2)
+  );
+  this.distance$ = new Observable(
+    Math.max(distance$.value, -focalLength$.value / 2)
+  );
+  this.focalLength$ = focalLength$;
+  this.setDistance = distance => {
+    this.distance$.value = Math.max(distance, -focalLength$.value / 2);
+  };
+  this.setVerticalRotation = verticalRotation => {
+    this.verticalRotation$.value = Math.max(
+      Math.min(verticalRotation, Math.PI / 2),
+      -Math.PI / 2
+    );
+  };
+};
+
+module.exports = Camera;
 
   return module.exports;
 })();
@@ -2265,51 +2393,6 @@ module.exports = WidgetValue$;
   return module.exports;
 })();
 
-modules['src/components/valueWidget/ValueWidget.js'] = (() => {
-  const module = { exports: {} };
-  const WidgetLabel$ = include('src/components/widgetLabel/WidgetLabel.js');
-const WidgetValue$ = include('src/components/widgetValue/WidgetValue.js');
-const WidgetCard$ = include('src/components/widgetCard/WidgetCard.js');
-const { not$ } = include('src/libraries/observable/utils.js');
-const { If$ } = include('src/libraries/observableHtml/utils.js');
-const withShadow = include('src/styleWrappers/withShadow.js');
-
-const ValueWidget$ = ({ label$, value$ }) => {
-  If$(
-    not$(isEmpty$),
-    // Height + margin = 5 x navigator buttons
-    // Width + margin = 7.5 x navigator buttons
-    withShadow(WidgetCard$({ height$: 288, width$: 448 }))(
-      WidgetLabel$({ label$ }),
-      WidgetValue$({ value$ })
-    ).setStyle({ position: 'relative', color: 'dimgray' })
-  );
-};
-
-module.exports = ValueWidget$;
-
-  return module.exports;
-})();
-
-modules['src/components/widget/WidgetContainer.js'] = (() => {
-  const module = { exports: {} };
-  const Container = include('src/libraries/simpleUI/Container.js');
-
-const WidgetContainer = () => {
-  const widgetContainer = Container();
-  Object.assign(widgetContainer.style, {
-    display: 'inline-block',
-    verticalAlign: 'top',
-    background: 'white',
-  });
-  return widgetContainer;
-};
-
-module.exports = WidgetContainer;
-
-  return module.exports;
-})();
-
 modules['src/components/widget/valueWidget/ValueWidget.js'] = (() => {
   const module = { exports: {} };
   const WidgetLabel$ = include('src/components/widgetLabel/WidgetLabel.js');
@@ -2345,42 +2428,6 @@ const ValueWidget = () => {
 };
 
 module.exports = ValueWidget;
-
-  return module.exports;
-})();
-
-modules['src/components/visualization/threeDimVisualization/camera/Camera.js'] = (() => {
-  const module = { exports: {} };
-  const Observable = include('src/libraries/observable/Observable.js');
-
-const Camera = function({
-  target = new Observable([0, 0, 0]),
-  horizontalRotation$ = new Observable(0),
-  verticalRotation$ = new Observable(0),
-  distance$ = new Observabe(100),
-  focalLength$ = new Observable(100),
-}) {
-  this.target = target;
-  this.horizontalRotation$ = horizontalRotation$;
-  this.verticalRotation$ = new Observable(
-    Math.max(Math.min(verticalRotation$.value, Math.PI / 4), -Math.PI / 2)
-  );
-  this.distance$ = new Observable(
-    Math.max(distance$.value, -focalLength$.value / 2)
-  );
-  this.focalLength$ = focalLength$;
-  this.setDistance = distance => {
-    this.distance$.value = Math.max(distance, -focalLength$.value / 2);
-  };
-  this.setVerticalRotation = verticalRotation => {
-    this.verticalRotation$.value = Math.max(
-      Math.min(verticalRotation, Math.PI / 2),
-      -Math.PI / 2
-    );
-  };
-};
-
-module.exports = Camera;
 
   return module.exports;
 })();
@@ -2449,275 +2496,6 @@ modules['src/components/visualization/render/rotate/rotate.js'] = (() => {
 };
 
 module.exports = rotate;
-
-  return module.exports;
-})();
-
-modules['src/components/visualization/render/render.js'] = (() => {
-  const module = { exports: {} };
-  const toCenterOfWidget = include(
-  'src/components/visualization/render/toCenterOfWidget/toCenterOfWidget.js'
-);
-const toPerspective = include(
-  'src/components/visualization/render/toPerspective/toPerspective.js'
-);
-const toCenterOfStructure = include(
-  'src/components/visualization/render/toCenterOfStructure/toCenterOfStructure.js'
-);
-const rotate = include('src/components/visualization/render/rotate/rotate.js');
-
-/**
- * @param {number} dx
- * Defines the x coordinate which will be displayed in the center of the
- * visualization
- *
- * @param {number} dy
- * Defines the y coordinate which will be displayed in the center of the
- * visualization
- *
- * @param {number} dz
- * Defines the z coordinate which will be displayed in the center of the
- * visualization
- *
- * @param {number} d
- * Defines the distance from the defined center of the structure, to the
- * camera.
- */
-const render = (
-  surfaces$,
-  edges$,
-  ctx,
-  center,
-  rx = 0,
-  ry = 0,
-  d = 0,
-  focalLength = 0
-) => {
-  // Render the faces
-  surfaces$.value.forEach(({ color, points }) => {
-    points
-      .map((point) => toCenterOfStructure(point, center))
-      .map((point) => rotate(point, rx, ry))
-      .map((point) => toPerspective(point, d, focalLength))
-      .map((point) => toCenterOfWidget(point, ctx))
-      .forEach((point, index) => {
-        if (index === 0) {
-          ctx.beginPath();
-          ctx.moveTo(point[0], -point[1]);
-          return;
-        }
-        if (index < points.length - 1) {
-          ctx.lineTo(point[0], -point[1]);
-          return;
-        }
-        if (index === points.length - 1) {
-          ctx.lineTo(point[0], -point[1]);
-          ctx.closePath();
-          ctx.fillStyle = color;
-          ctx.fill();
-          return;
-        }
-      });
-  });
-
-  // Render the edges
-  edges$.value.forEach(({ color, points, width }) => {
-    // Draw the first vertex
-    const startPoint = toCenterOfWidget(
-      toPerspective(
-        rotate(toCenterOfStructure(points[0], center), rx, ry),
-        d,
-        focalLength
-      ),
-
-      ctx
-    );
-    const endPoint = toCenterOfWidget(
-      toPerspective(
-        rotate(toCenterOfStructure(points[1], center), rx, ry),
-        d,
-        focalLength
-      ),
-      ctx
-    );
-    ctx.beginPath();
-    ctx.lineCap = 'round';
-    ctx.moveTo(startPoint[0], -startPoint[1]);
-    ctx.lineTo(endPoint[0], -endPoint[1]);
-    ctx.lineWidth = width;
-    ctx.strokeStyle = color;
-    ctx.stroke();
-  });
-};
-
-module.exports = render;
-
-  return module.exports;
-})();
-
-modules['src/components/visualization/threeDimVisualization/ThreeDimVisualization.js'] = (() => {
-  const module = { exports: {} };
-  const Observable = include('src/libraries/observable/Observable.js');
-const { canvas$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const Camera = include(
-  'src/components/visualization/threeDimVisualization/camera/Camera.js'
-);
-const render = include('src/components/visualization/render/render.js');
-
-const ThreeDimVisualization$ = ({
-  height$,
-  width$,
-  surfaces$,
-  edges$,
-  center$,
-}) => {
-  const state = { mouseDown: false };
-  const canvas = canvas$({ height$, width$ }).setStyle({
-    position: 'absolute',
-  });
-  const camera = new Camera({
-    target: center$,
-    horizontalRotation$: new Observable(0),
-    verticalRotation$: new Observable(0),
-    distance$: new Observable(100),
-    focalLength$: new Observable(100),
-  });
-  const ctx = canvas.getContext('2d');
-  const rerender = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    render(
-      surfaces$,
-      edges$,
-      ctx,
-      camera.target.value,
-      camera.horizontalRotation$.value,
-      camera.verticalRotation$.value,
-      camera.distance$.value,
-      camera.focalLength$.value
-    );
-  };
-  rerender();
-  canvas.onwheel = (event) => {
-    camera.setDistance(camera.distance$.value + event.deltaY / 5);
-  };
-  window.addEventListener('mousedown', (event) => {
-    state.mouseDown = true;
-  });
-  window.addEventListener(
-    'mouseup',
-    (canvas.onmouseup = (event) => {
-      state.mouseDown = false;
-    })
-  );
-  canvas.onmousemove = (event) => {
-    if (state.mouseDown) {
-      camera.horizontalRotation$.value =
-        camera.horizontalRotation$.value - event.movementX / 100;
-      camera.setVerticalRotation(
-        camera.verticalRotation$.value - event.movementY / 100
-      );
-    }
-  };
-  window.addEventListener(camera.horizontalRotation$.id, () => rerender());
-  window.addEventListener(camera.verticalRotation$.id, () => rerender());
-  window.addEventListener(camera.distance$.id, () => rerender());
-  window.addEventListener(camera.focalLength$.id, () => rerender());
-  window.addEventListener(surfaces$.id, () => rerender());
-  window.addEventListener(edges$.id, () => rerender());
-  window.addEventListener(center$.id, () => rerender());
-  return canvas;
-};
-
-module.exports = ThreeDimVisualization$;
-
-  return module.exports;
-})();
-
-modules['src/components/visualization/twoDimVisualization/TwoDimVisualization.js'] = (() => {
-  const module = { exports: {} };
-  const { canvas$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const render = include('src/components/visualization/render/render.js');
-
-const TwoDimVisualization$ = ({
-  height$,
-  width$,
-  surfaces$,
-  edges$,
-  center$,
-}) => {
-  const canvas = canvas$({ height$, width$ }).setStyle({
-    position: 'absolute',
-  });
-  const ctx = canvas.getContext('2d');
-  const rerender = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    render(surfaces$, edges$, ctx, center$.value);
-  };
-  rerender();
-  window.addEventListener(surfaces$.id, () => rerender());
-  window.addEventListener(edges$.id, () => rerender());
-  window.addEventListener(center$.id, () => rerender());
-  return canvas;
-};
-
-module.exports = TwoDimVisualization$;
-
-  return module.exports;
-})();
-
-modules['src/components/canvasWidget/CanvasWidget.js'] = (() => {
-  const module = { exports: {} };
-  const WidgetCard$ = include('src/components/widgetCard/WidgetCard.js');
-const ThreeDimVisualization$ = include(
-  'src/components/visualization/threeDimVisualization/ThreeDimVisualization.js'
-);
-const TwoDimVisualization$ = include(
-  'src/components/visualization/twoDimVisualization/TwoDimVisualization.js'
-);
-const WidgetLabel$ = include('src/components/widgetLabel/WidgetLabel.js');
-const withShadow = include('src/styleWrappers/withShadow.js');
-const { not$ } = include('src/libraries/observable/utils.js');
-const { Choose$, If$ } = include('src/libraries/observableHtml/utils.js');
-
-const CanvasWidget$ = ({
-  label$,
-  surfaces$,
-  edges$,
-  center$,
-  is3d$,
-  isEmpty$,
-}) => {
-  return If$(
-    not$(isEmpty$),
-    // Height + margin = 5 x navigator buttons
-    // Width + margin = 7.5 x navigator buttons
-    withShadow(WidgetCard$({ height$: 288, width$: 448 }))(
-      Choose$(
-        is3d$,
-        ThreeDimVisualization$({
-          height$: 288,
-          width$: 448,
-          surfaces$,
-          edges$,
-          center$,
-        }),
-        TwoDimVisualization$({
-          height$: 288,
-          width$: 448,
-          surfaces$,
-          edges$,
-          center$,
-        })
-      ),
-      WidgetLabel$({ label$ })
-    ).setStyle({
-      position: 'relative',
-      color: 'dimgray',
-    })
-  );
-};
-
-module.exports = CanvasWidget$;
 
   return module.exports;
 })();
@@ -3023,126 +2801,75 @@ module.exports = Widget;
 
 modules['src/views/dashboard/Dashboard.js'] = (() => {
   const module = { exports: {} };
-  const CanvasWidget$ = include('src/components/canvasWidget/CanvasWidget.js');
-const ValueWidget$ = include('src/components/valueWidget/ValueWidget.js');
-const { eq$ } = include('src/libraries/observable/utils.js');
-const { Choose$ } = include('src/libraries/observableHtml/utils.js');
-const TextArea = include('src/libraries/simpleUI/TextArea.js');
-const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
-const PaddedContainer = include('src/libraries/simpleUI/PaddedContainer.js');
-const Container = include('src/libraries/simpleUI/Container.js');
+  const { textarea } = include('src/libraries/simpleHTML/SimpleHTML.js');
 const Widget = include('src/components/widget/Widget.js');
-const { doAddShadow } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const { defineComponent, div, span } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
 
-const Dashboard$ = ({ viewModel, currentRoute$ }) => {
-  const { isExported } = viewModel;
-  const codeEditorIsOpen$ = eq$(
-    currentRoute$,
-    '/projects/<projectId:string>/dashboard/edit'
+const CodeEditor = defineComponent((props) => {
+  return div(
+    { style: { padding: '10px' } },
+    textarea({
+      ...props,
+      style: {
+        height: '300px',
+        borderRadius: '5px',
+        fontFamily: `"Courier New", Courier, monospace`,
+        background: 'rgba(0, 0, 0, 0.05)',
+        outline: 'none',
+        fontSize: '15px',
+        padding: '10px',
+        border: 'none',
+        resize: 'none',
+        width: '100%',
+        boxShadow: 'inset rgba(0, 0, 0, 0.5) 0 0 10px -5px',
+      },
+    })
   );
-  const codeEditor = Object.assign(TextArea(), {
-    value: viewModel.selectedWidgetsCode$.value,
-    heightUnits: 15,
-  });
+});
 
-  codeEditor.addEventListener('input', ({ target }) => {
-    viewModel.updateWidgetsCode(
-      viewModel.selectedProjectId$.value,
-      target.value
-    );
-  });
+const Dashboard = defineComponent(({ state, viewModel }) => {
+  const { currentRoute } = state;
+  const codeEditorIsOpen =
+    currentRoute === '/projects/<projectId:string>/dashboard/edit';
 
-  const codeEditorContainer = Object.assign(PaddedContainer(), {
-    children: [codeEditor],
-  });
-
-  const widgetsContainer = Container();
-
-  const updateWidgets = () => {
-    const widgets = [
-      ...viewModel.widgets
-        .filter(({ isEmpty$ }) => !isEmpty$.value)
-        .map(
-          ({
-            label$,
-            type$,
-            value$,
-            surfaces$,
-            edges$,
-            is3d$,
-            center$,
-            isEmpty$,
-          }) => {
-            const widget = Widget();
-            doAddShadow(widget);
-            const paddedContainer = document.createElement('span');
-            paddedContainer.appendChild(widget);
-            Object.assign(paddedContainer.style, {
-              padding: '10px',
-              display: 'inline-block',
-            });
-            widget.widgetDescription = {
-              type: type$.value,
-              label: label$.value,
-              value: value$.value,
-              surfaces: surfaces$.value,
-              edges: edges$.value,
-              is3d: is3d$.value,
-              center: center$.value,
-              isEmpty: isEmpty$.value,
-            };
-            return paddedContainer;
-          }
-        ),
-    ];
-    Object.assign(widgetsContainer, {
-      children: [...widgets],
-    });
-  };
-
-  // This should replaced with a single setter
-  viewModel.widgets.forEach(
-    ({
-      label$,
-      type$,
-      value$,
-      surfaces$,
-      edges$,
-      is3d$,
-      center$,
-      isEmpty$,
-    }) => {
-      addEventListener(type$.id, updateWidgets);
-      addEventListener(label$.id, updateWidgets);
-      addEventListener(value$.id, updateWidgets);
-      addEventListener(surfaces$.id, updateWidgets);
-      addEventListener(edges$.id, updateWidgets);
-      addEventListener(is3d$.id, updateWidgets);
-      addEventListener(center$.id, updateWidgets);
-      addEventListener(isEmpty$.id, updateWidgets);
-    }
+  return div(
+    { style: { padding: '10px' } },
+    ...[
+      codeEditorIsOpen
+        ? CodeEditor({
+            value: state.selectedWidgetsCode,
+            onInput: ({ target }) => {
+              viewModel.updateWidgetsCode(
+                state.selectedProjectId,
+                target.value
+              );
+            },
+          })
+        : null,
+      ...state.widgets.map(
+        ({ type, label, value, surfaces, edges, is3d, center }) => {
+          return span(
+            { style: { padding: '10px', display: 'inline-block' } },
+            `Widget({
+              style: { boxShadow: 'rgba(0, 0, 0, 0.25) 0 0 10px -5px' },
+              type,
+              label,
+              value,
+              surfaces,
+              edges,
+              is3d,
+              center,
+            })`
+          );
+        }
+      ),
+    ].filter(Boolean)
   );
+});
 
-  const getDashboardChildren = () =>
-    codeEditorIsOpen$.value && !isExported
-      ? [codeEditorContainer, widgetsContainer]
-      : [widgetsContainer];
-
-  const dashboardContainer = Object.assign(PaddedContainer(), {
-    children: getDashboardChildren(),
-  });
-
-  addEventListener(codeEditorIsOpen$.id, () => {
-    doUpdateChildren(dashboardContainer, getDashboardChildren());
-  });
-  addEventListener(viewModel.selectedWidgetsCode$.id, () => {
-    codeEditor.value = viewModel.selectedWidgetsCode$.value;
-  });
-
-  return dashboardContainer;
-};
-
-module.exports = Dashboard$;
+module.exports = Dashboard;
 
   return module.exports;
 })();
@@ -3152,52 +2879,54 @@ modules['src/app/App.js'] = (() => {
   const { eq$, or$, startsWith$ } = include('src/libraries/observable/utils.js');
 const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const { If$ } = include('src/libraries/observableHtml/utils.js');
-const ProjectNavigator$ = include(
+const ProjectNavigator = include(
   'src/views/project/projectNavigator/ProjectNavigator.js'
 );
-const ProjectContainer$ = include(
+const ProjectContainer = include(
   'src/views/project/projectContainer/ProjectContainer.js'
 );
-const TitleBar$ = include('src/app/titleBar/TitleBar.js');
+const TitleBar = include('src/app/titleBar/TitleBar.js');
 const Projects$ = include('src/views/projects/Projects.js');
 const DataSources$ = include('src/views/dataSources/DataSources.js');
-const Dashboard$ = include('src/views/dashboard/Dashboard.js');
+const Dashboard = include('src/views/dashboard/Dashboard.js');
 
-const App = ({ currentRoute$, viewModel }) => {
-  return viewModel.isExported
-    ? div$(
-        TitleBar$({ currentRoute$, viewModel }),
-        ProjectContainer$(Dashboard$({ viewModel, currentRoute$ }))
+const { defineComponent, div } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
+
+const App = defineComponent(({ state, viewModel }) => {
+  return state.isExported
+    ? div(
+        TitleBar({ state, viewModel }),
+        ProjectContainer$(Dashboard({ state, viewModel }))
       )
-    : div$(
-        TitleBar$({ currentRoute$, viewModel }),
-        If$(eq$(currentRoute$, '/'), Projects$({ viewModel })),
-        If$(
-          startsWith$(currentRoute$, '/projects/<projectId:string>'),
-          ProjectContainer$(
-            ProjectNavigator$({ currentRoute$, viewModel }),
-            If$(
-              or$(
-                eq$(currentRoute$, '/projects/<projectId:string>/data-sources'),
-                eq$(currentRoute$, '/projects/<projectId:string>')
-              ),
-              DataSources$({ viewModel })
-            ),
-            /*If$(
-              startsWith$(currentRoute$, '/projects/<projectId:string>/values'),
-              Values$({ viewModel, currentRoute$ })
-            ),*/
-            If$(
-              startsWith$(
-                currentRoute$,
-                '/projects/<projectId:string>/dashboard'
-              ),
-              Dashboard$({ viewModel, currentRoute$ })
-            )
-          )
-        )
+    : div(
+        ...[
+          TitleBar({ state, viewModel }),
+          state.currentRoute === '/' ? Projects$({ viewModel }) : null,
+          state.currentRoute.indexOf('/projects/<projectId:string>') === 0
+            ? ProjectContainer(
+                ...[
+                  ProjectNavigator({ state }),
+                  state.currentRoute ===
+                    '/projects/<projectId:string>/data-sources' ||
+                  state.currentRoute$ === '/projects/<projectId:string>'
+                    ? DataSources$({ viewModel })
+                    : null,
+                  state.currentRoute.indexOf(
+                    '/projects/<projectId:string>/dashboard'
+                  ) === 0
+                    ? Dashboard({
+                        state,
+                        viewModel,
+                      })
+                    : null,
+                ].filter(Boolean)
+              )
+            : null,
+        ].filter(Boolean)
       );
-};
+});
 
 module.exports = App;
 
@@ -3205,7 +2934,8 @@ module.exports = App;
 })();
 
 window.addEventListener('load', () => {
-const Router = include('src/libraries/router/Router.js');
+const Router = include('src/libraries/simpleRouter/SimpleRouter.js');
+const simpleState = include('src/libraries/simpleState/SimpleState.js');
 const Model = include('src/model/Model.js');
 const App = include('src/app/App.js');
 
@@ -3223,8 +2953,6 @@ const isExported = false;
 const router = isExported
   ? new Router({
       '/': 'Dashboard',
-      '/values': 'Values',
-      '/dashboard': 'Dashboard',
     })
   : new Router({
       '/': 'Projects',
@@ -3236,23 +2964,30 @@ const router = isExported
       '/projects/<projectId:string>/dashboard/edit': 'Edit dashboard',
     });
 
-const viewModel = Model({ router, isExported });
+const { state, setState, withState } = simpleState({
+  currentRoute: router.currentRoute,
+  params: router.params,
+  isExported,
+  projects: [],
+  selectedProjectId: null,
+  selectedProjectName: '',
+  lastVisitedProjectView: null,
+  selectedApiUrl: '',
+  selectedApiUrlTestPreview: '',
+  selectedApiInterval: null,
+  apiResponse: '',
+  selectedDerivedValuesCode: '',
+  selectedWidgetsCode: '',
+  widgets: [],
+});
 
-document.body.appendChild(
-  App({
-    viewModel,
-    params: router.getParams,
-    currentRoute$: router.currentRoute$,
-  })
+const viewModel = Model({ router, isExported, state, setState });
+
+const app = withState(({ state, setState }) =>
+  App({ state, setState, viewModel })
 );
-document.body.update = (props) =>
-  document.body.childNodes.forEach((childNode) => {
-    if (typeof childNode.update === 'function') {
-      childNode.update(props);
-    }
-  });
 
-router.subscribe(() => document.body.update());
+document.body.appendChild(app);
 
 })
 </script>

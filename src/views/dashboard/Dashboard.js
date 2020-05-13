@@ -1,120 +1,69 @@
-const CanvasWidget$ = include('src/components/canvasWidget/CanvasWidget.js');
-const ValueWidget$ = include('src/components/valueWidget/ValueWidget.js');
-const { eq$ } = include('src/libraries/observable/utils.js');
-const { Choose$ } = include('src/libraries/observableHtml/utils.js');
-const TextArea = include('src/libraries/simpleUI/TextArea.js');
-const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
-const PaddedContainer = include('src/libraries/simpleUI/PaddedContainer.js');
-const Container = include('src/libraries/simpleUI/Container.js');
+const { textarea } = include('src/libraries/simpleHTML/SimpleHTML.js');
 const Widget = include('src/components/widget/Widget.js');
-const { doAddShadow } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const { defineComponent, div, span } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
 
-const Dashboard$ = ({ viewModel, currentRoute$ }) => {
-  const { isExported } = viewModel;
-  const codeEditorIsOpen$ = eq$(
-    currentRoute$,
-    '/projects/<projectId:string>/dashboard/edit'
+const CodeEditor = defineComponent((props) => {
+  return div(
+    { style: { padding: '10px' } },
+    textarea({
+      ...props,
+      style: {
+        height: '300px',
+        borderRadius: '5px',
+        fontFamily: `"Courier New", Courier, monospace`,
+        background: 'rgba(0, 0, 0, 0.05)',
+        outline: 'none',
+        fontSize: '15px',
+        padding: '10px',
+        border: 'none',
+        resize: 'none',
+        width: '100%',
+        boxShadow: 'inset rgba(0, 0, 0, 0.5) 0 0 10px -5px',
+      },
+    })
   );
-  const codeEditor = Object.assign(TextArea(), {
-    value: viewModel.selectedWidgetsCode$.value,
-    heightUnits: 15,
-  });
+});
 
-  codeEditor.addEventListener('input', ({ target }) => {
-    viewModel.updateWidgetsCode(
-      viewModel.selectedProjectId$.value,
-      target.value
-    );
-  });
+const Dashboard = defineComponent(({ state, viewModel }) => {
+  const { currentRoute } = state;
+  const codeEditorIsOpen =
+    currentRoute === '/projects/<projectId:string>/dashboard/edit';
 
-  const codeEditorContainer = Object.assign(PaddedContainer(), {
-    children: [codeEditor],
-  });
-
-  const widgetsContainer = Container();
-
-  const updateWidgets = () => {
-    const widgets = [
-      ...viewModel.widgets
-        .filter(({ isEmpty$ }) => !isEmpty$.value)
-        .map(
-          ({
-            label$,
-            type$,
-            value$,
-            surfaces$,
-            edges$,
-            is3d$,
-            center$,
-            isEmpty$,
-          }) => {
-            const widget = Widget();
-            doAddShadow(widget);
-            const paddedContainer = document.createElement('span');
-            paddedContainer.appendChild(widget);
-            Object.assign(paddedContainer.style, {
-              padding: '10px',
-              display: 'inline-block',
-            });
-            widget.widgetDescription = {
-              type: type$.value,
-              label: label$.value,
-              value: value$.value,
-              surfaces: surfaces$.value,
-              edges: edges$.value,
-              is3d: is3d$.value,
-              center: center$.value,
-              isEmpty: isEmpty$.value,
-            };
-            return paddedContainer;
-          }
-        ),
-    ];
-    Object.assign(widgetsContainer, {
-      children: [...widgets],
-    });
-  };
-
-  // This should replaced with a single setter
-  viewModel.widgets.forEach(
-    ({
-      label$,
-      type$,
-      value$,
-      surfaces$,
-      edges$,
-      is3d$,
-      center$,
-      isEmpty$,
-    }) => {
-      addEventListener(type$.id, updateWidgets);
-      addEventListener(label$.id, updateWidgets);
-      addEventListener(value$.id, updateWidgets);
-      addEventListener(surfaces$.id, updateWidgets);
-      addEventListener(edges$.id, updateWidgets);
-      addEventListener(is3d$.id, updateWidgets);
-      addEventListener(center$.id, updateWidgets);
-      addEventListener(isEmpty$.id, updateWidgets);
-    }
+  return div(
+    { style: { padding: '10px' } },
+    ...[
+      codeEditorIsOpen
+        ? CodeEditor({
+            value: state.selectedWidgetsCode,
+            onInput: ({ target }) => {
+              viewModel.updateWidgetsCode(
+                state.selectedProjectId,
+                target.value
+              );
+            },
+          })
+        : null,
+      ...state.widgets.map(
+        ({ type, label, value, surfaces, edges, is3d, center }) => {
+          return span(
+            { style: { padding: '10px', display: 'inline-block' } },
+            `Widget({
+              style: { boxShadow: 'rgba(0, 0, 0, 0.25) 0 0 10px -5px' },
+              type,
+              label,
+              value,
+              surfaces,
+              edges,
+              is3d,
+              center,
+            })`
+          );
+        }
+      ),
+    ].filter(Boolean)
   );
+});
 
-  const getDashboardChildren = () =>
-    codeEditorIsOpen$.value && !isExported
-      ? [codeEditorContainer, widgetsContainer]
-      : [widgetsContainer];
-
-  const dashboardContainer = Object.assign(PaddedContainer(), {
-    children: getDashboardChildren(),
-  });
-
-  addEventListener(codeEditorIsOpen$.id, () => {
-    doUpdateChildren(dashboardContainer, getDashboardChildren());
-  });
-  addEventListener(viewModel.selectedWidgetsCode$.id, () => {
-    codeEditor.value = viewModel.selectedWidgetsCode$.value;
-  });
-
-  return dashboardContainer;
-};
-
-module.exports = Dashboard$;
+module.exports = Dashboard;

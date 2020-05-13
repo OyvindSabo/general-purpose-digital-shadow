@@ -34,6 +34,8 @@ const createProject = (newProject) => {
 const updateProjectById = (projectId, project) => {
   const projects = getAllProjects();
   const projectIndex = projects.findIndex(({ id }) => id === projectId);
+  console.log('projectId: ', projectId);
+  console.log('project: ', project);
   if (projectIndex === -1) {
     console.warn('Tried to update nonexistent project');
     return;

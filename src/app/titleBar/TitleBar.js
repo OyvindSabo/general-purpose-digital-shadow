@@ -1,7 +1,7 @@
-const HorizontalNavigator$ = include(
+const HorizontalNavigator = include(
   'src/components/horizontalNavigator/HorizontalNavigator.js'
 );
-const { ViewTitle$, ExportButton$ } = include('src/app/titleBar/atoms.js');
+const { ViewTitle, ExportButton } = include('src/app/titleBar/atoms.js');
 const withShadow = include('src/styleWrappers/withShadow.js');
 const { add$, startsWith$, choose$, not$ } = include(
   'src/libraries/observable/utils.js'
@@ -9,88 +9,103 @@ const { add$, startsWith$, choose$, not$ } = include(
 const { If$ } = include('src/libraries/observableHtml/utils.js');
 const { span$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 
-const TitleBar$ = ({ currentRoute$, viewModel }) => {
-  const { isExported } = viewModel;
-  return withShadow(HorizontalNavigator$)(
-    ViewTitle$(
-      If$(
-        not$(isExported),
-        span$('Projects').onClick(() => (location.hash = '#!/projects'))
-      ),
-      span$(
-        choose$(
-          viewModel.selectedProjectName$,
-          isExported
-            ? viewModel.selectedProjectName$
-            : add$(' / ', viewModel.selectedProjectName$),
-          ''
-        )
-      )
-        .setStyle({
-          color: isExported
-            ? 'darkslategray'
-            : choose$(
-                startsWith$(currentRoute$, '/projects/<projectId:string>'),
-                'darkslategray',
-                'lightgray'
-              ),
-        })
-        .onClick(() => {
-          if (isExported) {
-            location.hash = '#!/';
-            return;
-          }
-          location.hash = `#!/projects/${viewModel.selectedProjectId$.value}/${
-            viewModel.lastVisitedProjectView$.value || ''
-          }`;
-        })
-    ),
-    If$(
-      not$(isExported),
-      ExportButton$('Export').onClick(() => {
-        const element = document.createElement('a');
-        // SInce just the first occurrence of the code will be replaced, we need to make sure that this code does not replace itself, so we construct the match on call time
-        const fileContent = document.head.innerHTML
-          .replace(
-            '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *f*a*l*s*e*;*'
-              .split('*')
-              .join(''),
-            '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *t*r*u*e*;*'
-              .split('*')
-              .join('')
-          )
-          .replace(
-            '*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>* *[*]*;*'
-              .split('*')
-              .join(''),
-            `*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>*`
-              .split('*')
-              .join('') +
-              JSON.stringify([
-                {
-                  id: viewModel.selectedProjectId$.value,
-                  name: viewModel.selectedProjectName$.value,
-                  apiUrl: viewModel.selectedApiUrl$.value,
-                  apiInterval: viewModel.selectedApiInterval$.value,
-                  derivedValuesCode: viewModel.selectedDerivedValuesCode$.value,
-                  widgetsCode: viewModel.selectedWidgetsCode$.value,
-                },
-              ])
-          );
-        const file = new Blob([fileContent], { type: 'text/plain' });
-        element.href = URL.createObjectURL(file);
-        element.download = `${viewModel.selectedProjectName$.value
-          .toLowerCase()
-          .split(' ')
-          .join('-')}.html`;
-        document.body.appendChild(element); // Required for this to work in FireFox
-        element.click();
-      })
-    )
-  ).setStyle({
-    background: 'white',
-    color: 'darkslategray',
-  });
-};
+const { defineComponent, div, span } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
 
-module.exports = TitleBar$;
+const TitleBar = defineComponent(({ viewModel, state }) => {
+  const { isExported, currentRoute } = state;
+  return HorizontalNavigator(
+    {},
+    ...[
+      ViewTitle(
+        {},
+        ...[
+          !isExported
+            ? span(
+                {
+                  onClick: () => (location.hash = '#!/projects'),
+                  style: { cursor: 'pointer' },
+                },
+                'Projects'
+              )
+            : null,
+          span(
+            {
+              style: {
+                color: isExported
+                  ? 'darkslategray'
+                  : currentRoute.indexOf('/projects/<projectId:string>') === 0
+                  ? 'darkslategray'
+                  : 'lightgray',
+                cursor: 'pointer',
+              },
+              onClick: () => {
+                if (isExported) {
+                  location.hash = '#!/';
+                  return;
+                }
+                location.hash = `#!/projects/${state.selectedProjectId}/${
+                  viewModel.lastVisitedProjectView || ''
+                }`;
+              },
+            },
+            state.selectedProjectName
+              ? isExported
+                ? state.selectedProjectName
+                : ` / ${state.selectedProjectName}`
+              : ''
+          ),
+        ].filter(Boolean)
+      ),
+      !isExported
+        ? ExportButton(
+            {
+              onClick: () => {
+                const element = document.createElement('a');
+                // SInce just the first occurrence of the code will be replaced, we need to make sure that this code does not replace itself, so we construct the match on call time
+                const fileContent = document.head.innerHTML
+                  .replace(
+                    '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *f*a*l*s*e*;*'
+                      .split('*')
+                      .join(''),
+                    '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *t*r*u*e*;*'
+                      .split('*')
+                      .join('')
+                  )
+                  .replace(
+                    '*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>* *[*]*;*'
+                      .split('*')
+                      .join(''),
+                    `*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>*`
+                      .split('*')
+                      .join('') +
+                      JSON.stringify([
+                        {
+                          id: state.selectedProjectId,
+                          name: state.selectedProjectName,
+                          apiUrl: state.selectedApiUrl,
+                          apiInterval: state.selectedApiInterval,
+                          derivedValuesCode: state.selectedDerivedValuesCode,
+                          widgetsCode: state.selectedWidgetsCode,
+                        },
+                      ])
+                  );
+                const file = new Blob([fileContent], { type: 'text/plain' });
+                element.href = URL.createObjectURL(file);
+                element.download = `${state.selectedProjectName
+                  .toLowerCase()
+                  .split(' ')
+                  .join('-')}.html`;
+                document.body.appendChild(element); // Required for this to work in FireFox
+                element.click();
+              },
+            },
+            'Export'
+          )
+        : null,
+    ]
+  );
+});
+
+module.exports = TitleBar;

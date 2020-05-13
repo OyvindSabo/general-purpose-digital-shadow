@@ -1,17 +1,33 @@
 const { div$, a$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const styled = include('src/libraries/styled/styled.js');
+const { defineComponent, div, span } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
 
-const ViewTitle$ = styled({
-  fontSize: '32px',
-  padding: '16px',
-  display: 'inline-block',
-})(div$);
+const ViewTitle = defineComponent((props, ...children) => {
+  return div(
+    {
+      ...props,
+      style: { fontSize: '32px', padding: '16px', display: 'inline-block' },
+    },
+    ...children
+  );
+});
 
-const ExportButton$ = styled({
-  fontSize: '16px',
-  padding: '0 16px',
-  float: 'right',
-  lineHeight: '64px',
-})(div$);
+const ExportButton = defineComponent((props, ...children) => {
+  return div(
+    {
+      ...props,
+      style: {
+        fontSize: '16px',
+        padding: '0 16px',
+        float: 'right',
+        lineHeight: '64px',
+        cursor: 'pointer',
+      },
+    },
+    ...children
+  );
+});
 
-module.exports = { ViewTitle$, ExportButton$ };
+module.exports = { ViewTitle, ExportButton };

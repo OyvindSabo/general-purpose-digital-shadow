@@ -1,6 +1,20 @@
-const styled = include('src/libraries/styled/styled.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const { defineComponent, div } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
 
-const HorizontalNavigator$ = styled({ height: '64px' })(div$);
+const HorizontalNavigator = defineComponent((props, ...children) => {
+  return div(
+    {
+      ...props,
+      style: {
+        height: '64px',
+        boxShadow: 'rgba(0, 0, 0, 0.25) 0 0 10px -5px',
+        background: 'white',
+        color: 'darkslategray',
+      },
+    },
+    ...children
+  );
+});
 
-module.exports = HorizontalNavigator$;
+module.exports = HorizontalNavigator;

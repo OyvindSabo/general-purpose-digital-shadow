@@ -2,60 +2,47 @@ const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
 const HorizontalNavigator = include(
   'src/libraries/simpleUI/HorizontalNavigator.js'
 );
+const { defineComponent } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const button = (title) =>
-  Object.assign(NavigationButton(), {
-    widthUnits: 8,
-    heightUnits: 2,
-    title,
-  });
+const Navigator = defineComponent(({}, ...children) => {
+  return HorizontalNavigator({ style: { height: '40px' } }, ...children);
+});
 
-const Navigator = (children) =>
-  Object.assign(HorizontalNavigator(), {
-    heightUnits: 2,
-    children,
-  });
+const DataSourcesButton = defineComponent(({ state }) => {
+  const { currentRoute, selectedProjectId } = state;
+  const style = { width: '160px', height: '40px' };
+  const isSelected = [
+    '/projects/<projectId:string>',
+    '/projects/<projectId:string>/data-sources',
+  ].includes(currentRoute);
+  const href = `#!/projects/${selectedProjectId}/data-sources`;
+  return NavigationButton({ style, isSelected, href }, 'Data sources');
+});
 
-const ProjectNavigator$ = ({ currentRoute$, viewModel }) => {
-  const dataSourcesButton = button('Data sources');
-  const dashboardEditorButton = button('Dashboard editor');
-  const dashboardButton = button('Dashboard');
-  const navigator = Navigator([
-    dataSourcesButton,
-    dashboardEditorButton,
-    dashboardButton,
-  ]);
+const DashboardEditorButton = defineComponent(({ state }) => {
+  const { currentRoute, selectedProjectId } = state;
+  const style = { width: '160px', height: '40px' };
+  const isSelected =
+    currentRoute === '/projects/<projectId:string>/dashboard/edit';
+  const href = `#!/projects/${selectedProjectId}/dashboard/edit`;
+  return NavigationButton({ style, isSelected, href }, 'Dashboard editor');
+});
 
-  const doUpdateIsSelected = (currentRoute) => {
-    dataSourcesButton.isSelected = [
-      '/projects/<projectId:string>',
-      '/projects/<projectId:string>/data-sources',
-    ].includes(currentRoute);
-    dashboardEditorButton.isSelected =
-      currentRoute === '/projects/<projectId:string>/dashboard/edit';
-    dashboardButton.isSelected =
-      currentRoute === '/projects/<projectId:string>/dashboard';
-  };
+const DashboardButton = defineComponent(({ state }) => {
+  const { currentRoute, selectedProjectId } = state;
+  const style = { width: '160px', height: '40px' };
+  const isSelected = currentRoute === '/projects/<projectId:string>/dashboard';
+  const href = `#!/projects/${selectedProjectId}/dashboard`;
+  return NavigationButton({ style, isSelected, href }, 'Dashboard');
+});
 
-  const doUpdateHref = (selectedProjectId) => {
-    dataSourcesButton.href = `#!/projects/${selectedProjectId}/data-sources`;
-    dashboardEditorButton.href = `#!/projects/${selectedProjectId}/dashboard/edit`;
-    dashboardButton.href = `#!/projects/${selectedProjectId}/dashboard`;
-  };
+const ProjectNavigator = defineComponent(({ state }) => {
+  return Navigator(
+    {},
+    DataSourcesButton({ state }),
+    DashboardEditorButton({ state }),
+    DashboardButton({ state })
+  );
+});
 
-  addEventListener(currentRoute$.id, () => {
-    doUpdateIsSelected(currentRoute$.value);
-  });
-
-  addEventListener(viewModel.selectedProjectId$.id, () => {
-    doUpdateHref(viewModel.selectedProjectId$.value);
-  });
-
-  // When this component becomes purely imperative, these will no longer be needed
-  doUpdateIsSelected(currentRoute$.value);
-  doUpdateHref(viewModel.selectedProjectId$.value);
-
-  return navigator;
-};
-
-module.exports = ProjectNavigator$;
+module.exports = ProjectNavigator;
