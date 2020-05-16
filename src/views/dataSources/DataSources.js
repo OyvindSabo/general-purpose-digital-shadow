@@ -1,12 +1,15 @@
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const ApiIntervalInput$ = include(
+const ApiIntervalInput = include(
   'src/views/dataSources/apiIntervalInput/ApiIntervalInput.js'
 );
-const ApiUrlInput$ = include(
-  'src/views/dataSources/apiUrlInput/ApiUrlInput.js'
-);
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const ApiUrlInput = include('src/views/dataSources/apiUrlInput/ApiUrlInput.js');
 
-const DataSourcesView$ = ({ viewModel }) =>
-  div$(ApiUrlInput$({ viewModel }), ApiIntervalInput$({ viewModel }));
+// getProps:: () => { viewModel, state }
+const DataSources = (getProps) => {
+  return compose('div', () => ({}), [
+    ApiUrlInput(getProps),
+    ApiIntervalInput(getProps),
+  ]);
+};
 
-module.exports = DataSourcesView$;
+module.exports = DataSources;

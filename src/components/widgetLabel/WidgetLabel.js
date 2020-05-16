@@ -1,10 +1,9 @@
-const { defineComponent, div } = include(
-  'src/libraries/simpleHTML/SimpleHTML.js'
-);
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const WidgetLabel = defineComponent(({ label }) => {
-  return div(
-    {
+const WidgetLabel = (getProps) => {
+  const element = compose(
+    'div',
+    () => ({
       style: {
         fontSize: '20px',
         marginTop: '20px',
@@ -14,9 +13,13 @@ const WidgetLabel = defineComponent(({ label }) => {
         pointerEvents: 'none',
         userSelect: 'none',
       },
-    },
-    label
+    }),
+    [getProps().label()]
   );
-});
+  element.update = () => {
+    element.innerText = getProps().label;
+  };
+  return element;
+};
 
 module.exports = WidgetLabel;

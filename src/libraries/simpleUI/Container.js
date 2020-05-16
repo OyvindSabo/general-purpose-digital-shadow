@@ -1,4 +1,4 @@
-const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const { doPatchChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const Container = () => {
   // Create base element
@@ -16,7 +16,7 @@ const Container = () => {
   });
   Object.defineProperty(divElement, 'children', {
     set: (children) => {
-      doUpdateChildren(divElement, children);
+      doPatchChildren(divElement, children);
     },
   });
   return divElement;

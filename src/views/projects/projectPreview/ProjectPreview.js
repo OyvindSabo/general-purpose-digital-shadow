@@ -1,30 +1,43 @@
-const styled = include('src/libraries/styled/styled.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const ProjectPreviewContainer$ = include(
+const ProjectPreviewContainer = include(
   'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
 );
-const ProjectPreviewButton$ = include(
+const ProjectPreviewButton = include(
   'src/views/projects/projectPreviewButton/ProjectPreviewButton.js'
 );
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const ProjectPreview$ = ({ viewModel, id$, name$ }) =>
-  ProjectPreviewContainer$(
-    styled({
-      padding: '0 16px',
-      width: 'calc(100% - 128px)',
-      boxSizing: 'border-box',
-      display: 'inline-block',
-    })(div$)(name$).onClick(
-      () =>
-        (location.hash = `#!/projects/${id$.value}/${
-          viewModel.lastVisitedProjectView$.value || ''
-        }`)
+// getProps::() => { state, viewModel, name, id }
+const ProjectPreview = (getProps) => {
+  return ProjectPreviewContainer(() => ({}), [
+    compose(
+      'div',
+      () => {
+        const { id, state } = getProps();
+        return {
+          onclick: () => {
+            location.hash = `#!/projects/${id}/${
+              state.lastVisitedProjectView || ''
+            }`;
+          },
+          style: {
+            padding: '0 16px',
+            width: 'calc(100% - 128px)',
+            boxSizing: 'border-box',
+            display: 'inline-block',
+          },
+        };
+      },
+      [getProps().name]
     ),
-    ProjectPreviewButton$('Delete').onClick(() =>
-      viewModel.deleteProject(id$.value)
+    ProjectPreviewButton(
+      () => ({ onclick: () => viewModel.deleteProject(getProps().id) }),
+      ['Delete']
     ),
-    ProjectPreviewButton$('Edit').onClick(() =>
-      viewModel.editProjectName(id$.value)
-    )
-  );
-module.exports = ProjectPreview$;
+    ProjectPreviewButton(
+      () => ({ onclick: () => viewModel.editProjectName(id$.value) }),
+      ['Edit']
+    ),
+  ]);
+};
+
+module.exports = ProjectPreview;

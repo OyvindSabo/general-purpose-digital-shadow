@@ -1,10 +1,10 @@
-const { defineComponent, div } = include(
-  'src/libraries/simpleHTML/SimpleHTML.js'
-);
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const WidgetValue = defineComponent(({ value }) => {
-  return div(
-    {
+const WidgetValue = (getProps) => {
+  const { value } = getProps();
+  const element = compose(
+    'div',
+    () => ({
       style: {
         fontSize: '60px',
         textAlign: 'center',
@@ -13,9 +13,16 @@ const WidgetValue = defineComponent(({ value }) => {
         top: '50%',
         transform: 'translate(0, -50%)',
       },
-    },
-    Number(value).toFixed(2)
+    }),
+    [Number(value).toFixed(2)]
   );
-});
+  const defaultUpdateFunction = element.update;
+  element.update = () => {
+    defaultUpdateFunction();
+    const { value } = getProps();
+    element.innerText = Number(value).toFixed(2);
+  };
+  return element;
+};
 
 module.exports = WidgetValue;

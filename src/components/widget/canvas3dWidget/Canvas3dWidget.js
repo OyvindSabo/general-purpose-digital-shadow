@@ -5,17 +5,21 @@ const Camera = include(
 const doRenderVisualization = include(
   'src/components/widget/doRenderVisualization/doRenderVisualization.js'
 );
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const ThreeDimVisualization$ = () => {
+// TODO: Shouldn't there be a label here?
+const Canvas3dWidget = (getProps) => {
+  const { surfaces, edges, center } = getProps();
   const state = { mouseDown: false };
-  const canvasElement = document.createElement('canvas');
-  // 16 x SizeUnit
-  canvasElement.height = 320;
-  // 24 x SizeUnit
-  canvasElement.width = 480;
-  Object.assign(canvasElement.style, {
-    position: 'absolute',
-  });
+  const canvasElement = compose(
+    'canvas',
+    () => ({
+      height: 320, // 16 x SizeUnit
+      width: 480, // 24 x SizeUnit
+      style: { position: 'absolute' },
+    }),
+    []
+  );
   const camera = new Camera({
     horizontalRotation$: new Observable(0),
     verticalRotation$: new Observable(0),
@@ -23,7 +27,8 @@ const ThreeDimVisualization$ = () => {
     focalLength$: new Observable(100),
   });
   const ctx = canvasElement.getContext('2d');
-  const rerender = ({ surfaces, edges, center }) => {
+  const rerender = () => {
+    const { surfaces, edges, center } = getProps();
     ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
     doRenderVisualization({
       surfaces,
@@ -36,6 +41,7 @@ const ThreeDimVisualization$ = () => {
       focalLength: camera.focalLength$.value,
     });
   };
+  rerender();
   canvasElement.onwheel = (event) => {
     camera.setDistance(camera.distance$.value + event.deltaY / 5);
   };
@@ -57,45 +63,22 @@ const ThreeDimVisualization$ = () => {
       );
     }
   };
-  Object.defineProperty(canvasElement, 'widgetDescription', {
-    set: ({ surfaces, edges, center }) => {
-      Object.assign(canvasElement, {
-        _surfaces: surfaces,
-        _edges: edges,
-        _center: center,
-      });
-      rerender({ surfaces, edges, center });
-    },
+  canvasElement.update = ({ surfaces, edges, center }) => {
+    rerender({ surfaces, edges, center });
+  };
+  window.addEventListener(camera.horizontalRotation$.id, () => {
+    rerender({ surfaces, edges, center });
   });
-  window.addEventListener(camera.horizontalRotation$.id, () =>
-    rerender({
-      surfaces: canvasElement._surfaces,
-      edges: canvasElement._edges,
-      center: canvasElement._center,
-    })
-  );
-  window.addEventListener(camera.verticalRotation$.id, () =>
-    rerender({
-      surfaces: canvasElement._surfaces,
-      edges: canvasElement._edges,
-      center: canvasElement._center,
-    })
-  );
-  window.addEventListener(camera.distance$.id, () =>
-    rerender({
-      surfaces: canvasElement._surfaces,
-      edges: canvasElement._edges,
-      center: canvasElement._center,
-    })
-  );
-  window.addEventListener(camera.focalLength$.id, () =>
-    rerender({
-      surfaces: canvasElement._surfaces,
-      edges: canvasElement._edges,
-      center: canvasElement._center,
-    })
-  );
+  window.addEventListener(camera.verticalRotation$.id, () => {
+    rerender({ surfaces, edges, center });
+  });
+  window.addEventListener(camera.distance$.id, () => {
+    rerender({ surfaces, edges, center });
+  });
+  window.addEventListener(camera.focalLength$.id, () => {
+    rerender({ surfaces, edges, center });
+  });
   return canvasElement;
 };
 
-module.exports = ThreeDimVisualization$;
+module.exports = Canvas3dWidget;

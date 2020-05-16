@@ -1,4 +1,4 @@
-const { doUpdateChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const { doPatchChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
 const { Sizes } = include('src/libraries/simpleUI/Constants.js');
 
 const PaddedContainer = () => {
@@ -18,7 +18,7 @@ const PaddedContainer = () => {
   });
   Object.defineProperty(divElement, 'children', {
     set: (children) => {
-      doUpdateChildren(divElement, children);
+      doPatchChildren(divElement, children);
     },
   });
   return divElement;

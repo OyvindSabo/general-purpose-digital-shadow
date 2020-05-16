@@ -6,7 +6,7 @@ const doAddShadow = (element) => {
   element.style.boxShadow = 'rgba(0, 0, 0, 0.25) 0 0 10px -5px';
 };
 
-const doUpdateChildren = (element, newChildren) => {
+const doPatchChildren = (element, newChildren) => {
   newChildren.forEach((newChild, index) => {
     if (element.childNodes[index] === newChild) return;
     while (
@@ -27,9 +27,77 @@ const doUpdateChildren = (element, newChildren) => {
   }
 };
 
-const isNullish = (value) => value === null || value === undefined;
+/**
+ * https://stackoverflow.com/questions/27936772/how-to-deep-merge-instead-of-shallow-merge
+ *
+ * Simple object check.
+ * @param item
+ * @returns {boolean}
+ */
+const isObject = (item) => {
+  return item && typeof item === 'object' && !Array.isArray(item);
+};
+/**
+ * Deep merge two objects.
+ * @param target
+ * @param ...sources
+ */
+const doDeepMerge = (target, ...sources) => {
+  if (!sources.length) return target;
+  const source = sources.shift();
+
+  if (isObject(target) && isObject(source)) {
+    for (const key in source) {
+      if (isObject(source[key])) {
+        if (!target[key]) Object.assign(target, { [key]: {} });
+        doDeepMerge(target[key], source[key]);
+      } else {
+        Object.assign(target, { [key]: source[key] });
+      }
+    }
+  }
+
+  return doDeepMerge(target, ...sources);
+};
+
+const determineIsNullish = (value) => value === null || value === undefined;
+
+/**
+ * A component is a function which returns an element and and update method
+ * @param {*} elementType
+ * @param {*} props
+ * @param {*} children
+ */
+const compose = (elementType, getProps, children) => {
+  if (typeof elementType === 'string') {
+    element = document.createElement(elementType);
+    doDeepMerge(element, getProps());
+    children.filter(Boolean).forEach((child) => {
+      if (typeof child === 'string') {
+        element.appendChild(document.createTextNode(child));
+      } else {
+        element.appendChild(child);
+      }
+    });
+    element.update = () => {
+      doDeepMerge(element, getProps());
+      Array.from(element.childNodes).forEach((childNode) => {
+        if (typeof childNode.update === 'function') {
+          childNode.update;
+        }
+      });
+    };
+    return element;
+  }
+  if (typeof elementType === 'function') {
+    console.log('elementType: ', elementType);
+    return elementType(props, children);
+  }
+  throw Error('elementType needs to be either a string or a function');
+};
+
 const nullishCoalesce = (primaryValue, backupValue) =>
-  isNullish(primaryValue) ? secondaryValue : primaryValue;
+  determineIsNullish(primaryValue) ? secondaryValue : primaryValue;
 
 class SimpleHTML {
   static isProp = (propsOrChild) =>
@@ -66,6 +134,7 @@ class SimpleHTML {
 
 const doMerge = (oldElement, newElement) => {
   if (!oldElement.parentNode) return;
+
   const oldChildren = Array.from(oldElement.childNodes);
   const newChildren = Array.from(newElement.childNodes);
   newChildren.forEach((newChild, i) => {
@@ -82,6 +151,8 @@ const doMerge = (oldElement, newElement) => {
         oldChild.selectionStart = selectionStart;
         oldChild.selectionEnd = selectionEnd;
 
+        console.log('oldChild.update: ', oldChild.update);
+        console.log('newChild.propsAndChildren: ', newChild.propsAndChildren);
         oldChild.update(...newChild.propsAndChildren);
         if (Object.keys(newChild.propsAndChildren[0]).includes('style')) {
           if (!oldChild.style) {
@@ -104,6 +175,7 @@ const doMerge = (oldElement, newElement) => {
           }
         }
         oldChild.innerText = newChild.innerText;
+
         foundMatchingOldChild = true;
       } else if (
         !(oldChild instanceof Element) &&
@@ -196,6 +268,7 @@ const button = defineComponent((props, ...children) =>
 
 module.exports = {
   doMerge,
+  compose,
   defineComponent,
   div,
   span,
@@ -211,5 +284,5 @@ module.exports = {
   button,
   doAddInnerShadow,
   doAddShadow,
-  doUpdateChildren,
+  doPatchChildren,
 };

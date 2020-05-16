@@ -1,29 +1,44 @@
-const styled = include('src/libraries/styled/styled.js');
-const { input$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const ProjectPreviewButton$ = include(
+const ProjectPreviewButton = include(
   'src/views/projects/projectPreviewButton/ProjectPreviewButton.js'
 );
-const ProjectPreviewContainer$ = include(
+const ProjectPreviewContainer = include(
   'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
 );
-const Input$ = include('src/components/input/Input.js');
-const ProjectNameInputContainer$ = include(
+const ProjectNameInputContainer = include(
   'src/views/projects/projectNameInputContainer/ProjectNameInputContainer.js'
 );
 
-const ProjectNameInput$ = ({ viewModel, id$, nameInputValue$ }) =>
-  ProjectPreviewContainer$(
-    ProjectNameInputContainer$(
-      Input$(nameInputValue$).onInput(({ value }) => {
-        viewModel.setProjectNameInputValue(id$.value, value);
-      })
+// getProps::() => { viewModel, id, nameInputValue }
+const ProjectNameInput = ({ viewModel, id$, nameInputValue$ }) => {
+  return ProjectPreviewContainer(() => ({}), [
+    ProjectNameInputContainer(
+      () => ({
+        oninput: ({ value }) => {
+          const { id, viewModel } = getProps();
+          viewModel.setProjectNameInputValue(id, value);
+        },
+      }),
+      [getProps().nameInputValue]
     ),
-    ProjectPreviewButton$('Cancel').onClick(() =>
-      viewModel.cancelEditingProjectName(id$.value)
+    ProjectPreviewButton(
+      () => ({
+        onclick: () => {
+          const { id, viewModel } = getProps();
+          viewModel.cancelEditingProjectName(id);
+        },
+      }),
+      ['Cancel']
     ),
-    ProjectPreviewButton$('Save').onClick(() =>
-      viewModel.saveProjectName(id$.value)
-    )
-  );
+    ProjectPreviewButton(
+      () => ({
+        onclick: () => {
+          const { id, viewModel } = getProps();
+          viewModel.saveProjectName(id);
+        },
+      }),
+      ['Save']
+    ),
+  ]);
+};
 
-module.exports = ProjectNameInput$;
+module.exports = ProjectNameInput;

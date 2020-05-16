@@ -5,13 +5,8 @@ const Camera = include(
 );
 const render = include('src/components/visualization/render/render.js');
 
-const ThreeDimVisualization$ = ({
-  height$,
-  width$,
-  surfaces$,
-  edges$,
-  center$,
-}) => {
+const ThreeDimVisualization$ = (getProps) => {
+  const { height$, width$, surfaces$, edges$, center$ } = getProps();
   const state = { mouseDown: false };
   const canvas = canvas$({ height$, width$ }).setStyle({
     position: 'absolute',

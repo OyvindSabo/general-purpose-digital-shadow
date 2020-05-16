@@ -1,38 +1,62 @@
-const FullWidthCard$ = include('src/components/fullWidthCard/FullWidthCard.js');
-const ApiInputLabel$ = include(
+const FullWidthCard = include('src/components/fullWidthCard/FullWidthCard.js');
+const ApiInputLabel = include(
   'src/views/dataSources/apiInputLabel/ApiInputLabel.js'
 );
-const Input$ = include('src/components/input/Input.js');
-const ApiInputContainer$ = include(
+const ApiInputContainer = include(
   'src/views/dataSources/apiInputContainer/ApiInputContainer.js'
 );
-const TextButton$ = include('src/components/textButton/TextButton.js');
-const ApiUrlTestPreview$ = include(
+const TextButton = include('src/components/textButton/TextButton.js');
+const ApiUrlTestPreview = include(
   'src/views/dataSources/apiUrlTestPreview/ApiUrlTestPreview.js'
 );
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
+const { compose, doPatchChildren } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
 
-const ApiUrlInput$ = ({ viewModel }) =>
-  FullWidthCard$(
-    div$(
-      ApiInputLabel$('API URL'),
-      ApiInputContainer$(
-        Input$(viewModel.selectedApiUrl$).onInput(({ value }) => {
-          viewModel.updateApiUrl(viewModel.selectedProjectId$.value, value);
-        })
+const ApiUrlInput = (getProps) => {
+  const { viewModel } = getProps();
+  const element = FullWidthCard({}, [
+    compose('div', () => ({ style: { minHeight: '128px' } }), [
+      ApiInputLabel(() => ({}), ['API URL']),
+      ApiInputContainer(() => ({}), [
+        compose(
+          'input',
+          () => ({
+            oninput: ({ value }) => {
+              viewModel.updateApiUrl(getProps().state.selectedProjectId, value);
+            },
+            value: getProps().state.selectedApiUrl,
+          }),
+          []
+        ),
+      ]),
+      compose(
+        'span',
+        () => ({
+          style: {
+            textAlign: 'left',
+            width: '192px',
+            height: '64px',
+            float: 'left',
+          },
+        }),
+        [
+          TextButton(
+            () => ({
+              onclick: getProps().state.testApiUrlInput,
+            }),
+            ['Test API URL']
+          ),
+        ]
       ),
-      TextButton$('Test API URL')
-        .setStyle({
-          textAlign: 'left',
-          width: '192px',
-          height: '64px',
-          float: 'left',
-        })
-        .onClick(viewModel.testApiUrlInput),
-      ApiUrlTestPreview$(viewModel.selectedApiUrlTestPreview$).setStyle({
-        width: 'calc(100% - 208px)',
-      })
-    ).setStyle({ minHeight: '128px' })
-  );
+      compose('span', () => ({ style: { width: 'calc(100% - 208px)' } }), [
+        ApiUrlTestPreview(() => ({}), [
+          getProps().state.selectedApiUrlTestPreview,
+        ]),
+      ]),
+    ]),
+  ]);
+  return element;
+};
 
-module.exports = ApiUrlInput$;
+module.exports = ApiUrlInput;

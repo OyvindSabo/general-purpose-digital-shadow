@@ -28,7 +28,7 @@ const router = isExported
       '/projects/<projectId:string>/dashboard/edit': 'Edit dashboard',
     });
 
-const { state, setState, withState } = simpleState({
+const { state, setState, addStateChangeListener } = simpleState({
   currentRoute: router.currentRoute,
   params: router.params,
   isExported,
@@ -47,8 +47,11 @@ const { state, setState, withState } = simpleState({
 
 const viewModel = Model({ router, isExported, state, setState });
 
-const app = withState(({ state, setState }) =>
-  App({ state, setState, viewModel })
-);
+const app = App(() => ({
+  state,
+  setState,
+  viewModel,
+}));
+addStateChangeListener(({ state, setState }) => app.update());
 
 document.body.appendChild(app);

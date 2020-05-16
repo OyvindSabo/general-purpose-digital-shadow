@@ -1,6 +1,3 @@
-const { eq$, or$, startsWith$ } = include('src/libraries/observable/utils.js');
-const { div$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const { If$ } = include('src/libraries/observableHtml/utils.js');
 const ProjectNavigator = include(
   'src/views/project/projectNavigator/ProjectNavigator.js'
 );
@@ -8,46 +5,47 @@ const ProjectContainer = include(
   'src/views/project/projectContainer/ProjectContainer.js'
 );
 const TitleBar = include('src/app/titleBar/TitleBar.js');
-const Projects$ = include('src/views/projects/Projects.js');
-const DataSources$ = include('src/views/dataSources/DataSources.js');
+const Projects = include('src/views/projects/Projects.js');
+const DataSources = include('src/views/dataSources/DataSources.js');
 const Dashboard = include('src/views/dashboard/Dashboard.js');
+const DashboardEditor = include('src/views/dashboardEditor/DashboardEditor.js');
 
-const { defineComponent, div } = include(
-  'src/libraries/simpleHTML/SimpleHTML.js'
-);
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const App = defineComponent(({ state, viewModel }) => {
-  return state.isExported
-    ? div(
-        TitleBar({ state, viewModel }),
-        ProjectContainer$(Dashboard({ state, viewModel }))
-      )
-    : div(
-        ...[
-          TitleBar({ state, viewModel }),
-          state.currentRoute === '/' ? Projects$({ viewModel }) : null,
-          state.currentRoute.indexOf('/projects/<projectId:string>') === 0
-            ? ProjectContainer(
-                ...[
-                  ProjectNavigator({ state }),
-                  state.currentRoute ===
-                    '/projects/<projectId:string>/data-sources' ||
-                  state.currentRoute$ === '/projects/<projectId:string>'
-                    ? DataSources$({ viewModel })
-                    : null,
-                  state.currentRoute.indexOf(
-                    '/projects/<projectId:string>/dashboard'
-                  ) === 0
-                    ? Dashboard({
-                        state,
-                        viewModel,
-                      })
-                    : null,
-                ].filter(Boolean)
-              )
-            : null,
-        ].filter(Boolean)
-      );
-});
+// getProps::() => { state, viewModel }
+const App = (getProps) => {
+  const { state } = getProps();
+  console.log('getProps().state.currentRoute: ', getProps().state.currentRoute);
+  const element = state.isExported
+    ? compose('div', () => ({}), [
+        TitleBar(getProps),
+        ProjectContainer({}, [Dashboard(getProps)]),
+      ])
+    : compose('div', () => ({}), [
+        TitleBar(getProps),
+        getProps().state.currentRoute === '/' ? Projects(getProps) : null,
+        getProps().state.currentRoute.indexOf(
+          '/projects/<projectId:string>'
+        ) === 0
+          ? ProjectContainer(() => ({}), [
+              ProjectNavigator(() => ({ state: getProps().state })),
+              state.currentRoute ===
+                '/projects/<projectId:string>/data-sources' ||
+              state.currentRoute === '/projects/<projectId:string>'
+                ? DataSources(getProps)
+                : null,
+              state.currentRoute ===
+              '/projects/<projectId:string>/dashboard/edit'
+                ? DashboardEditor(getProps)
+                : null,
+              state.currentRoute === '/projects/<projectId:string>/dashboard'
+                ? Dashboard(getProps)
+                : null,
+            ])
+          : null,
+      ]);
+  // TODO: Add some custom update logic to make sure children are replaced if route changes
+  return element;
+};
 
 module.exports = App;

@@ -2,6 +2,7 @@ const Colors = {
   TextColor: 'slategray',
   HighlightedTextColor: 'darkslategray',
   DisabledTextColor: 'lightgray',
+  HighlightColor: 'deepskyblue',
 };
 
 const Sizes = {

@@ -1,27 +1,24 @@
-const { defineComponent } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
 const simpleState = (initialState) => {
   const state = initialState;
-  const connectedElements = [];
+  const stateChangeCallbacks = [];
   const emit = () => {
-    connectedElements.forEach((connectedElement) => {
-      console.log('connectedElement: ', connectedElement);
-      connectedElement.update({ state, setState });
+    stateChangeCallbacks.forEach((stateChangeCallback) => {
+      stateChangeCallback({ state, setState });
     });
   };
   const setState = (newState) => {
     Object.assign(state, newState);
     emit();
   };
-  const withState = (elementFunction) => {
-    const element = defineComponent(elementFunction)({ state, setState });
-    connectedElements.push(element);
+  const addStateChangeListener = (stateChangeCallback) => {
+    const element = { state, setState };
+    stateChangeCallbacks.push(stateChangeCallback);
     return element;
   };
   return {
     state,
     setState,
-    withState,
+    addStateChangeListener,
   };
 };
 

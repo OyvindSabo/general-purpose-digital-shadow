@@ -1,27 +1,32 @@
-const ProjectPreviewContainer$ = include(
+const ProjectPreviewContainer = include(
   'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
 );
-const ApiInputLabel$ = include(
+const ApiInputLabel = include(
   'src/views/dataSources/apiInputLabel/ApiInputLabel.js'
 );
 const Input$ = include('src/components/input/Input.js');
-const ApiInputContainer$ = include(
+const ApiInputContainer = include(
   'src/views/dataSources/apiInputContainer/ApiInputContainer.js'
 );
+const { compose, doPatchChildren } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
 
-const ApiIntervalInput$ = ({ viewModel }) =>
-  ProjectPreviewContainer$(
-    ApiInputLabel$('Fetch interval (s)'),
-    ApiInputContainer$(
-      Input$(viewModel.selectedApiInterval$)
-        .setProps({ type: 'number', min: '0' })
-        .onInput(({ value }) => {
-          viewModel.updateApiInterval(
-            viewModel.selectedProjectId$.value,
-            value
-          );
-        })
-    )
-  );
+// getProps::() => { state, viewModel }
+const ApiIntervalInput = (getProps) => {
+  return ProjectPreviewContainer(() => ({}), [
+    ApiInputLabel(() => ({ label: 'Fetch interval (s)' })),
+    ApiInputContainer(
+      () => ({
+        type: 'number',
+        min: '0',
+        oninput: ({ value }) => {
+          viewModel.updateApiInterval(state.selectedProjectId, value);
+        },
+      }),
+      [getProps().state.selectedApiInterval]
+    ),
+  ]);
+};
 
-module.exports = ApiIntervalInput$;
+module.exports = ApiIntervalInput;

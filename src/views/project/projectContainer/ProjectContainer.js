@@ -1,19 +1,18 @@
-const { defineComponent, div } = include(
-  'src/libraries/simpleHTML/SimpleHTML.js'
-);
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const ProjectContainer = defineComponent((props, ...children) => {
-  return div(
-    {
+const ProjectContainer = (props, children) => {
+  return compose(
+    'div',
+    () => ({
       style: {
         height: 'calc(100% - 64px)',
         position: 'absolute',
         left: '0',
         right: '0',
       },
-    },
-    ...children
+    }),
+    children
   );
-});
+};
 
 module.exports = ProjectContainer;
