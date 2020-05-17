@@ -2,6 +2,10 @@ const { Colors } = include('src/libraries/simpleUI/Constants.js');
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const getColor = (isHovered, isSelected) => {
+  console.log(
+    'finding textColor: ',
+    isSelected || isHovered ? Colors.HighlightedTextColor : Colors.TextColor
+  );
   return isSelected || isHovered
     ? Colors.HighlightedTextColor
     : Colors.TextColor;
@@ -13,8 +17,6 @@ const getBorderBottom = (isSelected) => {
 
 const NavigationButton = (getProps) => {
   let isHovered = false;
-  const { label, href, isSelected } = getProps();
-  const props = { label, href, isSelected };
   const element = compose(
     'span',
     () => {
@@ -27,32 +29,35 @@ const NavigationButton = (getProps) => {
           width: '160px',
           height: '40px',
           lineHeight: '40px',
-          fontSize: '30px',
+          fontSize: '15px',
           borderBottom: getBorderBottom(isSelected),
-          color: getColor(isHovered, isSelected),
         },
       };
     },
     [
       compose(
         'a',
-        () => ({
-          style: {
-            textDecoration: 'none',
-            display: 'inline-block',
-            width: '100%',
-          },
-          href: getProps().href,
-          onmouseenter: () => {
-            isHovered = true;
-            element.update();
-          },
-          onMouseLeave: () => {
-            isHovered = false;
-            element.update();
-          },
-        }),
-        [props.label]
+        () => {
+          const { isSelected, href } = getProps();
+          return {
+            style: {
+              textDecoration: 'none',
+              display: 'inline-block',
+              width: '100%',
+              color: getColor(isHovered, isSelected),
+            },
+            href,
+            onmouseenter: () => {
+              isHovered = true;
+              element.update();
+            },
+            onMouseLeave: () => {
+              isHovered = false;
+              element.update();
+            },
+          };
+        },
+        [getProps().label]
       ),
     ]
   );

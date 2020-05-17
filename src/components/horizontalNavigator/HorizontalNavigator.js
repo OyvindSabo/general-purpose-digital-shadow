@@ -1,7 +1,8 @@
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const HorizontalNavigator = ({}, children) => {
-  return compose(
+const HorizontalNavigator = (_, children) => {
+  console.log('HorizontalNavigator');
+  const element = compose(
     'div',
     () => ({
       style: {
@@ -13,6 +14,7 @@ const HorizontalNavigator = ({}, children) => {
     }),
     children
   );
+  return element;
 };
 
 module.exports = HorizontalNavigator;

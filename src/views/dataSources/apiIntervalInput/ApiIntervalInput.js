@@ -4,17 +4,13 @@ const ProjectPreviewContainer = include(
 const ApiInputLabel = include(
   'src/views/dataSources/apiInputLabel/ApiInputLabel.js'
 );
-const Input$ = include('src/components/input/Input.js');
 const ApiInputContainer = include(
   'src/views/dataSources/apiInputContainer/ApiInputContainer.js'
-);
-const { compose, doPatchChildren } = include(
-  'src/libraries/simpleHTML/SimpleHTML.js'
 );
 
 // getProps::() => { state, viewModel }
 const ApiIntervalInput = (getProps) => {
-  return ProjectPreviewContainer(() => ({}), [
+  const element = ProjectPreviewContainer(() => ({}), [
     ApiInputLabel(() => ({ label: 'Fetch interval (s)' })),
     ApiInputContainer(
       () => ({
@@ -27,6 +23,7 @@ const ApiIntervalInput = (getProps) => {
       [getProps().state.selectedApiInterval]
     ),
   ]);
+  return element;
 };
 
 module.exports = ApiIntervalInput;

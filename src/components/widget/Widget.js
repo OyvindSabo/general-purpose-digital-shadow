@@ -1,4 +1,3 @@
-const WidgetContainer = include('src/components/widget/WidgetContainer.js');
 const Canvas3dWidget = include(
   'src/components/widget/canvas3dWidget/Canvas3dWidget.js'
 );
@@ -6,9 +5,7 @@ const Canvas2dWidget = include(
   'src/components/widget/canvas2dWidget/Canvas2dWidget.js'
 );
 const ValueWidget = include('src/components/widget/valueWidget/ValueWidget.js');
-const { compose, doPatchChildren } = include(
-  'src/libraries/simpleHTML/SimpleHTML.js'
-);
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 /**
  *
@@ -24,12 +21,14 @@ const { compose, doPatchChildren } = include(
  *
  * @returns { HTMLElement }
  */
-const getWidgetElementByType = (props) => {
-  if (props.type === 'canvas-widget') {
-    return props.is3d ? Canvas3dWidget(props) : Canvas2dWidget(props);
+const getWidgetElementByType = (getProps) => {
+  const { type, is3d } = getProps();
+  console.log('widget type: ', getProps().type);
+  if (type === 'canvas-widget') {
+    return is3d ? Canvas3dWidget(getProps) : Canvas2dWidget(getProps);
   }
-  if (props.type === 'value-widget') {
-    return ValueWidget(props);
+  if (type === 'value-widget') {
+    return ValueWidget(getProps);
   }
   throw Error('A widget must have type canvas-widget or value-widget');
 };
@@ -48,11 +47,10 @@ const getWidgetElementByType = (props) => {
  *
  * @returns { HTMLElement }
  */
-const Widget = (props) => {
-  const previousProps = props;
+const Widget = (getProps) => {
   const element = compose(
     'span',
-    {
+    () => ({
       style: {
         padding: '10px',
         display: 'inline-block',
@@ -62,17 +60,9 @@ const Widget = (props) => {
         height: '320px', // 16 x SizeUnit
         boxShadow: 'rgba(0, 0, 0, 0.25) 0 0 10px -5px',
       },
-    },
-    [getWidgetElementByType(props)]
+    }),
+    [getWidgetElementByType(getProps)]
   );
-  element.update = (newProps) => {
-    if (newProps.type == previousProps.type) {
-      element.childNodes[0].update(newProps);
-    } else {
-      doPatchChildren(element, [getWidgetElementByType(props)]);
-    }
-    Object.assign(previousProps, newProps);
-  };
   return element;
 };
 

@@ -2,6 +2,7 @@ const Router = include('src/libraries/simpleRouter/SimpleRouter.js');
 const simpleState = include('src/libraries/simpleState/SimpleState.js');
 const Model = include('src/model/Model.js');
 const App = include('src/app/App.js');
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 Object.assign(document.body.style, {
   margin: 0,
@@ -47,11 +48,15 @@ const { state, setState, addStateChangeListener } = simpleState({
 
 const viewModel = Model({ router, isExported, state, setState });
 
-const app = App(() => ({
-  state,
-  setState,
-  viewModel,
-}));
-addStateChangeListener(({ state, setState }) => app.update());
+const app = compose('div', () => ({}), [
+  App(() => ({
+    state,
+    setState,
+    viewModel,
+  })),
+]);
+addStateChangeListener(({ state, setState }) => {
+  app.update();
+});
 
 document.body.appendChild(app);

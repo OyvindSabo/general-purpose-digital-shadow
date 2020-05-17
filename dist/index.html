@@ -213,6 +213,7 @@ modules['src/libraries/simpleState/SimpleState.js'] = (() => {
     });
   };
   const setState = (newState) => {
+    console.log('setState: newState: ', newState);
     Object.assign(state, newState);
     emit();
   };
@@ -229,6 +230,348 @@ modules['src/libraries/simpleState/SimpleState.js'] = (() => {
 };
 
 module.exports = simpleState;
+
+  return module.exports;
+})();
+
+modules['src/libraries/simpleHTML/SimpleHTML.js'] = (() => {
+  const module = { exports: {} };
+  const doAddInnerShadow = (element) => {
+  element.style.boxShadow = 'inset rgba(0, 0, 0, 0.25) 0 0 10px -5px';
+};
+
+const doAddShadow = (element) => {
+  element.style.boxShadow = 'rgba(0, 0, 0, 0.25) 0 0 10px -5px';
+};
+
+const doPatchChildren = (
+  element,
+  newChildren,
+  compareFunction = (a, b) => a === b
+) => {
+  newChildren.forEach((newChild, index) => {
+    // If the new child node already exists on the correct index, jump to next iteration
+    if (compareFunction(newChild, element.childNodes[index])) return;
+
+    // As long as there is an old child node at the current index which is not correspond to any of the new childNodes, remove it
+    while (
+      element.childNodes[index] &&
+      !newChildren.some((newChild) =>
+        compareFunction(newChild, element.childNodes[index])
+      )
+    ) {
+      element.removeChild(element.childNodes[index]);
+    }
+
+    // Insert the new child node at the correct position
+    if (element.childNodes[index]) {
+      element.insertBefore(newChild, element.childNodes[index]);
+      return;
+    }
+    console.log('newChild: ', newChild);
+    element.appendChild(newChild);
+    return;
+  });
+
+  // Remove any superfluous old nodes which don't correspond to the new nodes
+  while (newChildren.length < element.childNodes.length) {
+    element.removeChild(element.childNodes[newChildren.length]);
+  }
+};
+
+/**
+ * https://stackoverflow.com/questions/27936772/how-to-deep-merge-instead-of-shallow-merge
+ *
+ * Simple object check.
+ * @param item
+ * @returns {boolean}
+ */
+const isObject = (item) => {
+  return item && typeof item === 'object' && !Array.isArray(item);
+};
+/**
+ * Deep merge two objects.
+ * @param target
+ * @param ...sources
+ */
+const doDeepMerge = (target, ...sources) => {
+  if (!sources.length) return target;
+  const source = sources.shift();
+
+  if (isObject(target) && isObject(source)) {
+    for (const key in source) {
+      if (isObject(source[key])) {
+        if (!target[key]) Object.assign(target, { [key]: {} });
+        doDeepMerge(target[key], source[key]);
+      } else {
+        Object.assign(target, { [key]: source[key] });
+      }
+    }
+  }
+
+  return doDeepMerge(target, ...sources);
+};
+
+const determineIsNullish = (value) => value === null || value === undefined;
+
+const getNodeRepresentation = (child) => {
+  if (typeof child === 'string') return document.createTextNode(child);
+  if (typeof child === 'number') return document.createTextNode(child);
+  return child;
+};
+
+const callUntilNotFunction = (valueOrFunction) => {
+  if (typeof valueOrFunction === 'function') {
+    return callUntilNotFunction(valueOrFunction());
+  }
+  return valueOrFunction;
+};
+
+const getCleanedChildNodes = (children) => {
+  return children.map(getNodeRepresentation).filter(Boolean);
+};
+
+/**
+ * A component is a function which returns an element and and update method
+ * @param {*} elementType
+ * @param {*} props
+ * @param {*} children
+ */
+const compose = (elementType, getProps, getChildren) => {
+  element = document.createElement(elementType);
+  //Object.assign(element, getProps());
+  if (typeof getProps === 'function') {
+    doDeepMerge(element, getProps());
+  } else {
+    doDeepMerge(element, getProps);
+  }
+
+  if (typeof getChildren === 'function') {
+    getCleanedChildNodes(getChildren()).forEach((childNode) => {
+      element.appendChild(childNode);
+    });
+  } else {
+    getCleanedChildNodes(getChildren).forEach((childNode) => {
+      element.appendChild(childNode);
+    });
+  }
+
+  element.update = () => {
+    // We update the props only if they are provided as a function. Otherwise they are static.
+    if (typeof getProps === 'function') {
+      doDeepMerge(element, getProps());
+    }
+    //const newChildNodes = getCleanedChildNodes(callUntilNotFunction(children));
+    /*doPatchChildren(element, newChildNodes, (node1, node2) => {
+      if (node1 && node2 && node1.key && node2.key) {
+        return node1.key === node2.key;
+      }
+      return false;
+    });*/
+    element.childNodes.forEach((childNode) => {
+      //console.log('element.innerHTML: ', element.innerHTML);
+      //console.log('Calling update from: ', element);
+      //console.log('updating: ', element.childNodes);
+      //console.log('parentNode: ', element.parentNode);
+      if (typeof childNode.update === 'function') {
+        //console.log('childNodes: ', element.childNodes);
+        childNode.update();
+      }
+    });
+  };
+  return element;
+};
+
+const nullishCoalesce = (primaryValue, backupValue) =>
+  determineIsNullish(primaryValue) ? secondaryValue : primaryValue;
+
+class SimpleHTML {
+  static isProp = (propsOrChild) =>
+    !(propsOrChild instanceof HTMLElement || typeof propsOrChild === 'string');
+  static makeElement(elementType, propsOrChild, ...maybeAllChildren) {
+    const element = document.createElement(elementType);
+    const hasProps = SimpleHTML.isProp(propsOrChild);
+    const props = hasProps ? propsOrChild || {} : {};
+    const children = hasProps
+      ? maybeAllChildren
+      : [propsOrChild, ...maybeAllChildren];
+    Object.entries(props).forEach(([attribute, value]) => {
+      if (attribute === 'style') {
+        Object.assign(element.style, value);
+      } else if (attribute === 'onClick') {
+        element.onclick = value;
+      } else if (attribute === 'onInput') {
+        element.oninput = value;
+      } else {
+        element[attribute] = value;
+      }
+    });
+    children
+      .filter(Boolean)
+      .map((child) =>
+        typeof child === 'string' ? document.createTextNode(child) : child
+      )
+      .forEach((child) => {
+        element.appendChild(child);
+      });
+    return element;
+  }
+}
+
+const doMerge = (oldElement, newElement) => {
+  if (!oldElement.parentNode) return;
+
+  const oldChildren = Array.from(oldElement.childNodes);
+  const newChildren = Array.from(newElement.childNodes);
+  newChildren.forEach((newChild, i) => {
+    let foundMatchingOldChild = false;
+    while (oldChildren.length && !foundMatchingOldChild) {
+      oldChild = oldChildren.shift();
+      if (
+        oldChild.component === newChild.component &&
+        oldChild instanceof Element
+      ) {
+        const selectionStart = oldChild.selectionStart;
+        const selectionEnd = oldChild.selectionEnd;
+        oldChild.value = newChild.value;
+        oldChild.selectionStart = selectionStart;
+        oldChild.selectionEnd = selectionEnd;
+
+        console.log('oldChild.update: ', oldChild.update);
+        console.log('newChild.propsAndChildren: ', newChild.propsAndChildren);
+        oldChild.update(...newChild.propsAndChildren);
+        if (Object.keys(newChild.propsAndChildren[0]).includes('style')) {
+          if (!oldChild.style) {
+            Object.keys(oldChild.parentNode.style).forEach((property) => {
+              if (!newChild.propsAndChildren[0].style[property]) {
+                oldChild.parentNode.style[property] = null;
+              }
+            });
+            Object.assign(
+              oldChild.parentNode.style,
+              newChild.propsAndChildren[0].style
+            );
+          } else {
+            Object.keys(oldChild.parentNode.style).forEach((property) => {
+              if (!newChild.propsAndChildren[0].style[property]) {
+                oldChild.style[property] = null;
+              }
+            });
+            Object.assign(oldChild.style, newChild.propsAndChildren[0].style);
+          }
+        }
+        oldChild.innerText = newChild.innerText;
+
+        foundMatchingOldChild = true;
+      } else if (
+        !(oldChild instanceof Element) &&
+        !(newChild instanceof Element)
+      ) {
+        if (oldChild.data === newChild.data) {
+          foundMatchingOldChild = true;
+        } else {
+          oldChild.data = newChild.data;
+        }
+        foundMatchingOldChild = true;
+      } else {
+        oldElement.removeChild(oldChild);
+      }
+    }
+    if (!foundMatchingOldChild) {
+      while (oldElement.childNodes[i]) {
+        oldElement.removeChild(oldElement.childNodes[i]);
+      }
+      oldElement.appendChild(newChild);
+    }
+  });
+  while (newChildren.length < oldElement.childNodes.length) {
+    oldElement.removeChild(oldElement.childNodes[newChildren.length]);
+  }
+};
+
+const defineComponent = (elementFunction) => {
+  const component = (...propsAndChildren) => {
+    const element = elementFunction(...propsAndChildren);
+    element.component = component;
+    element.propsAndChildren = propsAndChildren;
+    element.update = (...newPropsAndChildren) => {
+      element.propsAndChildren = newPropsAndChildren;
+      doMerge(element, component(...newPropsAndChildren));
+    };
+    return element;
+  };
+  return component;
+};
+
+const div = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('div', props, ...children)
+);
+
+const span = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('span', props, ...children)
+);
+
+const a = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('a', props, ...children)
+);
+
+const p = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('p', props, ...children)
+);
+
+const h1 = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('h1', props, ...children)
+);
+
+const h2 = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('h2', props, ...children)
+);
+
+const img = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('img', props, ...children)
+);
+
+const form = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('form', props, ...children)
+);
+
+const input = defineComponent((props) =>
+  SimpleHTML.makeElement('input', props)
+);
+
+const textarea = defineComponent((props) =>
+  SimpleHTML.makeElement('textarea', props)
+);
+
+const br = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('br', props, ...children)
+);
+
+const button = defineComponent((props, ...children) =>
+  SimpleHTML.makeElement('button', props, ...children)
+);
+// And so on, fill in more as needed...
+
+module.exports = {
+  doMerge,
+  compose,
+  defineComponent,
+  div,
+  span,
+  a,
+  p,
+  h1,
+  h2,
+  img,
+  form,
+  input,
+  textarea,
+  br,
+  button,
+  doAddInnerShadow,
+  doAddShadow,
+  doPatchChildren,
+};
 
   return module.exports;
 })();
@@ -490,6 +833,7 @@ const Model = ({ router, isExported, state, setState }) => {
   };
 
   const updateValues = () => {
+    console.log('updateValues');
     let evaluatedCode;
     try {
       evaluatedCode = evaluateCode(
@@ -510,10 +854,11 @@ const Model = ({ router, isExported, state, setState }) => {
     fetch(state.selectedApiUrl)
       .then((response) => response.json())
       .then((jsonResponse) => {
-        setState({
+        // TODO: Make sure this does not cause a Maximum call stack exceeded error
+        /*setState({
           apiResponse: JSON.stringify(jsonResponse, null, 2),
         });
-        updateValues();
+        updateValues();*/
       });
   };
 
@@ -545,12 +890,13 @@ const Model = ({ router, isExported, state, setState }) => {
   */
 
   const syncSelectedProjectWithRouter = ({ params, currentRoute }) => {
-    setState({ currentRoute, params });
     if (currentRoute.indexOf('/projects/<projectId:string>') === 0) {
       const selectedProject = dataModel.projects.find(
         ({ id }) => id === params.projectId
       );
       setState({
+        currentRoute,
+        params,
         selectedProjectId: selectedProject.id,
         selectedProjectName: selectedProject.name,
         selectedApiUrl: selectedProject.apiUrl,
@@ -559,6 +905,8 @@ const Model = ({ router, isExported, state, setState }) => {
       });
       if (currentRoute === '/projects/<projectId:string>/data-sources') {
         setState({
+          currentRoute,
+          params,
           lastVisitedProjectView: 'data-sources',
         });
       }
@@ -567,11 +915,15 @@ const Model = ({ router, isExported, state, setState }) => {
         0
       ) {
         setState({
+          currentRoute,
+          params,
           lastVisitedProjectView: 'edit-dashboard', // TODO: Check that this works
         });
       }
       if (currentRoute === '/projects/<projectId:string>/dashboard') {
         setState({
+          currentRoute,
+          params,
           lastVisitedProjectView: 'dashboard',
         });
       }
@@ -588,306 +940,12 @@ module.exports = Model;
   return module.exports;
 })();
 
-modules['src/libraries/simpleHTML/SimpleHTML.js'] = (() => {
-  const module = { exports: {} };
-  const doAddInnerShadow = (element) => {
-  element.style.boxShadow = 'inset rgba(0, 0, 0, 0.25) 0 0 10px -5px';
-};
-
-const doAddShadow = (element) => {
-  element.style.boxShadow = 'rgba(0, 0, 0, 0.25) 0 0 10px -5px';
-};
-
-const doPatchChildren = (element, newChildren) => {
-  newChildren.forEach((newChild, index) => {
-    if (element.childNodes[index] === newChild) return;
-    while (
-      element.childNodes[index] &&
-      !newChildren.includes(element.childNodes[index])
-    ) {
-      element.removeChild(element.childNodes[index]);
-    }
-    if (element.childNodes[index]) {
-      element.insertBefore(newChild, element.childNodes[index]);
-      return;
-    }
-    element.appendChild(newChild);
-    return;
-  });
-  while (newChildren.length < element.childNodes.length) {
-    element.removeChild(element.childNodes[newChildren.length]);
-  }
-};
-
-/**
- * https://stackoverflow.com/questions/27936772/how-to-deep-merge-instead-of-shallow-merge
- *
- * Simple object check.
- * @param item
- * @returns {boolean}
- */
-const isObject = (item) => {
-  return item && typeof item === 'object' && !Array.isArray(item);
-};
-/**
- * Deep merge two objects.
- * @param target
- * @param ...sources
- */
-const doDeepMerge = (target, ...sources) => {
-  if (!sources.length) return target;
-  const source = sources.shift();
-
-  if (isObject(target) && isObject(source)) {
-    for (const key in source) {
-      if (isObject(source[key])) {
-        if (!target[key]) Object.assign(target, { [key]: {} });
-        doDeepMerge(target[key], source[key]);
-      } else {
-        Object.assign(target, { [key]: source[key] });
-      }
-    }
-  }
-
-  return doDeepMerge(target, ...sources);
-};
-
-const determineIsNullish = (value) => value === null || value === undefined;
-
-/**
- * A component is a function which returns an element and and update method
- * @param {*} elementType
- * @param {*} props
- * @param {*} children
- */
-const compose = (elementType, getProps, children) => {
-  if (typeof elementType === 'string') {
-    element = document.createElement(elementType);
-    doDeepMerge(element, getProps());
-    children.filter(Boolean).forEach((child) => {
-      if (typeof child === 'string') {
-        element.appendChild(document.createTextNode(child));
-      } else {
-        element.appendChild(child);
-      }
-    });
-    element.update = () => {
-      doDeepMerge(element, getProps());
-      Array.from(element.childNodes).forEach((childNode) => {
-        if (typeof childNode.update === 'function') {
-          childNode.update;
-        }
-      });
-    };
-    return element;
-  }
-  if (typeof elementType === 'function') {
-    console.log('elementType: ', elementType);
-    return elementType(props, children);
-  }
-  throw Error('elementType needs to be either a string or a function');
-};
-
-const nullishCoalesce = (primaryValue, backupValue) =>
-  determineIsNullish(primaryValue) ? secondaryValue : primaryValue;
-
-class SimpleHTML {
-  static isProp = (propsOrChild) =>
-    !(propsOrChild instanceof HTMLElement || typeof propsOrChild === 'string');
-  static makeElement(elementType, propsOrChild, ...maybeAllChildren) {
-    const element = document.createElement(elementType);
-    const hasProps = SimpleHTML.isProp(propsOrChild);
-    const props = hasProps ? propsOrChild || {} : {};
-    const children = hasProps
-      ? maybeAllChildren
-      : [propsOrChild, ...maybeAllChildren];
-    Object.entries(props).forEach(([attribute, value]) => {
-      if (attribute === 'style') {
-        Object.assign(element.style, value);
-      } else if (attribute === 'onClick') {
-        element.onclick = value;
-      } else if (attribute === 'onInput') {
-        element.oninput = value;
-      } else {
-        element[attribute] = value;
-      }
-    });
-    children
-      .filter(Boolean)
-      .map((child) =>
-        typeof child === 'string' ? document.createTextNode(child) : child
-      )
-      .forEach((child) => {
-        element.appendChild(child);
-      });
-    return element;
-  }
-}
-
-const doMerge = (oldElement, newElement) => {
-  if (!oldElement.parentNode) return;
-
-  const oldChildren = Array.from(oldElement.childNodes);
-  const newChildren = Array.from(newElement.childNodes);
-  newChildren.forEach((newChild, i) => {
-    let foundMatchingOldChild = false;
-    while (oldChildren.length && !foundMatchingOldChild) {
-      oldChild = oldChildren.shift();
-      if (
-        oldChild.component === newChild.component &&
-        oldChild instanceof Element
-      ) {
-        const selectionStart = oldChild.selectionStart;
-        const selectionEnd = oldChild.selectionEnd;
-        oldChild.value = newChild.value;
-        oldChild.selectionStart = selectionStart;
-        oldChild.selectionEnd = selectionEnd;
-
-        console.log('oldChild.update: ', oldChild.update);
-        console.log('newChild.propsAndChildren: ', newChild.propsAndChildren);
-        oldChild.update(...newChild.propsAndChildren);
-        if (Object.keys(newChild.propsAndChildren[0]).includes('style')) {
-          if (!oldChild.style) {
-            Object.keys(oldChild.parentNode.style).forEach((property) => {
-              if (!newChild.propsAndChildren[0].style[property]) {
-                oldChild.parentNode.style[property] = null;
-              }
-            });
-            Object.assign(
-              oldChild.parentNode.style,
-              newChild.propsAndChildren[0].style
-            );
-          } else {
-            Object.keys(oldChild.parentNode.style).forEach((property) => {
-              if (!newChild.propsAndChildren[0].style[property]) {
-                oldChild.style[property] = null;
-              }
-            });
-            Object.assign(oldChild.style, newChild.propsAndChildren[0].style);
-          }
-        }
-        oldChild.innerText = newChild.innerText;
-
-        foundMatchingOldChild = true;
-      } else if (
-        !(oldChild instanceof Element) &&
-        !(newChild instanceof Element)
-      ) {
-        if (oldChild.data === newChild.data) {
-          foundMatchingOldChild = true;
-        } else {
-          oldChild.data = newChild.data;
-        }
-        foundMatchingOldChild = true;
-      } else {
-        oldElement.removeChild(oldChild);
-      }
-    }
-    if (!foundMatchingOldChild) {
-      while (oldElement.childNodes[i]) {
-        oldElement.removeChild(oldElement.childNodes[i]);
-      }
-      oldElement.appendChild(newChild);
-    }
-  });
-  while (newChildren.length < oldElement.childNodes.length) {
-    oldElement.removeChild(oldElement.childNodes[newChildren.length]);
-  }
-};
-
-const defineComponent = (elementFunction) => {
-  const component = (...propsAndChildren) => {
-    const element = elementFunction(...propsAndChildren);
-    element.component = component;
-    element.propsAndChildren = propsAndChildren;
-    element.update = (...newPropsAndChildren) => {
-      element.propsAndChildren = newPropsAndChildren;
-      doMerge(element, component(...newPropsAndChildren));
-    };
-    return element;
-  };
-  return component;
-};
-
-const div = defineComponent((props, ...children) =>
-  SimpleHTML.makeElement('div', props, ...children)
-);
-
-const span = defineComponent((props, ...children) =>
-  SimpleHTML.makeElement('span', props, ...children)
-);
-
-const a = defineComponent((props, ...children) =>
-  SimpleHTML.makeElement('a', props, ...children)
-);
-
-const p = defineComponent((props, ...children) =>
-  SimpleHTML.makeElement('p', props, ...children)
-);
-
-const h1 = defineComponent((props, ...children) =>
-  SimpleHTML.makeElement('h1', props, ...children)
-);
-
-const h2 = defineComponent((props, ...children) =>
-  SimpleHTML.makeElement('h2', props, ...children)
-);
-
-const img = defineComponent((props, ...children) =>
-  SimpleHTML.makeElement('img', props, ...children)
-);
-
-const form = defineComponent((props, ...children) =>
-  SimpleHTML.makeElement('form', props, ...children)
-);
-
-const input = defineComponent((props) =>
-  SimpleHTML.makeElement('input', props)
-);
-
-const textarea = defineComponent((props) =>
-  SimpleHTML.makeElement('textarea', props)
-);
-
-const br = defineComponent((props, ...children) =>
-  SimpleHTML.makeElement('br', props, ...children)
-);
-
-const button = defineComponent((props, ...children) =>
-  SimpleHTML.makeElement('button', props, ...children)
-);
-// And so on, fill in more as needed...
-
-module.exports = {
-  doMerge,
-  compose,
-  defineComponent,
-  div,
-  span,
-  a,
-  p,
-  h1,
-  h2,
-  img,
-  form,
-  input,
-  textarea,
-  br,
-  button,
-  doAddInnerShadow,
-  doAddShadow,
-  doPatchChildren,
-};
-
-  return module.exports;
-})();
-
 modules['src/views/project/projectContainer/ProjectContainer.js'] = (() => {
   const module = { exports: {} };
   const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ProjectContainer = (props, children) => {
-  return compose(
+  const element = compose(
     'div',
     () => ({
       style: {
@@ -899,6 +957,7 @@ const ProjectContainer = (props, children) => {
     }),
     children
   );
+  return element;
 };
 
 module.exports = ProjectContainer;
@@ -910,8 +969,9 @@ modules['src/components/horizontalNavigator/HorizontalNavigator.js'] = (() => {
   const module = { exports: {} };
   const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const HorizontalNavigator = ({}, children) => {
-  return compose(
+const HorizontalNavigator = (_, children) => {
+  console.log('HorizontalNavigator');
+  const element = compose(
     'div',
     () => ({
       style: {
@@ -923,6 +983,7 @@ const HorizontalNavigator = ({}, children) => {
     }),
     children
   );
+  return element;
 };
 
 module.exports = HorizontalNavigator;
@@ -945,7 +1006,7 @@ const ViewTitle = (_, children) => {
 };
 
 const ExportButton = (getProps, children) => {
-  return compose(
+  const element = compose(
     'div',
     () => ({
       onclick: getProps().onclick,
@@ -959,6 +1020,7 @@ const ExportButton = (getProps, children) => {
     }),
     children
   );
+  return element;
 };
 
 module.exports = { ViewTitle, ExportButton };
@@ -976,11 +1038,9 @@ const { ViewTitle, ExportButton } = include('src/app/titleBar/atoms.js');
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const TitleBar = (getProps) => {
-  const { viewModel, state } = getProps();
-  const { isExported, currentRoute } = state;
-  return HorizontalNavigator(() => ({}), [
+  const element = HorizontalNavigator(() => ({}), [
     ViewTitle(() => ({}), [
-      !isExported
+      !getProps().state.isExported
         ? compose(
             'span',
             () => ({
@@ -992,35 +1052,43 @@ const TitleBar = (getProps) => {
         : null,
       compose(
         'span',
-        () => ({
-          style: {
-            color: isExported
-              ? 'darkslategray'
-              : currentRoute.indexOf('/projects/<projectId:string>') === 0
-              ? 'darkslategray'
-              : 'lightgray',
-            cursor: 'pointer',
-          },
-          onclick: () => {
-            if (isExported) {
-              location.hash = '#!/';
-              return;
-            }
-            location.hash = `#!/projects/${state.selectedProjectId}/${
-              viewModel.lastVisitedProjectView || ''
-            }`;
-          },
-        }),
+        () => {
+          const { state, viewModel } = getProps();
+          const { isExported, currentRoute } = state;
+          return {
+            style: {
+              color: isExported
+                ? 'darkslategray'
+                : currentRoute.indexOf('/projects/<projectId:string>') === 0
+                ? 'darkslategray'
+                : 'lightgray',
+              cursor: 'pointer',
+            },
+            onclick: () => {
+              if (isExported) {
+                location.hash = '#!/';
+                return;
+              }
+              location.hash = `#!/projects/${state.selectedProjectId}/${
+                viewModel.lastVisitedProjectView || ''
+              }`;
+            },
+          };
+        },
         [
-          state.selectedProjectName
-            ? isExported
-              ? state.selectedProjectName
-              : ` / ${state.selectedProjectName}`
-            : '',
+          (() => {
+            const { state } = getProps();
+            const { isExported } = state;
+            return state.selectedProjectName
+              ? isExported
+                ? state.selectedProjectName
+                : ` / ${state.selectedProjectName}`
+              : '';
+          })(),
         ]
       ),
     ]),
-    !isExported
+    !getProps().state.isExported
       ? ExportButton(
           () => ({
             onclick: () => {
@@ -1068,6 +1136,7 @@ const TitleBar = (getProps) => {
         )
       : null,
   ]);
+  return element;
 };
 
 module.exports = TitleBar;
@@ -1231,12 +1300,135 @@ module.exports = ProjectPreview;
   return module.exports;
 })();
 
+modules['src/views/projects/projectNameInputContainer/ProjectNameInputContainer.js'] = (() => {
+  const module = { exports: {} };
+  const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const ProjectNameInputContainer = (_, children) => {
+  const element = compose(
+    'span',
+    () => ({
+      style: {
+        // TODO: Make this one align nicely next to the input
+        color: 'dimgray',
+        height: '64px',
+        padding: '8px',
+        lineHeight: '64px',
+        fontSize: '16px',
+        width: 'calc(100% - 128px)',
+        display: 'inline-block',
+        boxSizing: 'border-box',
+      },
+    }),
+    children
+  );
+  return element;
+};
+
+module.exports = ProjectNameInputContainer;
+
+  return module.exports;
+})();
+
+modules['src/views/projects/projectNameInput/ProjectNameInput.js'] = (() => {
+  const module = { exports: {} };
+  const ProjectPreviewButton = include(
+  'src/views/projects/projectPreviewButton/ProjectPreviewButton.js'
+);
+const ProjectPreviewContainer = include(
+  'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
+);
+const ProjectNameInputContainer = include(
+  'src/views/projects/projectNameInputContainer/ProjectNameInputContainer.js'
+);
+
+// getProps::() => { viewModel, id, nameInputValue }
+const ProjectNameInput = ({ viewModel, id$, nameInputValue$ }) => {
+  const element = ProjectPreviewContainer(() => ({}), [
+    ProjectNameInputContainer(
+      () => ({
+        oninput: ({ value }) => {
+          const { id, viewModel } = getProps();
+          viewModel.setProjectNameInputValue(id, value);
+        },
+      }),
+      [getProps().nameInputValue]
+    ),
+    ProjectPreviewButton(
+      () => ({
+        onclick: () => {
+          const { id, viewModel } = getProps();
+          viewModel.cancelEditingProjectName(id);
+        },
+      }),
+      ['Cancel']
+    ),
+    ProjectPreviewButton(
+      () => ({
+        onclick: () => {
+          const { id, viewModel } = getProps();
+          viewModel.saveProjectName(id);
+        },
+      }),
+      ['Save']
+    ),
+  ]);
+  return element;
+};
+
+module.exports = ProjectNameInput;
+
+  return module.exports;
+})();
+
+modules['src/views/projects/Projects.js'] = (() => {
+  const module = { exports: {} };
+  const ProjectPreview = include(
+  'src/views/projects/projectPreview/ProjectPreview.js'
+);
+const ProjectNameInput = include(
+  'src/views/projects/projectNameInput/ProjectNameInput.js'
+);
+const NewProject = include('src/views/projects/newProject/NewProject.js');
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+// getProps::() => { viewModel, state }
+const Projects = (getProps) => {
+  const element = compose(
+    'div',
+    () => ({}),
+    getProps()
+      .state.projects.filter(({ isEmpty }) => !isEmpty)
+      .map(({ id, name, nameInputValue, isEditing, isEmpty }) =>
+        isEditing
+          ? ProjectNameInput(() => ({
+              viewModel: getProps().viewModel,
+              id,
+              nameInputValue,
+            }))
+          : ProjectPreview(() => ({
+              state: getProps().state,
+              viewModel: getProps().viewModel,
+              id,
+              name,
+            }))
+      ),
+    NewProject(getProps)
+  );
+  return element;
+};
+
+module.exports = Projects;
+
+  return module.exports;
+})();
+
 modules['src/views/dataSources/apiInputLabel/ApiInputLabel.js'] = (() => {
   const module = { exports: {} };
   const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ApiInputLabel = ({ label }) => {
-  return compose(
+  const element = compose(
     'span',
     () => ({
       // TODO: Make this one align nicely next to the input
@@ -1253,6 +1445,7 @@ const ApiInputLabel = ({ label }) => {
     }),
     [label]
   );
+  return element;
 };
 
 module.exports = ApiInputLabel;
@@ -1265,7 +1458,7 @@ modules['src/views/dataSources/apiInputContainer/ApiInputContainer.js'] = (() =>
   const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ApiInputContainer = (_, children) => {
-  return compose(
+  const element = compose(
     'span',
     () => ({
       style: {
@@ -1282,9 +1475,45 @@ const ApiInputContainer = (_, children) => {
     }),
     children
   );
+  return element;
 };
 
 module.exports = ApiInputContainer;
+
+  return module.exports;
+})();
+
+modules['src/views/dataSources/apiIntervalInput/ApiIntervalInput.js'] = (() => {
+  const module = { exports: {} };
+  const ProjectPreviewContainer = include(
+  'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
+);
+const ApiInputLabel = include(
+  'src/views/dataSources/apiInputLabel/ApiInputLabel.js'
+);
+const ApiInputContainer = include(
+  'src/views/dataSources/apiInputContainer/ApiInputContainer.js'
+);
+
+// getProps::() => { state, viewModel }
+const ApiIntervalInput = (getProps) => {
+  const element = ProjectPreviewContainer(() => ({}), [
+    ApiInputLabel(() => ({ label: 'Fetch interval (s)' })),
+    ApiInputContainer(
+      () => ({
+        type: 'number',
+        min: '0',
+        oninput: ({ value }) => {
+          viewModel.updateApiInterval(state.selectedProjectId, value);
+        },
+      }),
+      [getProps().state.selectedApiInterval]
+    ),
+  ]);
+  return element;
+};
+
+module.exports = ApiIntervalInput;
 
   return module.exports;
 })();
@@ -1314,1001 +1543,9 @@ module.exports = FullWidthCard;
   return module.exports;
 })();
 
-modules['src/views/dataSources/apiUrlTestPreview/ApiUrlTestPreview.js'] = (() => {
-  const module = { exports: {} };
-  const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const ApiUrlTestPreview = (_, children) => {
-  return compose(
-    'div',
-    () => ({
-      style: {
-        color: 'lightslategray',
-        background: 'ghostwhite',
-        lineHeight: '32px',
-        fontSize: '0 16px',
-        width: '100%',
-        margin: '8px',
-        padding: '8px',
-        display: 'inline-block',
-        boxSizing: 'border-box',
-        fontFamily: '"Courier New", Courier, monospace',
-        whiteSpace: 'pre-wrap',
-        maxHeight: '448px',
-        minHeight: '48px',
-        overflow: 'auto',
-      },
-    }),
-    children
-  );
-};
-
-module.exports = ApiUrlTestPreview;
-
-  return module.exports;
-})();
-
-modules['src/libraries/simpleUI/Constants.js'] = (() => {
-  const module = { exports: {} };
-  const Colors = {
-  TextColor: 'slategray',
-  HighlightedTextColor: 'darkslategray',
-  DisabledTextColor: 'lightgray',
-  HighlightColor: 'deepskyblue',
-};
-
-const Sizes = {
-  FontSize: 15,
-  Padding: 10,
-  Unit: 20,
-};
-
-module.exports = {
-  Colors,
-  Sizes,
-};
-
-  return module.exports;
-})();
-
-modules['src/libraries/simpleUI/NavigationButton.js'] = (() => {
-  const module = { exports: {} };
-  const { Colors } = include('src/libraries/simpleUI/Constants.js');
-const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const getColor = (isHovered, isSelected) => {
-  return isSelected || isHovered
-    ? Colors.HighlightedTextColor
-    : Colors.TextColor;
-};
-
-const getBorderBottom = (isSelected) => {
-  return isSelected ? `2px solid ${Colors.HighlightColor}` : 'none';
-};
-
-const NavigationButton = (getProps) => {
-  let isHovered = false;
-  const { label, href, isSelected } = getProps();
-  const props = { label, href, isSelected };
-  const element = compose(
-    'span',
-    () => {
-      const { isSelected } = getProps();
-      return {
-        style: {
-          display: 'inline-block',
-          textAlign: 'center',
-          boxSizing: 'border-box',
-          width: '160px',
-          height: '40px',
-          lineHeight: '40px',
-          fontSize: '30px',
-          borderBottom: getBorderBottom(isSelected),
-          color: getColor(isHovered, isSelected),
-        },
-      };
-    },
-    [
-      compose(
-        'a',
-        () => ({
-          style: {
-            textDecoration: 'none',
-            display: 'inline-block',
-            width: '100%',
-          },
-          href: getProps().href,
-          onmouseenter: () => {
-            isHovered = true;
-            element.update();
-          },
-          onMouseLeave: () => {
-            isHovered = false;
-            element.update();
-          },
-        }),
-        [props.label]
-      ),
-    ]
-  );
-  return element;
-};
-
-module.exports = NavigationButton;
-
-  return module.exports;
-})();
-
-modules['src/views/project/projectNavigator/dataSourcesButton/DataSourcesButton.js'] = (() => {
-  const module = { exports: {} };
-  const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
-
-// getProps::() => { state }
-const DataSourcesButton = (getProps) => {
-  const determineIsSelected = (currentRoute) =>
-    [
-      '/projects/<projectId:string>',
-      '/projects/<projectId:string>/data-sources',
-    ].includes(currentRoute);
-
-  const getHref = (selectedProjectId) =>
-    `#!/projects/${selectedProjectId}/data-sources`;
-
-  const element = NavigationButton(() => {
-    const { currentRoute, selectedProjectId } = getProps().state;
-    return {
-      label: 'Data sources',
-      isSelected: determineIsSelected(currentRoute),
-      href: getHref(selectedProjectId),
-    };
-  });
-
-  const updateNavigationButton = element.update;
-
-  element.update = () => {
-    updateNavigationButton();
-  };
-
-  return element;
-};
-
-module.exports = DataSourcesButton;
-
-  return module.exports;
-})();
-
-modules['src/views/project/projectNavigator/dashboardEditorButton/DashboardEditorButton.js'] = (() => {
-  const module = { exports: {} };
-  const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
-
-const DashboardEditorButton = (getProps) => {
-  const determineIsSelected = (currentRoute) =>
-    currentRoute === '/projects/<projectId:string>/dashboard/edit';
-
-  const getHref = (selectedProjectId) =>
-    `#!/projects/${selectedProjectId}/dashboard/edit`;
-
-  const element = NavigationButton(() => {
-    const { currentRoute, selectedProjectId } = getProps().state;
-    return {
-      label: 'Dashboard editor',
-      isSelected: determineIsSelected(currentRoute),
-      href: getHref(selectedProjectId),
-    };
-  });
-
-  const updateNavigationButton = element.update;
-
-  element.update = () => {
-    updateNavigationButton();
-  };
-
-  return element;
-};
-
-module.exports = DashboardEditorButton;
-
-  return module.exports;
-})();
-
-modules['src/views/project/projectNavigator/dashboardButton/DashboardButton.js'] = (() => {
-  const module = { exports: {} };
-  const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
-
-const DashboardButton = (getProps) => {
-  const determineIsSelected = (currentRoute) =>
-    currentRoute === '/projects/<projectId:string>/dashboard';
-
-  const getHref = (selectedProjectId) =>
-    `#!/projects/${selectedProjectId}/dashboard`;
-
-  const element = NavigationButton(() => {
-    const { currentRoute, selectedProjectId } = getProps().state;
-    return {
-      label: 'Dashboard',
-      isSelected: determineIsSelected(currentRoute),
-      href: getHref(selectedProjectId),
-    };
-  });
-
-  const updateNavigationButton = element.update;
-
-  element.update = () => {
-    updateNavigationButton();
-  };
-
-  return element;
-};
-
-module.exports = DashboardButton;
-
-  return module.exports;
-})();
-
-modules['src/views/project/projectNavigator/ProjectNavigator.js'] = (() => {
-  const module = { exports: {} };
-  const DataSourcesButton = include(
-  'src/views/project/projectNavigator/dataSourcesButton/DataSourcesButton.js'
-);
-const DashboardEditorButton = include(
-  'src/views/project/projectNavigator/dashboardEditorButton/DashboardEditorButton.js'
-);
-const DashboardButton = include(
-  'src/views/project/projectNavigator/dashboardButton/DashboardButton.js'
-);
-const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const Navigator = ({}, children) => {
-  element = compose('div', () => ({ style: { height: '40px' } }), children);
-  element.update = ({}) => {};
-  return element;
-};
-
-const ProjectNavigator = (getProps) => {
-  const element = Navigator({}, [
-    DataSourcesButton(getProps),
-    DashboardEditorButton(getProps),
-    DashboardButton(getProps),
-  ]);
-  console.log('projectNavigator: ', element);
-  return element;
-};
-
-module.exports = ProjectNavigator;
-
-  return module.exports;
-})();
-
-modules['src/libraries/styled/styled.js'] = (() => {
-  const module = { exports: {} };
-  const styled = style => Component => (...children) =>
-  Component(...children).setStyle(style);
-
-module.exports = styled;
-
-  return module.exports;
-})();
-
-modules['src/libraries/observableHtml/ObservableHtml.js'] = (() => {
-  const module = { exports: {} };
-  const Observable = include('src/libraries/observable/Observable.js');
-
-const observableToNode$ = (observable$) => {
-  if (
-    // If it is observable value
-    observable$ instanceof Observable
-  ) {
-    if (['string', 'number'].includes(typeof observable$.value)) {
-      const textElement = document.createElement('span');
-      const textNode = document.createTextNode(observable$.value);
-      textElement.appendChild(textNode);
-      textElement.classList.add(observable$.id);
-      window.addEventListener(observable$.id, ({ detail }) => {
-        textElement.innerHTML = '';
-        textElement.appendChild(document.createTextNode(detail));
-      });
-      return textElement;
-    }
-    if (Array.isArray(observable$.value)) {
-      const elements = observable$.value.map(observableToNode$).flat();
-      elements.forEach((element, index) => {
-        element.classList.add(`${observable$.id}${index}`);
-        window.addEventListener(observable$.id, ({ detail }) => {
-          // Remove all the existing elements except the first
-          let insertionPositions = [];
-          for (let index = 0; index < 100; index++) {
-            Array.from(
-              document.getElementsByClassName(`${observable$.id}${index}`)
-            ).forEach((elementToReplace, i) => {
-              const insertionParent = elementToReplace.parentNode;
-              const insertionIndex = Array.from(
-                elementToReplace.parentNode.children
-              ).indexOf(elementToReplace);
-              insertionPositions.push({
-                parent: insertionParent,
-                insertionIndex: insertionIndex,
-              });
-              elementToReplace.parentNode.removeChild(elementToReplace);
-            });
-          }
-
-          // For each of the first existing elements
-          insertionPositions.forEach(({ parent, insertionIndex }, index) => {
-            // Create a fragment and add all the elements inside it
-            const fragment = document.createDocumentFragment();
-            observable$.value.forEach((arrayElement, index) => {
-              // I might need to have another level of loop here in case observableToNode$ returns more than one node
-              const node = observableToNode$(arrayElement);
-              node.classList.add(`${observable$.id}${index}`);
-              fragment.appendChild(node);
-            });
-            // Repalact the first elemet with the fragments containing the new elements
-            parent.insertBefore(fragment, parent.children[insertionIndex]);
-          });
-        });
-      });
-      return elements;
-    }
-  }
-  if (
-    // If it is non-observable value
-    ['string', 'number'].includes(typeof observable$)
-  ) {
-    const textNode = document.createTextNode(observable$);
-    return textNode;
-  }
-  // If it is a dom node
-  return observable$;
-};
-
-const createElement$ = (elementType, ...observables) => {
-  const element = document.createElement(elementType);
-  const nodes = observables.map(observableToNode$).flat();
-  nodes.forEach((node) => element.appendChild(node));
-
-  // Note that styleObject$ is an object with observable values, not an observable object
-  element.setStyle = (styleObject$) => {
-    Object.entries(styleObject$).forEach(([styleProperty, styleValue$]) => {
-      if (styleValue$ instanceof Observable) {
-        element.style[styleProperty] = styleValue$.value;
-        window.addEventListener(styleValue$.id, ({ detail }) => {
-          element.style[styleProperty] = detail;
-        });
-        return;
-      }
-      element.style[styleProperty] = styleValue$;
-    });
-    return element;
-  };
-  element.setProps = (propsObject) => {
-    Object.entries(propsObject).forEach(([propKey, propValue$]) => {
-      if (propValue$ instanceof Observable) {
-        element[propKey] = propValue$.value;
-        window.addEventListener(propValue$.id, ({ detail }) => {
-          element[propKey] = detail;
-        });
-        return;
-      }
-      element[propKey] = propValue$;
-    });
-    return element;
-  };
-  element.onClick = (clickCallback) => {
-    element.style.cursor = 'pointer';
-    element.onclick = () => clickCallback(element);
-    return element;
-  };
-  element.onMouseEnter = (mouseEnterCallback) => {
-    element.onmouseenter = () => mouseEnterCallback(element);
-    return element;
-  };
-  element.onMouseLeave = (mouseLeaveCallback) => {
-    element.onmouseleave = () => mouseLeaveCallback(element);
-    return element;
-  };
-  element.onInput = (inputCallback) => {
-    element.oninput = () => inputCallback(element);
-    return element;
-  };
-  element.onChange = (changeCallback) => {
-    element.onchange = () => changeCallback(element);
-    return element;
-  };
-  return element;
-};
-const a$ = (...children) => createElement$('a', ...children);
-const div$ = (...children) => createElement$('div', ...children);
-const span$ = (...children) => createElement$('span', ...children);
-const h1$ = (...children) => createElement$('h1', ...children);
-const textArea$ = (value = '') =>
-  createElement$('textarea').setProps({ value });
-const br$ = () => createElement('br');
-const select$ = (...children) => createElement$('select', ...children);
-const button$ = (...children) => createElement$('button', ...children);
-const option$ = ({ value, label }) =>
-  createElement$('option', label).setProps({ value });
-const input$ = (value = '') => createElement$('input').setProps({ value });
-const canvas$ = ({ width$, height$ }) =>
-  createElement$('canvas').setProps({
-    width: width$,
-    height: height$,
-  });
-
-module.exports = {
-  createElement$,
-  a$,
-  div$,
-  span$,
-  h1$,
-  textArea$,
-  br$,
-  select$,
-  button$,
-  option$,
-  input$,
-  canvas$,
-};
-
-  return module.exports;
-})();
-
-modules['src/views/projects/projectNameInputContainer/ProjectNameInputContainer.js'] = (() => {
-  const module = { exports: {} };
-  const styled = include('src/libraries/styled/styled.js');
-const { span$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-
-const ProjectNameInputContainer$ = styled({
-  // TODO: Make this one align nicely next to the input
-  color: 'dimgray',
-  height: '64px',
-  padding: '8px',
-  lineHeight: '64px',
-  fontSize: '16px',
-  width: 'calc(100% - 128px)',
-  display: 'inline-block',
-  boxSizing: 'border-box',
-})(span$);
-
-module.exports = ProjectNameInputContainer$;
-
-  return module.exports;
-})();
-
-modules['src/views/projects/projectNameInput/ProjectNameInput.js'] = (() => {
-  const module = { exports: {} };
-  const ProjectPreviewButton = include(
-  'src/views/projects/projectPreviewButton/ProjectPreviewButton.js'
-);
-const ProjectPreviewContainer = include(
-  'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
-);
-const ProjectNameInputContainer = include(
-  'src/views/projects/projectNameInputContainer/ProjectNameInputContainer.js'
-);
-
-// getProps::() => { viewModel, id, nameInputValue }
-const ProjectNameInput = ({ viewModel, id$, nameInputValue$ }) => {
-  return ProjectPreviewContainer(() => ({}), [
-    ProjectNameInputContainer(
-      () => ({
-        oninput: ({ value }) => {
-          const { id, viewModel } = getProps();
-          viewModel.setProjectNameInputValue(id, value);
-        },
-      }),
-      [getProps().nameInputValue]
-    ),
-    ProjectPreviewButton(
-      () => ({
-        onclick: () => {
-          const { id, viewModel } = getProps();
-          viewModel.cancelEditingProjectName(id);
-        },
-      }),
-      ['Cancel']
-    ),
-    ProjectPreviewButton(
-      () => ({
-        onclick: () => {
-          const { id, viewModel } = getProps();
-          viewModel.saveProjectName(id);
-        },
-      }),
-      ['Save']
-    ),
-  ]);
-};
-
-module.exports = ProjectNameInput;
-
-  return module.exports;
-})();
-
-modules['src/views/projects/Projects.js'] = (() => {
-  const module = { exports: {} };
-  const ProjectPreview = include(
-  'src/views/projects/projectPreview/ProjectPreview.js'
-);
-const ProjectNameInput = include(
-  'src/views/projects/projectNameInput/ProjectNameInput.js'
-);
-const NewProject = include('src/views/projects/newProject/NewProject.js');
-const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-// getProps::() => { viewModel, state }
-const Projects = (getProps) => {
-  return compose(
-    'div',
-    () => ({}),
-    getProps()
-      .state.projects.filter(({ isEmpty }) => !isEmpty)
-      .map(({ id, name, nameInputValue, isEditing, isEmpty }) =>
-        isEditing
-          ? ProjectNameInput(() => ({
-              viewModel: getProps().viewModel,
-              id,
-              nameInputValue,
-            }))
-          : ProjectPreview(() => ({
-              state: getProps().state,
-              viewModel: getProps().viewModel,
-              id,
-              name,
-            }))
-      ),
-    NewProject(getProps)
-  );
-};
-
-module.exports = Projects;
-
-  return module.exports;
-})();
-
-modules['src/components/input/Input.js'] = (() => {
-  const module = { exports: {} };
-  const styled = include('src/libraries/styled/styled.js');
-const { input$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-
-const Input$ = styled({
-  color: 'darkslategray',
-  background: 'ghostwhite',
-  height: '100%',
-  padding: '0 8px',
-  lineHeight: '64px',
-  fontSize: '16px',
-  width: '100%',
-  border: 'none',
-})(input$);
-
-module.exports = Input$;
-
-  return module.exports;
-})();
-
-modules['src/views/dataSources/apiIntervalInput/ApiIntervalInput.js'] = (() => {
-  const module = { exports: {} };
-  const ProjectPreviewContainer = include(
-  'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
-);
-const ApiInputLabel = include(
-  'src/views/dataSources/apiInputLabel/ApiInputLabel.js'
-);
-const Input$ = include('src/components/input/Input.js');
-const ApiInputContainer = include(
-  'src/views/dataSources/apiInputContainer/ApiInputContainer.js'
-);
-const { compose, doPatchChildren } = include(
-  'src/libraries/simpleHTML/SimpleHTML.js'
-);
-
-// getProps::() => { state, viewModel }
-const ApiIntervalInput = (getProps) => {
-  return ProjectPreviewContainer(() => ({}), [
-    ApiInputLabel(() => ({ label: 'Fetch interval (s)' })),
-    ApiInputContainer(
-      () => ({
-        type: 'number',
-        min: '0',
-        oninput: ({ value }) => {
-          viewModel.updateApiInterval(state.selectedProjectId, value);
-        },
-      }),
-      [getProps().state.selectedApiInterval]
-    ),
-  ]);
-};
-
-module.exports = ApiIntervalInput;
-
-  return module.exports;
-})();
-
-modules['src/libraries/observable/utils.js'] = (() => {
-  const module = { exports: {} };
-  const Observable = include('src/libraries/observable/Observable.js');
-
-const valueOf$ = (observable$) =>
-  observable$ instanceof Observable ? observable$.value : observable$;
-
-const isObservable$ = (observable$) => observable$ instanceof Observable;
-
-// Currently needs at least two arguments
-const add$ = (...observables) => {
-  const sum = observables
-    .map((observable) =>
-      observable instanceof Observable ? observable.value : observable
-    )
-    .reduce((a, b) => a + b);
-  const sum$ = new Observable(sum);
-  observables
-    .filter((observable) => observable instanceof Observable)
-    .forEach((observable) => {
-      window.addEventListener(observable.id, ({ detail }) => {
-        const sum = observables
-          .map((observable) =>
-            observable instanceof Observable ? observable.value : observable
-          )
-          .reduce((a, b) => a + b);
-        sum$.value = sum;
-      });
-    });
-  return sum$;
-};
-
-// Currently needs at least two arguments
-const subtract$ = (...observables) => {
-  const difference = observables
-    .map((observable) =>
-      observable instanceof Observable ? observable.value : observable
-    )
-    .reduce((a, b) => a - b);
-  const difference$ = new Observable(difference);
-  observables.forEach((observable) => {
-    window.addEventListener(observable.id, ({ detail }) => {
-      const difference = observables
-        .map((observable) =>
-          observable instanceof Observable ? observable.value : observable
-        )
-        .reduce((a, b) => a - b);
-      difference$.value = difference;
-    });
-  });
-  return difference$;
-};
-
-// Currently needs at least two arguments
-const multiply$ = (...observables) => {
-  const product = observables
-    .map((observable) =>
-      observable instanceof Observable ? observable.value : observable
-    )
-    .reduce((a, b) => a * b);
-  const product$ = new Observable(product);
-  observables.forEach((observable) => {
-    window.addEventListener(observable.id, ({ detail }) => {
-      const product = observables
-        .map((observable) =>
-          observable instanceof Observable ? observable.value : observable
-        )
-        .reduce((a, b) => a * b);
-      product$.value = product;
-    });
-  });
-  return product$;
-};
-
-// Currently needs at least two arguments
-const divide$ = (...observables) => {
-  const quotient = observables
-    .map((observable) =>
-      observable instanceof Observable ? observable.value : observable
-    )
-    .reduce((a, b) => a / b);
-  const quotient$ = new Observable(quotient);
-  observables.forEach((observable) => {
-    window.addEventListener(observable.id, ({ detail }) => {
-      const quotient = observables
-        .map((observable) =>
-          observable instanceof Observable ? observable.value : observable
-        )
-        .reduce((a, b) => a / b);
-      quotient$.value = quotient;
-    });
-  });
-  return quotient$;
-};
-
-const choose$ = (observable, option1, option2) => {
-  const result$ = new Observable(
-    (observable instanceof Observable ? observable.value : observable)
-      ? option1 instanceof Observable
-        ? option1.value
-        : option1
-      : option2 instanceof Observable
-      ? option2.value
-      : option2
-  );
-  [observable, option1, option2]
-    .filter((observable) => observable instanceof Observable)
-    .forEach((observable) => {
-      window.addEventListener(observable.id, ({ detail }) => {
-        // TODO: Make it possible to set a specific child of an observable
-        result$.value = (
-          observable instanceof Observable ? observable.value : observable
-        )
-          ? option1 instanceof Observable
-            ? option1.value
-            : option1
-          : option2 instanceof Observable
-          ? option2.value
-          : option2;
-      });
-    });
-  return result$;
-};
-
-const cond$ = (...clauses) => {
-  const result = clauses
-    .map(([test, expression]) => [
-      test instanceof Observable ? test.value : test,
-      expression instanceof Observable ? expression.value : expression,
-    ])
-    .reduce((result, [test, expression]) => {
-      if (result !== null) return result;
-      if (test) return expression;
-      return null;
-    }, null);
-
-  const result$ = new Observable(result);
-
-  clauses
-    .flat()
-    .filter((testOrExpression) => testOrExpression instanceof Observable)
-    .forEach((testOrExpression) => {
-      window.addEventListener(testOrExpression.id, ({ detail }) => {
-        const result = clauses
-          .map(([test, expression]) => [
-            test instanceof Observable ? test.value : test,
-            expression instanceof Observable ? expression.value : expression,
-          ])
-          .reduce((result, [test, expression]) => {
-            if (result !== null) return result;
-            if (test) return expression;
-            return null;
-          }, null);
-        result$.value = result;
-      });
-    });
-
-  return result$;
-};
-
-const eq$ = (...observables) => {
-  const equality = observables
-    .map((observable) =>
-      observable instanceof Observable ? observable.value : observable
-    )
-    .every((element, _, array) => element === array[0]);
-  const equality$ = new Observable(equality);
-  observables.forEach((observable) => {
-    window.addEventListener(observable.id, ({ detail }) => {
-      const equality = observables
-        .map((observable) =>
-          observable instanceof Observable ? observable.value : observable
-        )
-        .every((element, _, array) => element === array[0]);
-      equality$.value = equality;
-    });
-  });
-  return equality$;
-};
-
-const and$ = (...observables) => {
-  const allTruthy = observables
-    .map((observable) =>
-      observable instanceof Observable ? observable.value : observable
-    )
-    .every(Boolean);
-  const allTruthy$ = new Observable(allTruthy);
-  observables.forEach((observable) => {
-    window.addEventListener(observable.id, ({ detail }) => {
-      const allTruthy = observables
-        .map((observable) =>
-          observable instanceof Observable ? observable.value : observable
-        )
-        .every(Boolean);
-      allTruthy$.value = allTruthy;
-    });
-  });
-  return allTruthy$;
-};
-
-const or$ = (...observables) => {
-  const someTruthy = observables
-    .map((observable) =>
-      observable instanceof Observable ? observable.value : observable
-    )
-    .some(Boolean);
-  const someTruthy$ = new Observable(someTruthy);
-  observables
-    .filter((observable) => observable instanceof Observable)
-    .forEach((observable) => {
-      window.addEventListener(observable.id, ({ detail }) => {
-        const someTruthy = observables
-          .map((observable) =>
-            observable instanceof Observable ? observable.value : observable
-          )
-          .some(Boolean);
-        someTruthy$.value = someTruthy;
-      });
-    });
-  return someTruthy$;
-};
-
-const not$ = (observable) => {
-  const conditional =
-    observable instanceof Observable ? observable.value : observable;
-  const opposite$ = new Observable(!conditional);
-  if (observable instanceof Observable) {
-    window.addEventListener(observable.id, ({ detail }) => {
-      opposite$.value = !detail;
-    });
-  }
-  return opposite$;
-};
-
-const Number$ = (maybeNumber$) => {
-  const number$ = new Observable(Number(valueOf$(maybeNumber$)));
-  if (isObservable$(maybeNumber$)) {
-    window.addEventListener(maybeNumber$.id, () => {
-      number$.value = Number(valueOf$(maybeNumber$));
-    });
-  }
-  return number$;
-};
-
-const toFixed$ = (number$, decimals$) => {
-  const number = number$ instanceof Observable ? number$.value : number$;
-  const decimals =
-    decimals$ instanceof Observable ? decimals$.value : decimals$;
-  const formattedNumber = number.toFixed(decimals);
-  const formattedNumber$ = new Observable(formattedNumber);
-  [number$, decimals$]
-    .filter((observable) => observable instanceof Observable)
-    .forEach((observable) => {
-      window.addEventListener(observable.id, ({ detail }) => {
-        const number = number$ instanceof Observable ? number$.value : number$;
-        const decimals =
-          decimals$ instanceof Observable ? decimals$.value : decimals$;
-        const formattedNumber = number.toFixed(decimals);
-        formattedNumber$.value = formattedNumber;
-      });
-    });
-  return formattedNumber$;
-};
-
-const slice$ = (stringOrArray$, start$, stop$) => {
-  const stringOrArray =
-    stringOrArray$ instanceof Observable
-      ? stringOrArray$.value
-      : stringOrArray$;
-  const start = start$ instanceof Observable ? start$.value : start$;
-  const stop = stop$ instanceof Observable ? stop$.value : stop$;
-  const slicedStringOrArray$ = new Observable(stringOrArray.slice(start, stop));
-  [stringOrArray$, start$, stop$]
-    .filter((observable) => observable instanceof Observable)
-    .forEach((observable) => {
-      window.addEventListener(observable.id, ({ detail }) => {
-        const stringOrArray =
-          stringOrArray$ instanceof Observable
-            ? stringOrArray$.value
-            : stringOrArray$;
-        const start = start$ instanceof Observable ? start$.value : start$;
-        const stop = stop$ instanceof Observable ? stop$.value : stop$;
-        slicedStringOrArray$.value = stringOrArray.slice(start, stop);
-      });
-    });
-  return slicedStringOrArray$;
-};
-
-const length$ = (stringOrArray$) => {
-  const length$ = new Observable(valueOf$(stringOrArray$).length);
-  if (isObservable$(stringOrArray$)) {
-    window.addEventListener(stringOrArray$.id, () => {
-      lenth$.value = valueOf$(stringOrArray$).length;
-    });
-  }
-  return length$;
-};
-
-const map$ = (array$, function$) => {
-  const mappedArray$ = new Observable(
-    valueOf$(array$).map(valueOf$(function$))
-  );
-
-  [array$, function$].filter(isObservable$).forEach((observable) => {
-    window.addEventListener(observable.id, () => {
-      mappedArray$.value = valueOf$(array$).map(valueOf$(function$));
-    });
-  });
-
-  return mappedArray$;
-};
-
-const startsWith$ = (includingString$, includedString$) => {
-  const includingString =
-    includingString$ instanceof Observable
-      ? includingString$.value
-      : includingString$;
-
-  const includedString =
-    includedString$ instanceof Observable
-      ? includedString$.value
-      : includedString$;
-
-  const includingStringIncludesIncludedString =
-    includingString.indexOf(includedString) === 0;
-
-  const includingStringIncludesIncludedString$ = new Observable(
-    includingStringIncludesIncludedString
-  );
-
-  [includingString$, includedString$]
-    .filter((string) => string instanceof Observable)
-    .forEach((string) => {
-      window.addEventListener(string.id, ({ detail }) => {
-        const includingString =
-          includingString$ instanceof Observable
-            ? includingString$.value
-            : includingString$;
-
-        const includedString =
-          includedString$ instanceof Observable
-            ? includedString$.value
-            : includedString$;
-
-        const includingStringIncludesIncludedString =
-          includingString.indexOf(includedString) === 0;
-
-        includingStringIncludesIncludedString$.value = includingStringIncludesIncludedString;
-      });
-    });
-  return includingStringIncludesIncludedString$;
-};
-
-module.exports = {
-  valueOf$,
-  isObservable$,
-  add$,
-  subtract$,
-  multiply$,
-  divide$,
-  choose$,
-  cond$,
-  eq$,
-  and$,
-  or$,
-  not$,
-  Number$,
-  toFixed$,
-  slice$,
-  length$,
-  map$,
-  startsWith$,
-};
-
-  return module.exports;
-})();
-
 modules['src/components/textButton/TextButton.js'] = (() => {
   const module = { exports: {} };
-  const { button$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const Observable = include('src/libraries/observable/Observable.js');
-const { choose$ } = include('src/libraries/observable/utils.js');
-const { compose, doPatchChildren } = include(
-  'src/libraries/simpleHTML/SimpleHTML.js'
-);
+  const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const TextButton = (getProps, children) => {
   let isHovered = false;
@@ -2318,11 +1555,11 @@ const TextButton = (getProps, children) => {
       onclick: getProps().onclick,
       onmouseenter: () => {
         isHovered = true;
-        element.update();
+        //element.update();
       },
       onmouseleave: () => {
         isHovered = false;
-        element.update();
+        //element.update();
       },
       style: {
         color: isHovered ? 'darkslategray' : 'slategray',
@@ -2348,6 +1585,41 @@ module.exports = TextButton;
   return module.exports;
 })();
 
+modules['src/views/dataSources/apiUrlTestPreview/ApiUrlTestPreview.js'] = (() => {
+  const module = { exports: {} };
+  const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const ApiUrlTestPreview = (_, children) => {
+  const element = compose(
+    'div',
+    () => ({
+      style: {
+        color: 'lightslategray',
+        background: 'ghostwhite',
+        lineHeight: '32px',
+        fontSize: '0 16px',
+        width: '100%',
+        margin: '8px',
+        padding: '8px',
+        display: 'inline-block',
+        boxSizing: 'border-box',
+        fontFamily: '"Courier New", Courier, monospace',
+        whiteSpace: 'pre-wrap',
+        maxHeight: '448px',
+        minHeight: '48px',
+        overflow: 'auto',
+      },
+    }),
+    children
+  );
+  return element;
+};
+
+module.exports = ApiUrlTestPreview;
+
+  return module.exports;
+})();
+
 modules['src/views/dataSources/apiUrlInput/ApiUrlInput.js'] = (() => {
   const module = { exports: {} };
   const FullWidthCard = include('src/components/fullWidthCard/FullWidthCard.js');
@@ -2361,9 +1633,7 @@ const TextButton = include('src/components/textButton/TextButton.js');
 const ApiUrlTestPreview = include(
   'src/views/dataSources/apiUrlTestPreview/ApiUrlTestPreview.js'
 );
-const { compose, doPatchChildren } = include(
-  'src/libraries/simpleHTML/SimpleHTML.js'
-);
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ApiUrlInput = (getProps) => {
   const { viewModel } = getProps();
@@ -2426,10 +1696,11 @@ const ApiUrlInput = include('src/views/dataSources/apiUrlInput/ApiUrlInput.js');
 
 // getProps:: () => { viewModel, state }
 const DataSources = (getProps) => {
-  return compose('div', () => ({}), [
+  const element = compose('div', () => ({}), [
     ApiUrlInput(getProps),
     ApiIntervalInput(getProps),
   ]);
+  return element;
 };
 
 module.exports = DataSources;
@@ -2437,52 +1708,219 @@ module.exports = DataSources;
   return module.exports;
 })();
 
-modules['src/libraries/simpleUI/Container.js'] = (() => {
+modules['src/libraries/simpleUI/Constants.js'] = (() => {
   const module = { exports: {} };
-  const { doPatchChildren } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const Container = () => {
-  // Create base element
-  const divElement = document.createElement('div');
-  Object.assign(divElement.style, {
-    display: 'inline-block',
-    width: '100%',
-  });
-
-  // Define setters
-  Object.defineProperty(divElement, 'widthUnits', {
-    set: (widthUnits) => {
-      divElement.style.maxWidth = `${widthUnits * 20}px`;
-    },
-  });
-  Object.defineProperty(divElement, 'children', {
-    set: (children) => {
-      doPatchChildren(divElement, children);
-    },
-  });
-  return divElement;
+  const Colors = {
+  TextColor: 'slategray',
+  HighlightedTextColor: 'darkslategray',
+  DisabledTextColor: 'lightgray',
+  HighlightColor: 'deepskyblue',
 };
 
-module.exports = Container;
+const Sizes = {
+  FontSize: 15,
+  Padding: 10,
+  Unit: 20,
+};
+
+module.exports = {
+  Colors,
+  Sizes,
+};
 
   return module.exports;
 })();
 
-modules['src/components/widget/WidgetContainer.js'] = (() => {
+modules['src/libraries/simpleUI/NavigationButton.js'] = (() => {
   const module = { exports: {} };
-  const Container = include('src/libraries/simpleUI/Container.js');
+  const { Colors } = include('src/libraries/simpleUI/Constants.js');
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const WidgetContainer = () => {
-  const widgetContainer = Container();
-  Object.assign(widgetContainer.style, {
-    display: 'inline-block',
-    verticalAlign: 'top',
-    background: 'white',
-  });
-  return widgetContainer;
+const getColor = (isHovered, isSelected) => {
+  console.log(
+    'finding textColor: ',
+    isSelected || isHovered ? Colors.HighlightedTextColor : Colors.TextColor
+  );
+  return isSelected || isHovered
+    ? Colors.HighlightedTextColor
+    : Colors.TextColor;
 };
 
-module.exports = WidgetContainer;
+const getBorderBottom = (isSelected) => {
+  return isSelected ? `2px solid ${Colors.HighlightColor}` : 'none';
+};
+
+const NavigationButton = (getProps) => {
+  let isHovered = false;
+  const element = compose(
+    'span',
+    () => {
+      const { isSelected } = getProps();
+      return {
+        style: {
+          display: 'inline-block',
+          textAlign: 'center',
+          boxSizing: 'border-box',
+          width: '160px',
+          height: '40px',
+          lineHeight: '40px',
+          fontSize: '15px',
+          borderBottom: getBorderBottom(isSelected),
+        },
+      };
+    },
+    [
+      compose(
+        'a',
+        () => {
+          const { isSelected, href } = getProps();
+          return {
+            style: {
+              textDecoration: 'none',
+              display: 'inline-block',
+              width: '100%',
+              color: getColor(isHovered, isSelected),
+            },
+            href,
+            onmouseenter: () => {
+              isHovered = true;
+              element.update();
+            },
+            onMouseLeave: () => {
+              isHovered = false;
+              element.update();
+            },
+          };
+        },
+        [getProps().label]
+      ),
+    ]
+  );
+  return element;
+};
+
+module.exports = NavigationButton;
+
+  return module.exports;
+})();
+
+modules['src/views/project/projectNavigator/dataSourcesButton/DataSourcesButton.js'] = (() => {
+  const module = { exports: {} };
+  const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
+
+// getProps::() => { state }
+const DataSourcesButton = (getProps) => {
+  const determineIsSelected = (currentRoute) =>
+    [
+      '/projects/<projectId:string>',
+      '/projects/<projectId:string>/data-sources',
+    ].includes(currentRoute);
+
+  const getHref = (selectedProjectId) =>
+    `#!/projects/${selectedProjectId}/data-sources`;
+
+  const element = NavigationButton(() => {
+    const { currentRoute, selectedProjectId } = getProps().state;
+    return {
+      label: 'Data sources',
+      isSelected: determineIsSelected(currentRoute),
+      href: getHref(selectedProjectId),
+    };
+  });
+
+  return element;
+};
+
+module.exports = DataSourcesButton;
+
+  return module.exports;
+})();
+
+modules['src/views/project/projectNavigator/dashboardEditorButton/DashboardEditorButton.js'] = (() => {
+  const module = { exports: {} };
+  const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
+
+const DashboardEditorButton = (getProps) => {
+  const determineIsSelected = (currentRoute) =>
+    currentRoute === '/projects/<projectId:string>/dashboard/edit';
+
+  const getHref = (selectedProjectId) =>
+    `#!/projects/${selectedProjectId}/dashboard/edit`;
+
+  const element = NavigationButton(() => {
+    const { currentRoute, selectedProjectId } = getProps().state;
+    return {
+      label: 'Dashboard editor',
+      isSelected: determineIsSelected(currentRoute),
+      href: getHref(selectedProjectId),
+    };
+  });
+
+  return element;
+};
+
+module.exports = DashboardEditorButton;
+
+  return module.exports;
+})();
+
+modules['src/views/project/projectNavigator/dashboardButton/DashboardButton.js'] = (() => {
+  const module = { exports: {} };
+  const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
+
+const DashboardButton = (getProps) => {
+  const determineIsSelected = (currentRoute) =>
+    currentRoute === '/projects/<projectId:string>/dashboard';
+
+  const getHref = (selectedProjectId) =>
+    `#!/projects/${selectedProjectId}/dashboard`;
+
+  const element = NavigationButton(() => {
+    const { currentRoute, selectedProjectId } = getProps().state;
+    return {
+      label: 'Dashboard',
+      isSelected: determineIsSelected(currentRoute),
+      href: getHref(selectedProjectId),
+    };
+  });
+
+  return element;
+};
+
+module.exports = DashboardButton;
+
+  return module.exports;
+})();
+
+modules['src/views/project/projectNavigator/ProjectNavigator.js'] = (() => {
+  const module = { exports: {} };
+  const DataSourcesButton = include(
+  'src/views/project/projectNavigator/dataSourcesButton/DataSourcesButton.js'
+);
+const DashboardEditorButton = include(
+  'src/views/project/projectNavigator/dashboardEditorButton/DashboardEditorButton.js'
+);
+const DashboardButton = include(
+  'src/views/project/projectNavigator/dashboardButton/DashboardButton.js'
+);
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const Navigator = ({}, children) => {
+  element = compose('div', () => ({ style: { height: '40px' } }), children);
+  return element;
+};
+
+const ProjectNavigator = (getProps) => {
+  const element = Navigator({}, [
+    DataSourcesButton(getProps),
+    DashboardEditorButton(getProps),
+    DashboardButton(getProps),
+  ]);
+
+  return element;
+};
+
+module.exports = ProjectNavigator;
 
   return module.exports;
 })();
@@ -2541,11 +1979,8 @@ const WidgetLabel = (getProps) => {
         userSelect: 'none',
       },
     }),
-    [getProps().label()]
+    () => [getProps().label]
   );
-  element.update = () => {
-    element.innerText = getProps().label;
-  };
   return element;
 };
 
@@ -2572,14 +2007,8 @@ const WidgetValue = (getProps) => {
         transform: 'translate(0, -50%)',
       },
     }),
-    [Number(value).toFixed(2)]
+    () => [Number(value).toFixed(2)]
   );
-  const defaultUpdateFunction = element.update;
-  element.update = () => {
-    defaultUpdateFunction();
-    const { value } = getProps();
-    element.innerText = Number(value).toFixed(2);
-  };
   return element;
 };
 
@@ -2857,8 +2286,8 @@ const Canvas3dWidget = (getProps) => {
       );
     }
   };
-  canvasElement.update = ({ surfaces, edges, center }) => {
-    rerender({ surfaces, edges, center });
+  canvasElement.update = () => {
+    rerender(getProps());
   };
   window.addEventListener(camera.horizontalRotation$.id, () => {
     rerender({ surfaces, edges, center });
@@ -2888,14 +2317,15 @@ modules['src/components/widget/canvas2dWidget/Canvas2dWidget.js'] = (() => {
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 // TODO: Shouldn't there be a label here?
-const TwoDimVisualization = ({ surfaces, edges, is3d, center }) => {
+// getProps::() => { surfaces, edges, id3d, center }
+const TwoDimVisualization = (getProps) => {
   const canvasElement = compose(
     'canvas',
-    {
+    () => ({
       height: 320, // 16 x SizeUnit
       width: 480, // 24 x SizeUnit
       style: { position: 'absolute' },
-    },
+    }),
     []
   );
   const ctx = canvasElement.getContext('2d');
@@ -2903,9 +2333,9 @@ const TwoDimVisualization = ({ surfaces, edges, is3d, center }) => {
     ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
     doRenderVisualization({ surfaces, edges, center, ctx });
   };
-  rerender({ surfaces, edges, center });
-  canvasElement.update = ({ surfaces, edges, center }) => {
-    rerender({ surfaces, edges, center });
+  rerender(getProps());
+  canvasElement.update = () => {
+    rerender(getProps());
   };
   return canvasElement;
 };
@@ -2917,17 +2347,14 @@ module.exports = TwoDimVisualization;
 
 modules['src/components/widget/Widget.js'] = (() => {
   const module = { exports: {} };
-  const WidgetContainer = include('src/components/widget/WidgetContainer.js');
-const Canvas3dWidget = include(
+  const Canvas3dWidget = include(
   'src/components/widget/canvas3dWidget/Canvas3dWidget.js'
 );
 const Canvas2dWidget = include(
   'src/components/widget/canvas2dWidget/Canvas2dWidget.js'
 );
 const ValueWidget = include('src/components/widget/valueWidget/ValueWidget.js');
-const { compose, doPatchChildren } = include(
-  'src/libraries/simpleHTML/SimpleHTML.js'
-);
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 /**
  *
@@ -2943,12 +2370,14 @@ const { compose, doPatchChildren } = include(
  *
  * @returns { HTMLElement }
  */
-const getWidgetElementByType = (props) => {
-  if (props.type === 'canvas-widget') {
-    return props.is3d ? Canvas3dWidget(props) : Canvas2dWidget(props);
+const getWidgetElementByType = (getProps) => {
+  const { type, is3d } = getProps();
+  console.log('widget type: ', getProps().type);
+  if (type === 'canvas-widget') {
+    return is3d ? Canvas3dWidget(getProps) : Canvas2dWidget(getProps);
   }
-  if (props.type === 'value-widget') {
-    return ValueWidget(props);
+  if (type === 'value-widget') {
+    return ValueWidget(getProps);
   }
   throw Error('A widget must have type canvas-widget or value-widget');
 };
@@ -2967,11 +2396,10 @@ const getWidgetElementByType = (props) => {
  *
  * @returns { HTMLElement }
  */
-const Widget = (props) => {
-  const previousProps = props;
+const Widget = (getProps) => {
   const element = compose(
     'span',
-    {
+    () => ({
       style: {
         padding: '10px',
         display: 'inline-block',
@@ -2981,17 +2409,9 @@ const Widget = (props) => {
         height: '320px', // 16 x SizeUnit
         boxShadow: 'rgba(0, 0, 0, 0.25) 0 0 10px -5px',
       },
-    },
-    [getWidgetElementByType(props)]
+    }),
+    [getWidgetElementByType(getProps)]
   );
-  element.update = (newProps) => {
-    if (newProps.type == previousProps.type) {
-      element.childNodes[0].update(newProps);
-    } else {
-      doPatchChildren(element, [getWidgetElementByType(props)]);
-    }
-    Object.assign(previousProps, newProps);
-  };
   return element;
 };
 
@@ -3028,19 +2448,6 @@ const DashboardWidgets = (getProps) => {
     () => ({ style: { padding: '10px' } }),
     getWidgetElements({ widgets: getProps().state.widgets })
   );
-  element.update = () => {
-    const { state } = getProps();
-    if (state.widgets.length !== element.childElementCount) {
-      doPatchChildren(
-        element,
-        getWidgetElements({ widgets: getProps().state.widgets })
-      );
-    } else {
-      Array.from(element.childNodes).forEach((childNode) => {
-        childNode.update();
-      });
-    }
-  };
   return element;
 };
 
@@ -3103,23 +2510,19 @@ const CodeEditor = (getProps) => {
       []
     ),
   ]);
-  element.update = ({ value, oninput }) => {
-    element.childNodes[0].value = value;
-    element.childNodes[0].oninput = oninput;
-  };
   return element;
 };
 
 // getProps::() => { state, viewModel }
 const DashboardEditor = (getProps) => {
-  const { state, viewModel } = getProps();
-  const value = state.selectedWidgetsCode;
-  const oninput = ({ target }) => {
-    viewModel.updateWidgetsCode(state.selectedProjectId, target.value);
-  };
-
   const element = compose('div', () => ({ style: { padding: '10px' } }), [
-    CodeEditor(() => ({ value, oninput })),
+    CodeEditor(() => {
+      const { state, viewModel } = getProps();
+      const oninput = ({ target }) => {
+        viewModel.updateWidgetsCode(state.selectedProjectId, target.value);
+      };
+      return { value: state.selectedWidgetsCode, oninput };
+    }),
     DashboardWidgets(getProps),
   ]);
 
@@ -3147,39 +2550,48 @@ const DashboardEditor = include('src/views/dashboardEditor/DashboardEditor.js');
 
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
+const withKey = (element, key) => {
+  element.key = key;
+  return element;
+};
+
 // getProps::() => { state, viewModel }
 const App = (getProps) => {
   const { state } = getProps();
-  console.log('getProps().state.currentRoute: ', getProps().state.currentRoute);
   const element = state.isExported
-    ? compose('div', () => ({}), [
+    ? compose('div', {}, [
         TitleBar(getProps),
         ProjectContainer({}, [Dashboard(getProps)]),
       ])
-    : compose('div', () => ({}), [
-        TitleBar(getProps),
-        getProps().state.currentRoute === '/' ? Projects(getProps) : null,
+    : compose('div', {}, [
+        withKey(TitleBar(getProps), 'title-bar'),
+        getProps().state.currentRoute === '/'
+          ? withKey(Projects(getProps), 'projects')
+          : null,
         getProps().state.currentRoute.indexOf(
           '/projects/<projectId:string>'
         ) === 0
-          ? ProjectContainer(() => ({}), [
-              ProjectNavigator(() => ({ state: getProps().state })),
-              state.currentRoute ===
-                '/projects/<projectId:string>/data-sources' ||
-              state.currentRoute === '/projects/<projectId:string>'
-                ? DataSources(getProps)
-                : null,
-              state.currentRoute ===
-              '/projects/<projectId:string>/dashboard/edit'
-                ? DashboardEditor(getProps)
-                : null,
-              state.currentRoute === '/projects/<projectId:string>/dashboard'
-                ? Dashboard(getProps)
-                : null,
-            ])
+          ? withKey(
+              ProjectContainer(getProps, [
+                withKey(ProjectNavigator(getProps), 'project-navigator'),
+                state.currentRoute ===
+                  '/projects/<projectId:string>/data-sources' ||
+                state.currentRoute === '/projects/<projectId:string>'
+                  ? withKey(DataSources(getProps), 'data-sources')
+                  : null,
+                state.currentRoute ===
+                '/projects/<projectId:string>/dashboard/edit'
+                  ? withKey(DashboardEditor(getProps), 'dashboard-editor')
+                  : null,
+                state.currentRoute === '/projects/<projectId:string>/dashboard'
+                  ? withKey(Dashboard(getProps), 'dashboard')
+                  : null,
+              ]),
+              'project-container'
+            )
           : null,
       ]);
-  // TODO: Add some custom update logic to make sure children are replaced if route changes
+
   return element;
 };
 
@@ -3193,6 +2605,7 @@ const Router = include('src/libraries/simpleRouter/SimpleRouter.js');
 const simpleState = include('src/libraries/simpleState/SimpleState.js');
 const Model = include('src/model/Model.js');
 const App = include('src/app/App.js');
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 Object.assign(document.body.style, {
   margin: 0,
@@ -3238,12 +2651,16 @@ const { state, setState, addStateChangeListener } = simpleState({
 
 const viewModel = Model({ router, isExported, state, setState });
 
-const app = App(() => ({
-  state,
-  setState,
-  viewModel,
-}));
-addStateChangeListener(({ state, setState }) => app.update());
+const app = compose('div', () => ({}), [
+  App(() => ({
+    state,
+    setState,
+    viewModel,
+  })),
+]);
+addStateChangeListener(({ state, setState }) => {
+  app.update();
+});
 
 document.body.appendChild(app);
 

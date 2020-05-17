@@ -24,19 +24,6 @@ const DashboardWidgets = (getProps) => {
     () => ({ style: { padding: '10px' } }),
     getWidgetElements({ widgets: getProps().state.widgets })
   );
-  element.update = () => {
-    const { state } = getProps();
-    if (state.widgets.length !== element.childElementCount) {
-      doPatchChildren(
-        element,
-        getWidgetElements({ widgets: getProps().state.widgets })
-      );
-    } else {
-      Array.from(element.childNodes).forEach((childNode) => {
-        childNode.update();
-      });
-    }
-  };
   return element;
 };
 

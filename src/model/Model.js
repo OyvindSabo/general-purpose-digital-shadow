@@ -153,6 +153,7 @@ const Model = ({ router, isExported, state, setState }) => {
   };
 
   const updateValues = () => {
+    console.log('updateValues');
     let evaluatedCode;
     try {
       evaluatedCode = evaluateCode(
@@ -173,10 +174,11 @@ const Model = ({ router, isExported, state, setState }) => {
     fetch(state.selectedApiUrl)
       .then((response) => response.json())
       .then((jsonResponse) => {
-        setState({
+        // TODO: Make sure this does not cause a Maximum call stack exceeded error
+        /*setState({
           apiResponse: JSON.stringify(jsonResponse, null, 2),
         });
-        updateValues();
+        updateValues();*/
       });
   };
 
@@ -208,12 +210,13 @@ const Model = ({ router, isExported, state, setState }) => {
   */
 
   const syncSelectedProjectWithRouter = ({ params, currentRoute }) => {
-    setState({ currentRoute, params });
     if (currentRoute.indexOf('/projects/<projectId:string>') === 0) {
       const selectedProject = dataModel.projects.find(
         ({ id }) => id === params.projectId
       );
       setState({
+        currentRoute,
+        params,
         selectedProjectId: selectedProject.id,
         selectedProjectName: selectedProject.name,
         selectedApiUrl: selectedProject.apiUrl,
@@ -222,6 +225,8 @@ const Model = ({ router, isExported, state, setState }) => {
       });
       if (currentRoute === '/projects/<projectId:string>/data-sources') {
         setState({
+          currentRoute,
+          params,
           lastVisitedProjectView: 'data-sources',
         });
       }
@@ -230,11 +235,15 @@ const Model = ({ router, isExported, state, setState }) => {
         0
       ) {
         setState({
+          currentRoute,
+          params,
           lastVisitedProjectView: 'edit-dashboard', // TODO: Check that this works
         });
       }
       if (currentRoute === '/projects/<projectId:string>/dashboard') {
         setState({
+          currentRoute,
+          params,
           lastVisitedProjectView: 'dashboard',
         });
       }

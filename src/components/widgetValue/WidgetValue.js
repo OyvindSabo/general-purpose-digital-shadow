@@ -14,14 +14,8 @@ const WidgetValue = (getProps) => {
         transform: 'translate(0, -50%)',
       },
     }),
-    [Number(value).toFixed(2)]
+    () => [Number(value).toFixed(2)]
   );
-  const defaultUpdateFunction = element.update;
-  element.update = () => {
-    defaultUpdateFunction();
-    const { value } = getProps();
-    element.innerText = Number(value).toFixed(2);
-  };
   return element;
 };
 

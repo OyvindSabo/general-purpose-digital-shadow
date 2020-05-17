@@ -6,11 +6,9 @@ const { ViewTitle, ExportButton } = include('src/app/titleBar/atoms.js');
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const TitleBar = (getProps) => {
-  const { viewModel, state } = getProps();
-  const { isExported, currentRoute } = state;
-  return HorizontalNavigator(() => ({}), [
+  const element = HorizontalNavigator(() => ({}), [
     ViewTitle(() => ({}), [
-      !isExported
+      !getProps().state.isExported
         ? compose(
             'span',
             () => ({
@@ -22,35 +20,43 @@ const TitleBar = (getProps) => {
         : null,
       compose(
         'span',
-        () => ({
-          style: {
-            color: isExported
-              ? 'darkslategray'
-              : currentRoute.indexOf('/projects/<projectId:string>') === 0
-              ? 'darkslategray'
-              : 'lightgray',
-            cursor: 'pointer',
-          },
-          onclick: () => {
-            if (isExported) {
-              location.hash = '#!/';
-              return;
-            }
-            location.hash = `#!/projects/${state.selectedProjectId}/${
-              viewModel.lastVisitedProjectView || ''
-            }`;
-          },
-        }),
+        () => {
+          const { state, viewModel } = getProps();
+          const { isExported, currentRoute } = state;
+          return {
+            style: {
+              color: isExported
+                ? 'darkslategray'
+                : currentRoute.indexOf('/projects/<projectId:string>') === 0
+                ? 'darkslategray'
+                : 'lightgray',
+              cursor: 'pointer',
+            },
+            onclick: () => {
+              if (isExported) {
+                location.hash = '#!/';
+                return;
+              }
+              location.hash = `#!/projects/${state.selectedProjectId}/${
+                viewModel.lastVisitedProjectView || ''
+              }`;
+            },
+          };
+        },
         [
-          state.selectedProjectName
-            ? isExported
-              ? state.selectedProjectName
-              : ` / ${state.selectedProjectName}`
-            : '',
+          (() => {
+            const { state } = getProps();
+            const { isExported } = state;
+            return state.selectedProjectName
+              ? isExported
+                ? state.selectedProjectName
+                : ` / ${state.selectedProjectName}`
+              : '';
+          })(),
         ]
       ),
     ]),
-    !isExported
+    !getProps().state.isExported
       ? ExportButton(
           () => ({
             onclick: () => {
@@ -98,6 +104,7 @@ const TitleBar = (getProps) => {
         )
       : null,
   ]);
+  return element;
 };
 
 module.exports = TitleBar;

@@ -10,6 +10,7 @@ const withShadow = include('src/styleWrappers/withShadow.js');
 const { not$ } = include('src/libraries/observable/utils.js');
 const { Choose$, If$ } = include('src/libraries/observableHtml/utils.js');
 
+// TODO: Remove this one if not still in use
 const CanvasWidget$ = ({
   label$,
   surfaces$,

@@ -6,22 +6,36 @@ const doAddShadow = (element) => {
   element.style.boxShadow = 'rgba(0, 0, 0, 0.25) 0 0 10px -5px';
 };
 
-const doPatchChildren = (element, newChildren) => {
+const doPatchChildren = (
+  element,
+  newChildren,
+  compareFunction = (a, b) => a === b
+) => {
   newChildren.forEach((newChild, index) => {
-    if (element.childNodes[index] === newChild) return;
+    // If the new child node already exists on the correct index, jump to next iteration
+    if (compareFunction(newChild, element.childNodes[index])) return;
+
+    // As long as there is an old child node at the current index which is not correspond to any of the new childNodes, remove it
     while (
       element.childNodes[index] &&
-      !newChildren.includes(element.childNodes[index])
+      !newChildren.some((newChild) =>
+        compareFunction(newChild, element.childNodes[index])
+      )
     ) {
       element.removeChild(element.childNodes[index]);
     }
+
+    // Insert the new child node at the correct position
     if (element.childNodes[index]) {
       element.insertBefore(newChild, element.childNodes[index]);
       return;
     }
+    console.log('newChild: ', newChild);
     element.appendChild(newChild);
     return;
   });
+
+  // Remove any superfluous old nodes which don't correspond to the new nodes
   while (newChildren.length < element.childNodes.length) {
     element.removeChild(element.childNodes[newChildren.length]);
   }
@@ -62,38 +76,72 @@ const doDeepMerge = (target, ...sources) => {
 
 const determineIsNullish = (value) => value === null || value === undefined;
 
+const getNodeRepresentation = (child) => {
+  if (typeof child === 'string') return document.createTextNode(child);
+  if (typeof child === 'number') return document.createTextNode(child);
+  return child;
+};
+
+const callUntilNotFunction = (valueOrFunction) => {
+  if (typeof valueOrFunction === 'function') {
+    return callUntilNotFunction(valueOrFunction());
+  }
+  return valueOrFunction;
+};
+
+const getCleanedChildNodes = (children) => {
+  return children.map(getNodeRepresentation).filter(Boolean);
+};
+
 /**
  * A component is a function which returns an element and and update method
  * @param {*} elementType
  * @param {*} props
  * @param {*} children
  */
-const compose = (elementType, getProps, children) => {
-  if (typeof elementType === 'string') {
-    element = document.createElement(elementType);
+const compose = (elementType, getProps, getChildren) => {
+  element = document.createElement(elementType);
+  //Object.assign(element, getProps());
+  if (typeof getProps === 'function') {
     doDeepMerge(element, getProps());
-    children.filter(Boolean).forEach((child) => {
-      if (typeof child === 'string') {
-        element.appendChild(document.createTextNode(child));
-      } else {
-        element.appendChild(child);
+  } else {
+    doDeepMerge(element, getProps);
+  }
+
+  if (typeof getChildren === 'function') {
+    getCleanedChildNodes(getChildren()).forEach((childNode) => {
+      element.appendChild(childNode);
+    });
+  } else {
+    getCleanedChildNodes(getChildren).forEach((childNode) => {
+      element.appendChild(childNode);
+    });
+  }
+
+  element.update = () => {
+    // We update the props only if they are provided as a function. Otherwise they are static.
+    if (typeof getProps === 'function') {
+      doDeepMerge(element, getProps());
+    }
+    //const newChildNodes = getCleanedChildNodes(callUntilNotFunction(children));
+    /*doPatchChildren(element, newChildNodes, (node1, node2) => {
+      if (node1 && node2 && node1.key && node2.key) {
+        return node1.key === node2.key;
+      }
+      return false;
+    });*/
+    element.childNodes.forEach((childNode) => {
+      //console.log('element.innerHTML: ', element.innerHTML);
+      //console.log('Calling update from: ', element);
+      //console.log('updating: ', element.childNodes);
+      //console.log('parentNode: ', element.parentNode);
+      if (typeof childNode.update === 'function') {
+        //console.log('childNodes: ', element.childNodes);
+        childNode.update();
       }
     });
-    element.update = () => {
-      doDeepMerge(element, getProps());
-      Array.from(element.childNodes).forEach((childNode) => {
-        if (typeof childNode.update === 'function') {
-          childNode.update;
-        }
-      });
-    };
-    return element;
-  }
-  if (typeof elementType === 'function') {
-    console.log('elementType: ', elementType);
-    return elementType(props, children);
-  }
-  throw Error('elementType needs to be either a string or a function');
+  };
+  return element;
 };
 
 const nullishCoalesce = (primaryValue, backupValue) =>

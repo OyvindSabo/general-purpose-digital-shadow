@@ -10,7 +10,7 @@ const ProjectNameInputContainer = include(
 
 // getProps::() => { viewModel, id, nameInputValue }
 const ProjectNameInput = ({ viewModel, id$, nameInputValue$ }) => {
-  return ProjectPreviewContainer(() => ({}), [
+  const element = ProjectPreviewContainer(() => ({}), [
     ProjectNameInputContainer(
       () => ({
         oninput: ({ value }) => {
@@ -39,6 +39,7 @@ const ProjectNameInput = ({ viewModel, id$, nameInputValue$ }) => {
       ['Save']
     ),
   ]);
+  return element;
 };
 
 module.exports = ProjectNameInput;

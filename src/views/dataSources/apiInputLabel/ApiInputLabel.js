@@ -1,7 +1,7 @@
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ApiInputLabel = ({ label }) => {
-  return compose(
+  const element = compose(
     'span',
     () => ({
       // TODO: Make this one align nicely next to the input
@@ -18,6 +18,7 @@ const ApiInputLabel = ({ label }) => {
     }),
     [label]
   );
+  return element;
 };
 
 module.exports = ApiInputLabel;

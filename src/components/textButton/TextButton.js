@@ -1,9 +1,4 @@
-const { button$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const Observable = include('src/libraries/observable/Observable.js');
-const { choose$ } = include('src/libraries/observable/utils.js');
-const { compose, doPatchChildren } = include(
-  'src/libraries/simpleHTML/SimpleHTML.js'
-);
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const TextButton = (getProps, children) => {
   let isHovered = false;
@@ -13,11 +8,11 @@ const TextButton = (getProps, children) => {
       onclick: getProps().onclick,
       onmouseenter: () => {
         isHovered = true;
-        element.update();
+        //element.update();
       },
       onmouseleave: () => {
         isHovered = false;
-        element.update();
+        //element.update();
       },
       style: {
         color: isHovered ? 'darkslategray' : 'slategray',

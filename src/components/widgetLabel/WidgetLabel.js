@@ -14,11 +14,8 @@ const WidgetLabel = (getProps) => {
         userSelect: 'none',
       },
     }),
-    [getProps().label()]
+    () => [getProps().label]
   );
-  element.update = () => {
-    element.innerText = getProps().label;
-  };
   return element;
 };
 

@@ -16,12 +16,6 @@ const DashboardButton = (getProps) => {
     };
   });
 
-  const updateNavigationButton = element.update;
-
-  element.update = () => {
-    updateNavigationButton();
-  };
-
   return element;
 };
 

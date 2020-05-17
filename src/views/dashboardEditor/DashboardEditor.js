@@ -30,23 +30,19 @@ const CodeEditor = (getProps) => {
       []
     ),
   ]);
-  element.update = ({ value, oninput }) => {
-    element.childNodes[0].value = value;
-    element.childNodes[0].oninput = oninput;
-  };
   return element;
 };
 
 // getProps::() => { state, viewModel }
 const DashboardEditor = (getProps) => {
-  const { state, viewModel } = getProps();
-  const value = state.selectedWidgetsCode;
-  const oninput = ({ target }) => {
-    viewModel.updateWidgetsCode(state.selectedProjectId, target.value);
-  };
-
   const element = compose('div', () => ({ style: { padding: '10px' } }), [
-    CodeEditor(() => ({ value, oninput })),
+    CodeEditor(() => {
+      const { state, viewModel } = getProps();
+      const oninput = ({ target }) => {
+        viewModel.updateWidgetsCode(state.selectedProjectId, target.value);
+      };
+      return { value: state.selectedWidgetsCode, oninput };
+    }),
     DashboardWidgets(getProps),
   ]);
 

@@ -9,7 +9,7 @@ const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 // getProps::() => { viewModel, state }
 const Projects = (getProps) => {
-  return compose(
+  const element = compose(
     'div',
     () => ({}),
     getProps()
@@ -30,6 +30,7 @@ const Projects = (getProps) => {
       ),
     NewProject(getProps)
   );
+  return element;
 };
 
 module.exports = Projects;

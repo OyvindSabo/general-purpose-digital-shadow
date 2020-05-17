@@ -20,12 +20,6 @@ const DataSourcesButton = (getProps) => {
     };
   });
 
-  const updateNavigationButton = element.update;
-
-  element.update = () => {
-    updateNavigationButton();
-  };
-
   return element;
 };
 

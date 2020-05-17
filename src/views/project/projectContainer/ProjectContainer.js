@@ -1,7 +1,7 @@
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ProjectContainer = (props, children) => {
-  return compose(
+  const element = compose(
     'div',
     () => ({
       style: {
@@ -13,6 +13,7 @@ const ProjectContainer = (props, children) => {
     }),
     children
   );
+  return element;
 };
 
 module.exports = ProjectContainer;

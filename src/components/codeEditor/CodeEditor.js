@@ -2,6 +2,7 @@ const styled = include('src/libraries/styled/styled.js');
 const { textArea$ } = include('src/libraries/observableHtml/ObservableHtml.js');
 const FullWidthCard$ = include('src/components/fullWidthCard/FullWidthCard.js');
 
+// TODO: Remvoe this or replace it with newer code
 const CodeEditor$ = (value) => {
   const textAreaElement = textArea$(value).setStyle({
     padding: '20px',

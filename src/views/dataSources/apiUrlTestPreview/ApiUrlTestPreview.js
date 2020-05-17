@@ -1,7 +1,7 @@
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ApiUrlTestPreview = (_, children) => {
-  return compose(
+  const element = compose(
     'div',
     () => ({
       style: {
@@ -23,6 +23,7 @@ const ApiUrlTestPreview = (_, children) => {
     }),
     children
   );
+  return element;
 };
 
 module.exports = ApiUrlTestPreview;

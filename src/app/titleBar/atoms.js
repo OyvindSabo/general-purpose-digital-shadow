@@ -11,7 +11,7 @@ const ViewTitle = (_, children) => {
 };
 
 const ExportButton = (getProps, children) => {
-  return compose(
+  const element = compose(
     'div',
     () => ({
       onclick: getProps().onclick,
@@ -25,6 +25,7 @@ const ExportButton = (getProps, children) => {
     }),
     children
   );
+  return element;
 };
 
 module.exports = { ViewTitle, ExportButton };

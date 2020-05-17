@@ -6,10 +6,11 @@ const ApiUrlInput = include('src/views/dataSources/apiUrlInput/ApiUrlInput.js');
 
 // getProps:: () => { viewModel, state }
 const DataSources = (getProps) => {
-  return compose('div', () => ({}), [
+  const element = compose('div', () => ({}), [
     ApiUrlInput(getProps),
     ApiIntervalInput(getProps),
   ]);
+  return element;
 };
 
 module.exports = DataSources;

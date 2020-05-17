@@ -9,9 +9,7 @@ const TextButton = include('src/components/textButton/TextButton.js');
 const ApiUrlTestPreview = include(
   'src/views/dataSources/apiUrlTestPreview/ApiUrlTestPreview.js'
 );
-const { compose, doPatchChildren } = include(
-  'src/libraries/simpleHTML/SimpleHTML.js'
-);
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ApiUrlInput = (getProps) => {
   const { viewModel } = getProps();

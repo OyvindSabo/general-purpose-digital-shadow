@@ -1,7 +1,7 @@
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ApiInputContainer = (_, children) => {
-  return compose(
+  const element = compose(
     'span',
     () => ({
       style: {
@@ -18,6 +18,7 @@ const ApiInputContainer = (_, children) => {
     }),
     children
   );
+  return element;
 };
 
 module.exports = ApiInputContainer;
