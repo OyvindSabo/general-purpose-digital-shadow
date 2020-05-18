@@ -12,30 +12,35 @@ const ProjectPreview = (getProps) => {
     compose(
       'div',
       () => {
-        const { id, state } = getProps();
+        const { id, state, name } = getProps();
         return {
           onclick: () => {
             location.hash = `#!/projects/${id}/${
               state.lastVisitedProjectView || ''
             }`;
           },
-          style: {
-            padding: '0 16px',
-            width: 'calc(100% - 128px)',
-            boxSizing: 'border-box',
-            display: 'inline-block',
-          },
+          style: `padding: 0 16px;
+                  width: calc(100% - 128px);
+                  box-sizing: border-box;
+                  display: inline-block;`,
+          innerText: name,
         };
       },
-      [getProps().name]
+      []
     ),
     ProjectPreviewButton(
-      () => ({ onclick: () => viewModel.deleteProject(getProps().id) }),
-      ['Delete']
+      () => ({
+        innerText: 'Delete',
+        onclick: () => viewModel.deleteProject(getProps().id),
+      }),
+      []
     ),
     ProjectPreviewButton(
-      () => ({ onclick: () => viewModel.editProjectName(id$.value) }),
-      ['Edit']
+      () => ({
+        innerText: 'Edit',
+        onclick: () => viewModel.editProjectName(id$.value),
+      }),
+      []
     ),
   ]);
 };

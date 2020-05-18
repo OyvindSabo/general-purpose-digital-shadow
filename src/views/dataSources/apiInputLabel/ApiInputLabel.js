@@ -1,22 +1,23 @@
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const ApiInputLabel = ({ label }) => {
+const ApiInputLabel = (getProps) => {
   const element = compose(
     'span',
     () => ({
+      innerText: getProps().innerText,
       // TODO: Make this one align nicely next to the input
-      color: 'dimgray',
-      height: '64px',
-      padding: '0 16px',
-      lineHeight: '64px',
-      fontSize: '16px',
-      width: '192px',
-      border: 'none',
-      outline: 'none',
-      display: 'inline-block',
-      boxSizing: 'border-box',
+      // width = 8 x 20px
+      // height = 2 x 20px
+      style: `color: dimgray;
+              height: 40px;
+              padding: 10px;
+              line-height: 40px;
+              font-size: 15px;
+              width: 160px;
+              display: inline-block;
+              box-sizing: border-box;`,
     }),
-    [label]
+    []
   );
   return element;
 };

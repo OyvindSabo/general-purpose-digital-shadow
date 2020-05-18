@@ -4,7 +4,7 @@ const DashboardWidgets = include(
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const Dashboard = (getProps) => {
-  const element = compose('div', () => ({ style: { padding: '10px' } }), [
+  const element = compose('div', { style: `padding: 10px;` }, [
     DashboardWidgets(getProps),
   ]);
 

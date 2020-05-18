@@ -175,7 +175,7 @@ function SimpleRouter(routes) {
     this.hashChangeListeners.push(callback);
     this.callHashChangeListeners();
   };
-  this.callHashChangeListeners = function () {
+  this.callHashChangeListeners = () => {
     this.hashChangeListeners.forEach((hashChangeListener) =>
       hashChangeListener({
         params: this.params,

@@ -6,14 +6,12 @@ const WidgetCard = (getProps, children) =>
     () => {
       const { height, width } = getProps();
       return {
-        style: {
-          margin: '32px 0 0 32px',
-          width: `${width}px`,
-          height: `${height}px`,
-          display: 'inline-block',
-          verticalAlign: 'top',
-          background: 'white',
-        },
+        style: `margin: 32px 0 0 32px;
+                width: ${width}px;
+                height: ${height}px;
+                display: inline-block;
+                vertical-align: top;
+                background: white;`,
       };
     },
     children

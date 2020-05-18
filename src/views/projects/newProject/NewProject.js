@@ -6,6 +6,7 @@ const NewProject = (getProps) => {
   const element = compose(
     'span',
     () => ({
+      innerText: 'New project',
       onmouseenter: () => {
         color = 'darkslategray';
         element.update();
@@ -15,18 +16,16 @@ const NewProject = (getProps) => {
         element.update();
       },
       onclick: getProps().viewModel.createNewProject,
-      style: {
-        color,
-        margin: '32px',
-        padding: '0 16px',
-        height: '64px',
-        background: 'none',
-        lineHeight: '64px',
-        fontSize: '16px',
-        display: 'inline-block',
-      },
+      style: `${color};
+              margin: 32px;
+              padding: 0 16px;
+              height: 64px;
+              background: none;
+              line-height: 64px;
+              font-size: 16px;
+              display: inline-block;`,
     }),
-    ['New project']
+    []
   );
   return element;
 };

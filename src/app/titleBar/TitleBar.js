@@ -1,109 +1,15 @@
-const HorizontalNavigator = include(
-  'src/components/horizontalNavigator/HorizontalNavigator.js'
+const ExportedTitleBar = include(
+  'src/app/titleBar/exportedTitleBar/ExportedTitleBar.js'
 );
-const { ViewTitle, ExportButton } = include('src/app/titleBar/atoms.js');
-
-const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const UnexportedTitleBar = include(
+  'src/app/titleBar/unexportedTitleBar/UnexportedTitleBar.js'
+);
 
 const TitleBar = (getProps) => {
-  const element = HorizontalNavigator(() => ({}), [
-    ViewTitle(() => ({}), [
-      !getProps().state.isExported
-        ? compose(
-            'span',
-            () => ({
-              onclick: () => (location.hash = '#!/projects'),
-              style: { cursor: 'pointer' },
-            }),
-            ['Projects']
-          )
-        : null,
-      compose(
-        'span',
-        () => {
-          const { state, viewModel } = getProps();
-          const { isExported, currentRoute } = state;
-          return {
-            style: {
-              color: isExported
-                ? 'darkslategray'
-                : currentRoute.indexOf('/projects/<projectId:string>') === 0
-                ? 'darkslategray'
-                : 'lightgray',
-              cursor: 'pointer',
-            },
-            onclick: () => {
-              if (isExported) {
-                location.hash = '#!/';
-                return;
-              }
-              location.hash = `#!/projects/${state.selectedProjectId}/${
-                viewModel.lastVisitedProjectView || ''
-              }`;
-            },
-          };
-        },
-        [
-          (() => {
-            const { state } = getProps();
-            const { isExported } = state;
-            return state.selectedProjectName
-              ? isExported
-                ? state.selectedProjectName
-                : ` / ${state.selectedProjectName}`
-              : '';
-          })(),
-        ]
-      ),
-    ]),
-    !getProps().state.isExported
-      ? ExportButton(
-          () => ({
-            onclick: () => {
-              const { state } = getProps();
-              const element = document.createElement('a');
-              // SInce just the first occurrence of the code will be replaced, we need to make sure that this code does not replace itself, so we construct the match on call time
-              const fileContent = document.head.innerHTML
-                .replace(
-                  '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *f*a*l*s*e*;*'
-                    .split('*')
-                    .join(''),
-                  '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *t*r*u*e*;*'
-                    .split('*')
-                    .join('')
-                )
-                .replace(
-                  '*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>* *[*]*;*'
-                    .split('*')
-                    .join(''),
-                  `*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>*`
-                    .split('*')
-                    .join('') +
-                    JSON.stringify([
-                      {
-                        id: state.selectedProjectId,
-                        name: state.selectedProjectName,
-                        apiUrl: state.selectedApiUrl,
-                        apiInterval: state.selectedApiInterval,
-                        derivedValuesCode: state.selectedDerivedValuesCode,
-                        widgetsCode: state.selectedWidgetsCode,
-                      },
-                    ])
-                );
-              const file = new Blob([fileContent], { type: 'text/plain' });
-              element.href = URL.createObjectURL(file);
-              element.download = `${state.selectedProjectName
-                .toLowerCase()
-                .split(' ')
-                .join('-')}.html`;
-              document.body.appendChild(element); // Required for this to work in FireFox
-              element.click();
-            },
-          }),
-          ['Export']
-        )
-      : null,
-  ]);
+  const element = getProps().state.isExported
+    ? ExportedTitleBar(getProps)
+    : UnexportedTitleBar(getProps);
+
   return element;
 };
 

@@ -13,30 +13,33 @@ const ProjectNameInput = ({ viewModel, id$, nameInputValue$ }) => {
   const element = ProjectPreviewContainer(() => ({}), [
     ProjectNameInputContainer(
       () => ({
+        innerText: getProps().nameInputValue,
         oninput: ({ value }) => {
           const { id, viewModel } = getProps();
           viewModel.setProjectNameInputValue(id, value);
         },
       }),
-      [getProps().nameInputValue]
+      []
     ),
     ProjectPreviewButton(
       () => ({
+        innerText: 'Cancel',
         onclick: () => {
           const { id, viewModel } = getProps();
           viewModel.cancelEditingProjectName(id);
         },
       }),
-      ['Cancel']
+      []
     ),
     ProjectPreviewButton(
       () => ({
+        innerText: 'Save',
         onclick: () => {
           const { id, viewModel } = getProps();
           viewModel.saveProjectName(id);
         },
       }),
-      ['Save']
+      []
     ),
   ]);
   return element;

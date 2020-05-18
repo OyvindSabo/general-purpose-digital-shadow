@@ -21,7 +21,7 @@ const getWidgetElements = ({ widgets }) => {
 const DashboardWidgets = (getProps) => {
   const element = compose(
     'div',
-    () => ({ style: { padding: '10px' } }),
+    { style: 'padding: 10px' },
     getWidgetElements({ widgets: getProps().state.widgets })
   );
   return element;

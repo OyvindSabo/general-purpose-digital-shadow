@@ -183,7 +183,7 @@ modules['src/libraries/simpleRouter/SimpleRouter.js'] = (() => {
     this.hashChangeListeners.push(callback);
     this.callHashChangeListeners();
   };
-  this.callHashChangeListeners = function () {
+  this.callHashChangeListeners = () => {
     this.hashChangeListeners.forEach((hashChangeListener) =>
       hashChangeListener({
         params: this.params,
@@ -213,7 +213,6 @@ modules['src/libraries/simpleState/SimpleState.js'] = (() => {
     });
   };
   const setState = (newState) => {
-    console.log('setState: newState: ', newState);
     Object.assign(state, newState);
     emit();
   };
@@ -268,8 +267,10 @@ const doPatchChildren = (
       element.insertBefore(newChild, element.childNodes[index]);
       return;
     }
-    console.log('newChild: ', newChild);
-    element.appendChild(newChild);
+    // TODO: Find out why this is needed
+    if (!(newChild.contains && newChild.contains(element))) {
+      element.append(newChild);
+    }
     return;
   });
 
@@ -277,39 +278,6 @@ const doPatchChildren = (
   while (newChildren.length < element.childNodes.length) {
     element.removeChild(element.childNodes[newChildren.length]);
   }
-};
-
-/**
- * https://stackoverflow.com/questions/27936772/how-to-deep-merge-instead-of-shallow-merge
- *
- * Simple object check.
- * @param item
- * @returns {boolean}
- */
-const isObject = (item) => {
-  return item && typeof item === 'object' && !Array.isArray(item);
-};
-/**
- * Deep merge two objects.
- * @param target
- * @param ...sources
- */
-const doDeepMerge = (target, ...sources) => {
-  if (!sources.length) return target;
-  const source = sources.shift();
-
-  if (isObject(target) && isObject(source)) {
-    for (const key in source) {
-      if (isObject(source[key])) {
-        if (!target[key]) Object.assign(target, { [key]: {} });
-        doDeepMerge(target[key], source[key]);
-      } else {
-        Object.assign(target, { [key]: source[key] });
-      }
-    }
-  }
-
-  return doDeepMerge(target, ...sources);
 };
 
 const determineIsNullish = (value) => value === null || value === undefined;
@@ -328,6 +296,11 @@ const callUntilNotFunction = (valueOrFunction) => {
 };
 
 const getCleanedChildNodes = (children) => {
+  console.log('children: ', children);
+  console.log(
+    'cleanedChildren: ',
+    children.map(getNodeRepresentation).filter(Boolean)
+  );
   return children.map(getNodeRepresentation).filter(Boolean);
 };
 
@@ -338,52 +311,48 @@ const getCleanedChildNodes = (children) => {
  * @param {*} children
  */
 const compose = (elementType, getProps, getChildren) => {
-  element = document.createElement(elementType);
-  //Object.assign(element, getProps());
+  const element = document.createElement(elementType);
+
   if (typeof getProps === 'function') {
-    doDeepMerge(element, getProps());
+    Object.assign(element, getProps());
   } else {
-    doDeepMerge(element, getProps);
+    Object.assign(element, getProps);
   }
 
   if (typeof getChildren === 'function') {
-    getCleanedChildNodes(getChildren()).forEach((childNode) => {
-      element.appendChild(childNode);
-    });
+    element.append(...getChildren().filter(Boolean));
   } else {
-    getCleanedChildNodes(getChildren).forEach((childNode) => {
-      element.appendChild(childNode);
-    });
+    element.append(...getChildren.filter(Boolean));
   }
 
   element.update = () => {
     // We update the props only if they are provided as a function. Otherwise they are static.
     if (typeof getProps === 'function') {
-      doDeepMerge(element, getProps());
-    }
-    //const newChildNodes = getCleanedChildNodes(callUntilNotFunction(children));
-    /*doPatchChildren(element, newChildNodes, (node1, node2) => {
-      if (node1 && node2 && node1.key && node2.key) {
-        return node1.key === node2.key;
+      if (element.selectionStart !== null && element.selectionRange !== null) {
+        const { selectionStart, selectionEnd } = element;
+        Object.assign(element, getProps(), { selectionStart, selectionEnd });
+      } else {
+        Object.assign(element, getProps());
       }
-      return false;
-    });*/
-    element.childNodes.forEach((childNode) => {
-      //console.log('element.innerHTML: ', element.innerHTML);
-      //console.log('Calling update from: ', element);
-      //console.log('updating: ', element.childNodes);
-      //console.log('parentNode: ', element.parentNode);
+    }
+    if (typeof getChildren === 'function') {
+      const newChildNodes = getChildren().filter(Boolean);
+      doPatchChildren(element, newChildNodes, (node1, node2) => {
+        if (node1 && node2 && node1.key && node2.key) {
+          return node1.key === node2.key;
+        }
+        return false;
+      });
+    }
+
+    Array.from(element.childNodes).forEach((childNode) => {
       if (typeof childNode.update === 'function') {
-        //console.log('childNodes: ', element.childNodes);
         childNode.update();
       }
     });
   };
   return element;
 };
-
-const nullishCoalesce = (primaryValue, backupValue) =>
-  determineIsNullish(primaryValue) ? secondaryValue : primaryValue;
 
 class SimpleHTML {
   static isProp = (propsOrChild) =>
@@ -437,8 +406,6 @@ const doMerge = (oldElement, newElement) => {
         oldChild.selectionStart = selectionStart;
         oldChild.selectionEnd = selectionEnd;
 
-        console.log('oldChild.update: ', oldChild.update);
-        console.log('newChild.propsAndChildren: ', newChild.propsAndChildren);
         oldChild.update(...newChild.propsAndChildren);
         if (Object.keys(newChild.propsAndChildren[0]).includes('style')) {
           if (!oldChild.style) {
@@ -554,6 +521,7 @@ const button = defineComponent((props, ...children) =>
 
 module.exports = {
   doMerge,
+  callUntilNotFunction,
   compose,
   defineComponent,
   div,
@@ -716,7 +684,7 @@ const Model = ({ router, isExported, state, setState }) => {
     if (state.isExported) {
       setState({ selectedProjectId: dataModel.projects[0].id });
     }
-    // I am here now
+
     const selectedProject = dataModel.projects.find(
       ({ id }) => id === state.selectedProjectId
     );
@@ -854,11 +822,10 @@ const Model = ({ router, isExported, state, setState }) => {
     fetch(state.selectedApiUrl)
       .then((response) => response.json())
       .then((jsonResponse) => {
-        // TODO: Make sure this does not cause a Maximum call stack exceeded error
-        /*setState({
+        setState({
           apiResponse: JSON.stringify(jsonResponse, null, 2),
         });
-        updateValues();*/
+        updateValues();
       });
   };
 
@@ -927,6 +894,8 @@ const Model = ({ router, isExported, state, setState }) => {
           lastVisitedProjectView: 'dashboard',
         });
       }
+    } else {
+      setState({ currentRoute, params });
     }
   };
   syncSelectedProjectWithRouter(router);
@@ -947,199 +916,18 @@ modules['src/views/project/projectContainer/ProjectContainer.js'] = (() => {
 const ProjectContainer = (props, children) => {
   const element = compose(
     'div',
-    () => ({
-      style: {
-        height: 'calc(100% - 64px)',
-        position: 'absolute',
-        left: '0',
-        right: '0',
-      },
-    }),
+    {
+      style: `height: calc(100% - 64px);
+              position: absolute;
+              left: 0;
+              right: 0;`,
+    },
     children
   );
   return element;
 };
 
 module.exports = ProjectContainer;
-
-  return module.exports;
-})();
-
-modules['src/components/horizontalNavigator/HorizontalNavigator.js'] = (() => {
-  const module = { exports: {} };
-  const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const HorizontalNavigator = (_, children) => {
-  console.log('HorizontalNavigator');
-  const element = compose(
-    'div',
-    () => ({
-      style: {
-        height: '64px',
-        boxShadow: 'rgba(0, 0, 0, 0.25) 0 0 10px -5px',
-        background: 'white',
-        color: 'darkslategray',
-      },
-    }),
-    children
-  );
-  return element;
-};
-
-module.exports = HorizontalNavigator;
-
-  return module.exports;
-})();
-
-modules['src/app/titleBar/atoms.js'] = (() => {
-  const module = { exports: {} };
-  const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const ViewTitle = (_, children) => {
-  return compose(
-    'div',
-    () => ({
-      style: { fontSize: '32px', padding: '16px', display: 'inline-block' },
-    }),
-    children
-  );
-};
-
-const ExportButton = (getProps, children) => {
-  const element = compose(
-    'div',
-    () => ({
-      onclick: getProps().onclick,
-      style: {
-        fontSize: '16px',
-        padding: '0 16px',
-        float: 'right',
-        lineHeight: '64px',
-        cursor: 'pointer',
-      },
-    }),
-    children
-  );
-  return element;
-};
-
-module.exports = { ViewTitle, ExportButton };
-
-  return module.exports;
-})();
-
-modules['src/app/titleBar/TitleBar.js'] = (() => {
-  const module = { exports: {} };
-  const HorizontalNavigator = include(
-  'src/components/horizontalNavigator/HorizontalNavigator.js'
-);
-const { ViewTitle, ExportButton } = include('src/app/titleBar/atoms.js');
-
-const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const TitleBar = (getProps) => {
-  const element = HorizontalNavigator(() => ({}), [
-    ViewTitle(() => ({}), [
-      !getProps().state.isExported
-        ? compose(
-            'span',
-            () => ({
-              onclick: () => (location.hash = '#!/projects'),
-              style: { cursor: 'pointer' },
-            }),
-            ['Projects']
-          )
-        : null,
-      compose(
-        'span',
-        () => {
-          const { state, viewModel } = getProps();
-          const { isExported, currentRoute } = state;
-          return {
-            style: {
-              color: isExported
-                ? 'darkslategray'
-                : currentRoute.indexOf('/projects/<projectId:string>') === 0
-                ? 'darkslategray'
-                : 'lightgray',
-              cursor: 'pointer',
-            },
-            onclick: () => {
-              if (isExported) {
-                location.hash = '#!/';
-                return;
-              }
-              location.hash = `#!/projects/${state.selectedProjectId}/${
-                viewModel.lastVisitedProjectView || ''
-              }`;
-            },
-          };
-        },
-        [
-          (() => {
-            const { state } = getProps();
-            const { isExported } = state;
-            return state.selectedProjectName
-              ? isExported
-                ? state.selectedProjectName
-                : ` / ${state.selectedProjectName}`
-              : '';
-          })(),
-        ]
-      ),
-    ]),
-    !getProps().state.isExported
-      ? ExportButton(
-          () => ({
-            onclick: () => {
-              const { state } = getProps();
-              const element = document.createElement('a');
-              // SInce just the first occurrence of the code will be replaced, we need to make sure that this code does not replace itself, so we construct the match on call time
-              const fileContent = document.head.innerHTML
-                .replace(
-                  '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *f*a*l*s*e*;*'
-                    .split('*')
-                    .join(''),
-                  '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *t*r*u*e*;*'
-                    .split('*')
-                    .join('')
-                )
-                .replace(
-                  '*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>* *[*]*;*'
-                    .split('*')
-                    .join(''),
-                  `*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>*`
-                    .split('*')
-                    .join('') +
-                    JSON.stringify([
-                      {
-                        id: state.selectedProjectId,
-                        name: state.selectedProjectName,
-                        apiUrl: state.selectedApiUrl,
-                        apiInterval: state.selectedApiInterval,
-                        derivedValuesCode: state.selectedDerivedValuesCode,
-                        widgetsCode: state.selectedWidgetsCode,
-                      },
-                    ])
-                );
-              const file = new Blob([fileContent], { type: 'text/plain' });
-              element.href = URL.createObjectURL(file);
-              element.download = `${state.selectedProjectName
-                .toLowerCase()
-                .split(' ')
-                .join('-')}.html`;
-              document.body.appendChild(element); // Required for this to work in FireFox
-              element.click();
-            },
-          }),
-          ['Export']
-        )
-      : null,
-  ]);
-  return element;
-};
-
-module.exports = TitleBar;
 
   return module.exports;
 })();
@@ -1154,6 +942,7 @@ const NewProject = (getProps) => {
   const element = compose(
     'span',
     () => ({
+      innerText: 'New project',
       onmouseenter: () => {
         color = 'darkslategray';
         element.update();
@@ -1163,23 +952,256 @@ const NewProject = (getProps) => {
         element.update();
       },
       onclick: getProps().viewModel.createNewProject,
-      style: {
-        color,
-        margin: '32px',
-        padding: '0 16px',
-        height: '64px',
-        background: 'none',
-        lineHeight: '64px',
-        fontSize: '16px',
-        display: 'inline-block',
-      },
+      style: `${color};
+              margin: 32px;
+              padding: 0 16px;
+              height: 64px;
+              background: none;
+              line-height: 64px;
+              font-size: 16px;
+              display: inline-block;`,
     }),
-    ['New project']
+    []
   );
   return element;
 };
 
 module.exports = NewProject;
+
+  return module.exports;
+})();
+
+modules['src/components/horizontalNavigator/HorizontalNavigator.js'] = (() => {
+  const module = { exports: {} };
+  const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const HorizontalNavigator = (_, children) => {
+  const element = compose(
+    'div',
+    {
+      style: `height: 64px;
+              box-shadow: rgba(0, 0, 0, 0.25) 0 0 10px -5px;
+              background: white;
+              color: darkslategray;`,
+    },
+    children
+  );
+  return element;
+};
+
+module.exports = HorizontalNavigator;
+
+  return module.exports;
+})();
+
+modules['src/app/titleBar/atoms.js'] = (() => {
+  const module = { exports: {} };
+  const { callUntilNotFunction, compose } = include(
+  'src/libraries/simpleHTML/SimpleHTML.js'
+);
+
+const ViewTitle = (_, children) => {
+  return compose(
+    'div',
+    {
+      style: `font-size: 32px;
+              padding: '16px';
+              display: inline-block;`,
+    },
+    children
+  );
+};
+
+const ExportButton = (getProps) => {
+  const element = compose(
+    'div',
+    () => {
+      const { innerText, onclick } = getProps();
+      return {
+        innerText,
+        onclick,
+        style: `font-size: 16px;
+              padding: 0 16px;
+              float: right;
+              line-height: 64px;
+              cursor: pointer;`,
+      };
+    },
+    []
+  );
+  return element;
+};
+
+module.exports = { ViewTitle, ExportButton };
+
+  return module.exports;
+})();
+
+modules['src/app/titleBar/exportedTitleBar/ExportedTitleBar.js'] = (() => {
+  const module = { exports: {} };
+  const HorizontalNavigator = include(
+  'src/components/horizontalNavigator/HorizontalNavigator.js'
+);
+const { ViewTitle, ExportButton } = include('src/app/titleBar/atoms.js');
+
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const ExportedTitleBar = (getProps) => {
+  const element = HorizontalNavigator(
+    () => ({}),
+    () => [
+      ViewTitle(
+        () => ({}),
+        () => [
+          compose(
+            'span',
+            {
+              style: `color: darkslategray;
+                        cursor: pointer;`,
+              onclick: () => {
+                location.hash = '#!/';
+              },
+            },
+            [getProps().state.selectedProjectName]
+          ),
+        ]
+      ),
+    ]
+  );
+  return element;
+};
+
+module.exports = ExportedTitleBar;
+
+  return module.exports;
+})();
+
+modules['src/app/titleBar/unexportedTitleBar/UnexportedTitleBar.js'] = (() => {
+  const module = { exports: {} };
+  const HorizontalNavigator = include(
+  'src/components/horizontalNavigator/HorizontalNavigator.js'
+);
+const { ViewTitle, ExportButton } = include('src/app/titleBar/atoms.js');
+
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const UnexportedTitleBar = (getProps) => {
+  const element = HorizontalNavigator(
+    () => ({}),
+    () => [
+      ViewTitle(
+        () => ({}),
+        () => [
+          compose(
+            'span',
+            {
+              innerText: 'Projects',
+              onclick: () => (location.hash = '#!/projects'),
+              style: 'cursor: pointer',
+            },
+            []
+          ),
+          compose(
+            'span',
+            () => {
+              const { state, viewModel } = getProps();
+              const { currentRoute } = state;
+              return {
+                style: `color: ${
+                  currentRoute.indexOf('/projects/<projectId:string>') === 0
+                    ? 'darkslategray'
+                    : 'lightgray'
+                };
+                      cursor: pointer;`,
+                onclick: () => {
+                  location.hash = `#!/projects/${state.selectedProjectId}/${
+                    viewModel.lastVisitedProjectView || ''
+                  }`;
+                },
+              };
+            },
+            () => [
+              getProps().state.selectedProjectName
+                ? ` / ${getProps().state.selectedProjectName}`
+                : '',
+            ]
+          ),
+        ]
+      ),
+      ExportButton(
+        () => ({
+          innerText: 'Export',
+          onclick: () => {
+            const { state } = getProps();
+            const element = document.createElement('a');
+            // SInce just the first occurrence of the code will be replaced, we need to make sure that this code does not replace itself, so we construct the match on call time
+            const fileContent = document.head.innerHTML
+              .replace(
+                '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *f*a*l*s*e*;*'
+                  .split('*')
+                  .join(''),
+                '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *t*r*u*e*;*'
+                  .split('*')
+                  .join('')
+              )
+              .replace(
+                '*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>* *[*]*;*'
+                  .split('*')
+                  .join(''),
+                `*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>*`
+                  .split('*')
+                  .join('') +
+                  JSON.stringify([
+                    {
+                      id: state.selectedProjectId,
+                      name: state.selectedProjectName,
+                      apiUrl: state.selectedApiUrl,
+                      apiInterval: state.selectedApiInterval,
+                      derivedValuesCode: state.selectedDerivedValuesCode,
+                      widgetsCode: state.selectedWidgetsCode,
+                    },
+                  ])
+              );
+            const file = new Blob([fileContent], { type: 'text/plain' });
+            element.href = URL.createObjectURL(file);
+            element.download = `${state.selectedProjectName
+              .toLowerCase()
+              .split(' ')
+              .join('-')}.html`;
+            document.body.appendChild(element); // Required for this to work in FireFox
+            element.click();
+          },
+        }),
+        []
+      ),
+    ]
+  );
+  return element;
+};
+
+module.exports = UnexportedTitleBar;
+
+  return module.exports;
+})();
+
+modules['src/app/titleBar/TitleBar.js'] = (() => {
+  const module = { exports: {} };
+  const ExportedTitleBar = include(
+  'src/app/titleBar/exportedTitleBar/ExportedTitleBar.js'
+);
+const UnexportedTitleBar = include(
+  'src/app/titleBar/unexportedTitleBar/UnexportedTitleBar.js'
+);
+
+const TitleBar = (getProps) => {
+  const element = getProps().state.isExported
+    ? ExportedTitleBar(getProps)
+    : UnexportedTitleBar(getProps);
+
+  return element;
+};
+
+module.exports = TitleBar;
 
   return module.exports;
 })();
@@ -1191,16 +1213,14 @@ modules['src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js']
 const ProjectPreviewContainer = (_, children) => {
   return compose(
     'div',
-    () => ({
-      style: {
-        color: 'dimgray',
-        margin: '32px 32px 0 32px',
-        height: '64px',
-        background: 'white',
-        lineHeight: '64px',
-        fontSize: '16px',
-      },
-    }),
+    {
+      style: `color: dimgray;
+              margin: 32px 32px 0 32px;
+              height: 64px;
+              background: white;
+              line-height: 64px;
+              font-size: 16px;`,
+    },
     children
   );
 };
@@ -1228,20 +1248,19 @@ const ProjectPreviewButton = (getProps) => {
         isHovered = false;
         element.update();
       },
-      style: {
-        color: isHovered ? 'darkslategray' : 'slategray',
-        height: '64px',
-        background: 'white',
-        lineHeight: '64px',
-        fontSize: '16px',
-        width: '64px',
-        textAlign: 'center',
-        border: 'none',
-        outline: 'none',
-        cursor: 'pointer',
-      },
+      innerText: getProps().innerText,
+      style: `color: ${isHovered ? 'darkslategray' : 'slategray'};
+              height: 64px;
+              background: white;
+              line-height: 64px;
+              font-size: 16px;
+              width: 64px;
+              text-align: center;
+              border: none;
+              outline: none;
+              cursor: pointer;`,
     }),
-    [getProps().value]
+    []
   );
   return element;
 };
@@ -1267,30 +1286,35 @@ const ProjectPreview = (getProps) => {
     compose(
       'div',
       () => {
-        const { id, state } = getProps();
+        const { id, state, name } = getProps();
         return {
           onclick: () => {
             location.hash = `#!/projects/${id}/${
               state.lastVisitedProjectView || ''
             }`;
           },
-          style: {
-            padding: '0 16px',
-            width: 'calc(100% - 128px)',
-            boxSizing: 'border-box',
-            display: 'inline-block',
-          },
+          style: `padding: 0 16px;
+                  width: calc(100% - 128px);
+                  box-sizing: border-box;
+                  display: inline-block;`,
+          innerText: name,
         };
       },
-      [getProps().name]
+      []
     ),
     ProjectPreviewButton(
-      () => ({ onclick: () => viewModel.deleteProject(getProps().id) }),
-      ['Delete']
+      () => ({
+        innerText: 'Delete',
+        onclick: () => viewModel.deleteProject(getProps().id),
+      }),
+      []
     ),
     ProjectPreviewButton(
-      () => ({ onclick: () => viewModel.editProjectName(id$.value) }),
-      ['Edit']
+      () => ({
+        innerText: 'Edit',
+        onclick: () => viewModel.editProjectName(id$.value),
+      }),
+      []
     ),
   ]);
 };
@@ -1304,23 +1328,26 @@ modules['src/views/projects/projectNameInputContainer/ProjectNameInputContainer.
   const module = { exports: {} };
   const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const ProjectNameInputContainer = (_, children) => {
+const ProjectNameInputContainer = (getProps) => {
   const element = compose(
     'span',
-    () => ({
-      style: {
+    () => {
+      const { innerText, oninput } = getProps();
+      return {
         // TODO: Make this one align nicely next to the input
-        color: 'dimgray',
-        height: '64px',
-        padding: '8px',
-        lineHeight: '64px',
-        fontSize: '16px',
-        width: 'calc(100% - 128px)',
-        display: 'inline-block',
-        boxSizing: 'border-box',
-      },
-    }),
-    children
+        innerText,
+        oninput,
+        style: `color: dimgray;
+              height: 64px;
+              padding: 8px;
+              line-height: 64px;
+              font-size: 16px;
+              width: calc(100% - 128px);
+              display: inline-block;
+              box-sizing: border-box;`,
+      };
+    },
+    []
   );
   return element;
 };
@@ -1347,30 +1374,33 @@ const ProjectNameInput = ({ viewModel, id$, nameInputValue$ }) => {
   const element = ProjectPreviewContainer(() => ({}), [
     ProjectNameInputContainer(
       () => ({
+        innerText: getProps().nameInputValue,
         oninput: ({ value }) => {
           const { id, viewModel } = getProps();
           viewModel.setProjectNameInputValue(id, value);
         },
       }),
-      [getProps().nameInputValue]
+      []
     ),
     ProjectPreviewButton(
       () => ({
+        innerText: 'Cancel',
         onclick: () => {
           const { id, viewModel } = getProps();
           viewModel.cancelEditingProjectName(id);
         },
       }),
-      ['Cancel']
+      []
     ),
     ProjectPreviewButton(
       () => ({
+        innerText: 'Save',
         onclick: () => {
           const { id, viewModel } = getProps();
           viewModel.saveProjectName(id);
         },
       }),
-      ['Save']
+      []
     ),
   ]);
   return element;
@@ -1427,23 +1457,24 @@ modules['src/views/dataSources/apiInputLabel/ApiInputLabel.js'] = (() => {
   const module = { exports: {} };
   const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const ApiInputLabel = ({ label }) => {
+const ApiInputLabel = (getProps) => {
   const element = compose(
     'span',
     () => ({
+      innerText: getProps().innerText,
       // TODO: Make this one align nicely next to the input
-      color: 'dimgray',
-      height: '64px',
-      padding: '0 16px',
-      lineHeight: '64px',
-      fontSize: '16px',
-      width: '192px',
-      border: 'none',
-      outline: 'none',
-      display: 'inline-block',
-      boxSizing: 'border-box',
+      // width = 8 x 20px
+      // height = 2 x 20px
+      style: `color: dimgray;
+              height: 40px;
+              padding: 10px;
+              line-height: 40px;
+              font-size: 15px;
+              width: 160px;
+              display: inline-block;
+              box-sizing: border-box;`,
     }),
-    [label]
+    []
   );
   return element;
 };
@@ -1453,61 +1484,57 @@ module.exports = ApiInputLabel;
   return module.exports;
 })();
 
-modules['src/views/dataSources/apiInputContainer/ApiInputContainer.js'] = (() => {
-  const module = { exports: {} };
-  const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const ApiInputContainer = (_, children) => {
-  const element = compose(
-    'span',
-    () => ({
-      style: {
-        // TODO: Make this one align nicely next to the input
-        color: 'dimgray',
-        height: '64px',
-        padding: '8px',
-        lineHeight: '64px',
-        fontSize: '16px',
-        width: 'calc(100% - 192px)',
-        display: 'inline-block',
-        boxSizing: 'border-box',
-      },
-    }),
-    children
-  );
-  return element;
-};
-
-module.exports = ApiInputContainer;
-
-  return module.exports;
-})();
-
 modules['src/views/dataSources/apiIntervalInput/ApiIntervalInput.js'] = (() => {
   const module = { exports: {} };
-  const ProjectPreviewContainer = include(
-  'src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js'
-);
-const ApiInputLabel = include(
+  const ApiInputLabel = include(
   'src/views/dataSources/apiInputLabel/ApiInputLabel.js'
 );
-const ApiInputContainer = include(
-  'src/views/dataSources/apiInputContainer/ApiInputContainer.js'
-);
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 // getProps::() => { state, viewModel }
 const ApiIntervalInput = (getProps) => {
-  const element = ProjectPreviewContainer(() => ({}), [
-    ApiInputLabel(() => ({ label: 'Fetch interval (s)' })),
-    ApiInputContainer(
-      () => ({
-        type: 'number',
-        min: '0',
-        oninput: ({ value }) => {
-          viewModel.updateApiInterval(state.selectedProjectId, value);
-        },
-      }),
-      [getProps().state.selectedApiInterval]
+  const element = compose('div', {}, [
+    compose(
+      'span',
+      {
+        style: `box-sizing: border-box;
+                display: inline-block;
+                padding: 10px;
+                width: 160px;`,
+      },
+      [ApiInputLabel(() => ({ innerText: 'Fetch interval (s)' }))]
+    ),
+    compose(
+      'span',
+      {
+        style: `box-sizing: border-box;
+                display: inline-block;
+                padding: 10px;
+                width: calc(100% - 160px);`,
+      },
+      [
+        compose(
+          'input',
+          () => ({
+            type: 'number',
+            min: '0',
+            oninput: ({ value }) => {
+              const { state, viewModel } = getProps();
+              viewModel.updateApiInterval(state.selectedProjectId, value);
+            },
+            style: `border-radius: 5px;
+                    font-family: "Courier New", Courier, monospace;
+                    background: rgba(0, 0, 0, 0.05);
+                    outline: none;
+                    font-size: 15px;
+                    padding: 10px;
+                    border: none;
+                    width: 100%;
+                    box-shadow: inset rgba(0, 0, 0, 0.5) 0 0 10px -5px;`,
+          }),
+          [getProps().state.selectedApiInterval]
+        ),
+      ]
     ),
   ]);
   return element;
@@ -1518,64 +1545,40 @@ module.exports = ApiIntervalInput;
   return module.exports;
 })();
 
-modules['src/components/fullWidthCard/FullWidthCard.js'] = (() => {
-  const module = { exports: {} };
-  const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const FullWidthCard = (_, children) => {
-  return compose(
-    'div',
-    () => ({
-      style: {
-        color: 'dimgray',
-        margin: '32px 32px 0 32px',
-        background: 'white',
-        lineHeight: '64px',
-        fontSize: '16px',
-      },
-    }),
-    children
-  );
-};
-
-module.exports = FullWidthCard;
-
-  return module.exports;
-})();
-
 modules['src/components/textButton/TextButton.js'] = (() => {
   const module = { exports: {} };
   const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const TextButton = (getProps, children) => {
+const TextButton = (getProps) => {
   let isHovered = false;
   const element = compose(
     'button',
-    () => ({
-      onclick: getProps().onclick,
-      onmouseenter: () => {
-        isHovered = true;
-        //element.update();
-      },
-      onmouseleave: () => {
-        isHovered = false;
-        //element.update();
-      },
-      style: {
-        color: isHovered ? 'darkslategray' : 'slategray',
-        height: '64px',
-        background: 'white',
-        lineHeight: '64px',
-        fontSize: '16px',
-        width: '100%',
-        textAlign: 'center',
-        border: 'none',
-        outline: 'none',
-        cursor: 'pointer',
-        padding: '0 16px',
-      },
-    }),
-    children
+    () => {
+      const { innerText, onclick } = getProps();
+      return {
+        innerText,
+        onclick,
+        onmouseenter: () => {
+          isHovered = true;
+          element.update();
+        },
+        onmouseleave: () => {
+          isHovered = false;
+          element.update();
+        },
+        style: `color: ${isHovered ? 'darkslategray' : 'slategray'};
+                background: none;
+                height: 40px;
+                line-height: 40px;
+                font-size: 15px;
+                width: 100%;
+                text-align: left;
+                border: none;
+                outline: none;
+                cursor: pointer;`,
+      };
+    },
+    []
   );
   return element;
 };
@@ -1590,26 +1593,30 @@ modules['src/views/dataSources/apiUrlTestPreview/ApiUrlTestPreview.js'] = (() =>
   const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ApiUrlTestPreview = (_, children) => {
+  // TODO: line-height, max-height and min-height here seem kind of random
   const element = compose(
     'div',
-    () => ({
-      style: {
-        color: 'lightslategray',
-        background: 'ghostwhite',
-        lineHeight: '32px',
-        fontSize: '0 16px',
-        width: '100%',
-        margin: '8px',
-        padding: '8px',
-        display: 'inline-block',
-        boxSizing: 'border-box',
-        fontFamily: '"Courier New", Courier, monospace',
-        whiteSpace: 'pre-wrap',
-        maxHeight: '448px',
-        minHeight: '48px',
-        overflow: 'auto',
-      },
-    }),
+    {
+      style: `color: lightslategray;
+              line-height: 32px;
+              display: inline-block;
+              box-sizing: border-box;
+              white-space: pre-wrap;
+              max-height: 448px;
+              min-height: 48px;
+              overflow: auto;
+              
+              border-radius: 5px;
+              font-family: "Courier New", Courier, monospace;
+              background: rgba(0, 0, 0, 0.05);
+              outline: none;
+              font-size: 15px;
+              padding: 10px;
+              border: none;
+              resize: none;
+              width: 100%;
+              box-shadow: inset rgba(0, 0, 0, 0.5) 0 0 10px -5px;`,
+    },
     children
   );
   return element;
@@ -1622,12 +1629,8 @@ module.exports = ApiUrlTestPreview;
 
 modules['src/views/dataSources/apiUrlInput/ApiUrlInput.js'] = (() => {
   const module = { exports: {} };
-  const FullWidthCard = include('src/components/fullWidthCard/FullWidthCard.js');
-const ApiInputLabel = include(
+  const ApiInputLabel = include(
   'src/views/dataSources/apiInputLabel/ApiInputLabel.js'
-);
-const ApiInputContainer = include(
-  'src/views/dataSources/apiInputContainer/ApiInputContainer.js'
 );
 const TextButton = include('src/components/textButton/TextButton.js');
 const ApiUrlTestPreview = include(
@@ -1637,45 +1640,87 @@ const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ApiUrlInput = (getProps) => {
   const { viewModel } = getProps();
-  const element = FullWidthCard({}, [
-    compose('div', () => ({ style: { minHeight: '128px' } }), [
-      ApiInputLabel(() => ({}), ['API URL']),
-      ApiInputContainer(() => ({}), [
-        compose(
-          'input',
-          () => ({
-            oninput: ({ value }) => {
-              viewModel.updateApiUrl(getProps().state.selectedProjectId, value);
-            },
-            value: getProps().state.selectedApiUrl,
-          }),
-          []
-        ),
-      ]),
+  const element = compose('div', {}, [
+    // The row where you can enter the API URL
+    compose('div', {}, [
       compose(
         'span',
-        () => ({
-          style: {
-            textAlign: 'left',
-            width: '192px',
-            height: '64px',
-            float: 'left',
-          },
-        }),
+        {
+          style: `box-sizing: border-box;
+                  display: inline-block;
+                  padding: 10px;
+                  width: 160px;`,
+        },
+        [ApiInputLabel(() => ({ innerText: 'API URL' }))]
+      ),
+      compose(
+        'span',
+        {
+          style: `box-sizing: border-box;
+                  display: inline-block;
+                  padding: 10px;
+                  width: calc(100% - 160px);`,
+        },
         [
-          TextButton(
+          compose(
+            'input',
             () => ({
-              onclick: getProps().state.testApiUrlInput,
+              oninput: ({ value }) => {
+                viewModel.updateApiUrl(
+                  getProps().state.selectedProjectId,
+                  value
+                );
+              },
+              style: `border-radius: 5px;
+                      font-family: "Courier New", Courier, monospace;
+                      background: rgba(0, 0, 0, 0.05);
+                      outline: none;
+                      font-size: 15px;
+                      padding: 10px;
+                      border: none;
+                      width: 100%;
+                      box-shadow: inset rgba(0, 0, 0, 0.5) 0 0 10px -5px;`,
+              value: getProps().state.selectedApiUrl,
             }),
-            ['Test API URL']
+            []
           ),
         ]
       ),
-      compose('span', () => ({ style: { width: 'calc(100% - 208px)' } }), [
-        ApiUrlTestPreview(() => ({}), [
-          getProps().state.selectedApiUrlTestPreview,
-        ]),
-      ]),
+    ]),
+    // The row where you can test the API URL
+    compose('div', {}, [
+      compose(
+        'span',
+        {
+          // float: left makes sure the label stays at the top of the parent div
+          // when the preview box next to it expands.
+          style: `box-sizing: border-box;
+                  display: inline-block;
+                  float: left;
+                  padding: 10px;
+                  width: 160px;`,
+        },
+        [
+          TextButton(() => ({
+            innerText: 'Test API URL',
+            onclick: getProps().viewModel.testApiUrlInput,
+          })),
+        ]
+      ),
+      compose(
+        'span',
+        {
+          style: `box-sizing: border-box;
+                  display: inline-block;
+                  padding: 10px;
+                  width: calc(100% - 160px);`,
+        },
+        [
+          ApiUrlTestPreview(() => ({}), [
+            getProps().state.selectedApiUrlTestPreview,
+          ]),
+        ]
+      ),
     ]),
   ]);
   return element;
@@ -1737,10 +1782,6 @@ modules['src/libraries/simpleUI/NavigationButton.js'] = (() => {
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const getColor = (isHovered, isSelected) => {
-  console.log(
-    'finding textColor: ',
-    isSelected || isHovered ? Colors.HighlightedTextColor : Colors.TextColor
-  );
   return isSelected || isHovered
     ? Colors.HighlightedTextColor
     : Colors.TextColor;
@@ -1757,16 +1798,14 @@ const NavigationButton = (getProps) => {
     () => {
       const { isSelected } = getProps();
       return {
-        style: {
-          display: 'inline-block',
-          textAlign: 'center',
-          boxSizing: 'border-box',
-          width: '160px',
-          height: '40px',
-          lineHeight: '40px',
-          fontSize: '15px',
-          borderBottom: getBorderBottom(isSelected),
-        },
+        style: `display: inline-block;
+                text-align: center;
+                box-sizing: border-box;
+                width: 160px;
+                height: 40px;
+                line-height: 40px;
+                font-size: 15px;
+                border-bottom: ${getBorderBottom(isSelected)};`,
       };
     },
     [
@@ -1775,24 +1814,23 @@ const NavigationButton = (getProps) => {
         () => {
           const { isSelected, href } = getProps();
           return {
-            style: {
-              textDecoration: 'none',
-              display: 'inline-block',
-              width: '100%',
-              color: getColor(isHovered, isSelected),
-            },
+            style: `text-decoration: none;
+                    display: inline-block;
+                    width: 100%;
+                    color: ${getColor(isHovered, isSelected)};`,
             href,
             onmouseenter: () => {
               isHovered = true;
               element.update();
             },
-            onMouseLeave: () => {
+            onmouseleave: () => {
               isHovered = false;
               element.update();
             },
+            innerText: getProps().label,
           };
         },
-        [getProps().label]
+        []
       ),
     ]
   );
@@ -1905,8 +1943,8 @@ const DashboardButton = include(
 );
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const Navigator = ({}, children) => {
-  element = compose('div', () => ({ style: { height: '40px' } }), children);
+const Navigator = (_, children) => {
+  element = compose('div', { style: 'height: 40px;' }, children);
   return element;
 };
 
@@ -1968,17 +2006,15 @@ modules['src/components/widgetLabel/WidgetLabel.js'] = (() => {
 const WidgetLabel = (getProps) => {
   const element = compose(
     'div',
-    () => ({
-      style: {
-        fontSize: '20px',
-        marginTop: '20px',
-        textAlign: 'center',
-        position: 'absolute',
-        width: '100%',
-        pointerEvents: 'none',
-        userSelect: 'none',
-      },
-    }),
+    {
+      style: `font-size: 20px;
+              margin-top: 20px;
+              text-align: center;
+              position: absolute;
+              width: 100%;
+              pointer-events: none;
+              user-select: none;`,
+    },
     () => [getProps().label]
   );
   return element;
@@ -1997,16 +2033,14 @@ const WidgetValue = (getProps) => {
   const { value } = getProps();
   const element = compose(
     'div',
-    () => ({
-      style: {
-        fontSize: '60px',
-        textAlign: 'center',
-        width: '100%',
-        position: 'absolute',
-        top: '50%',
-        transform: 'translate(0, -50%)',
-      },
-    }),
+    {
+      style: `font-size: 60px;
+              text-align: center;
+              width: 100%;
+              position: absolute;
+              top: 50%;
+              transform: translate(0, -50%);`,
+    },
     () => [Number(value).toFixed(2)]
   );
   return element;
@@ -2027,14 +2061,14 @@ const ValueWidget = (getProps) => {
   const element = compose(
     'span',
     () => ({
-      style: {
-        display: 'inline-block',
-        position: 'relative',
-        color: 'dimgray',
-        width: '480px', // 24 x SizeUnit
-        height: '320px', // 16 x SizeUnit
-        background: Number(getProps().value) === 500 ? 'blue' : 'red',
-      },
+      // width = 24 x SizeUnit
+      // height = 16 x SizeUnit
+      style: `display: inline-block;
+              position: relative;
+              color: dimgray;
+              width: 480px;
+              height: 320px;
+              background: ${Number(getProps().value) === 500 ? 'blue' : 'red'}`,
     }),
     [
       WidgetLabel(() => ({ label: getProps().label })),
@@ -2239,7 +2273,7 @@ const Canvas3dWidget = (getProps) => {
     () => ({
       height: 320, // 16 x SizeUnit
       width: 480, // 24 x SizeUnit
-      style: { position: 'absolute' },
+      style: 'position: absolute;',
     }),
     []
   );
@@ -2324,7 +2358,7 @@ const TwoDimVisualization = (getProps) => {
     () => ({
       height: 320, // 16 x SizeUnit
       width: 480, // 24 x SizeUnit
-      style: { position: 'absolute' },
+      style: 'position: absolute;',
     }),
     []
   );
@@ -2399,17 +2433,17 @@ const getWidgetElementByType = (getProps) => {
 const Widget = (getProps) => {
   const element = compose(
     'span',
-    () => ({
-      style: {
-        padding: '10px',
-        display: 'inline-block',
-        verticalAlign: 'top',
-        background: 'white',
-        width: '480px', // 24 x SizeUnit
-        height: '320px', // 16 x SizeUnit
-        boxShadow: 'rgba(0, 0, 0, 0.25) 0 0 10px -5px',
-      },
-    }),
+    {
+      // width = 24 x SizeUnit
+      // height = 16 x SizeUnit
+      style: `padding: 10px;
+              display: inline-block;
+              vertical-align: top;
+              background: white;
+              width: 480px;
+              height: 320px;
+              box-shadow: rgba(0, 0, 0, 0.25) 0 0 10px -5px;`,
+    },
     [getWidgetElementByType(getProps)]
   );
   return element;
@@ -2445,7 +2479,7 @@ const getWidgetElements = ({ widgets }) => {
 const DashboardWidgets = (getProps) => {
   const element = compose(
     'div',
-    () => ({ style: { padding: '10px' } }),
+    { style: 'padding: 10px' },
     getWidgetElements({ widgets: getProps().state.widgets })
   );
   return element;
@@ -2464,7 +2498,7 @@ modules['src/views/dashboard/Dashboard.js'] = (() => {
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const Dashboard = (getProps) => {
-  const element = compose('div', () => ({ style: { padding: '10px' } }), [
+  const element = compose('div', { style: `padding: 10px;` }, [
     DashboardWidgets(getProps),
   ]);
 
@@ -2476,6 +2510,36 @@ module.exports = Dashboard;
   return module.exports;
 })();
 
+modules['src/app/exportedApp/ExportedApp.js'] = (() => {
+  const module = { exports: {} };
+  const ProjectContainer = include(
+  'src/views/project/projectContainer/ProjectContainer.js'
+);
+const TitleBar = include('src/app/titleBar/TitleBar.js');
+const Dashboard = include('src/views/dashboard/Dashboard.js');
+
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const withKey = (element, key) => {
+  element.key = key;
+  return element;
+};
+
+// getProps::() => { state, viewModel }
+const ExportedApp = (getProps) => {
+  const element = compose('div', {}, [
+    TitleBar(getProps),
+    ProjectContainer({}, [Dashboard(getProps)]),
+  ]);
+
+  return element;
+};
+
+module.exports = ExportedApp;
+
+  return module.exports;
+})();
+
 modules['src/views/dashboardEditor/DashboardEditor.js'] = (() => {
   const module = { exports: {} };
   const DashboardWidgets = include(
@@ -2483,27 +2547,30 @@ modules['src/views/dashboardEditor/DashboardEditor.js'] = (() => {
 );
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
+const withKey = (element, key) => {
+  element.key = key;
+  return element;
+};
+
 const CodeEditor = (getProps) => {
-  const element = compose('div', () => ({ style: { padding: '10px' } }), [
+  const element = compose('div', { style: 'padding: 10px;' }, [
     compose(
       'textarea',
       () => {
         const { value, oninput } = getProps();
         return {
           oninput,
-          style: {
-            height: '300px',
-            borderRadius: '5px',
-            fontFamily: `"Courier New", Courier, monospace`,
-            background: 'rgba(0, 0, 0, 0.05)',
-            outline: 'none',
-            fontSize: '15px',
-            padding: '10px',
-            border: 'none',
-            resize: 'none',
-            width: '100%',
-            boxShadow: 'inset rgba(0, 0, 0, 0.5) 0 0 10px -5px',
-          },
+          style: `height: 300px;
+                  border-radius: 5px;
+                  font-family: "Courier New", Courier, monospace;
+                  background: rgba(0, 0, 0, 0.05);
+                  outline: none;
+                  font-size: 15px;
+                  padding: 10px;
+                  border: none;
+                  resize: none;
+                  width: 100%;
+                  box-shadow: inset rgba(0, 0, 0, 0.5) 0 0 10px -5px;`,
           value,
         };
       },
@@ -2515,7 +2582,7 @@ const CodeEditor = (getProps) => {
 
 // getProps::() => { state, viewModel }
 const DashboardEditor = (getProps) => {
-  const element = compose('div', () => ({ style: { padding: '10px' } }), [
+  const element = compose('div', { style: 'padding: 10px;' }, [
     CodeEditor(() => {
       const { state, viewModel } = getProps();
       const oninput = ({ target }) => {
@@ -2534,7 +2601,7 @@ module.exports = DashboardEditor;
   return module.exports;
 })();
 
-modules['src/app/App.js'] = (() => {
+modules['src/app/unexportedApp/UnexportedApp.js'] = (() => {
   const module = { exports: {} };
   const ProjectNavigator = include(
   'src/views/project/projectNavigator/ProjectNavigator.js'
@@ -2555,44 +2622,74 @@ const withKey = (element, key) => {
   return element;
 };
 
+const isProjectsUrl = (currentRoute) => {
+  return currentRoute === '/';
+};
+
+const hasOpenedProject = (currentRoute) => {
+  return currentRoute.indexOf('/projects/<projectId:string>') === 0;
+};
+
+const isDataSourcesUrl = (currentRoute) => {
+  return (
+    currentRoute === '/projects/<projectId:string>/data-sources' ||
+    currentRoute === '/projects/<projectId:string>'
+  );
+};
+
+const isDashboardEditorUrl = (currentRoute) => {
+  return currentRoute === '/projects/<projectId:string>/dashboard/edit';
+};
+
+const isDashboardUrl = (currentRoute) => {
+  return currentRoute === '/projects/<projectId:string>/dashboard';
+};
+
 // getProps::() => { state, viewModel }
-const App = (getProps) => {
-  const { state } = getProps();
-  const element = state.isExported
-    ? compose('div', {}, [
-        TitleBar(getProps),
-        ProjectContainer({}, [Dashboard(getProps)]),
-      ])
-    : compose('div', {}, [
-        withKey(TitleBar(getProps), 'title-bar'),
-        getProps().state.currentRoute === '/'
-          ? withKey(Projects(getProps), 'projects')
-          : null,
-        getProps().state.currentRoute.indexOf(
-          '/projects/<projectId:string>'
-        ) === 0
-          ? withKey(
-              ProjectContainer(getProps, [
-                withKey(ProjectNavigator(getProps), 'project-navigator'),
-                state.currentRoute ===
-                  '/projects/<projectId:string>/data-sources' ||
-                state.currentRoute === '/projects/<projectId:string>'
-                  ? withKey(DataSources(getProps), 'data-sources')
-                  : null,
-                state.currentRoute ===
-                '/projects/<projectId:string>/dashboard/edit'
-                  ? withKey(DashboardEditor(getProps), 'dashboard-editor')
-                  : null,
-                state.currentRoute === '/projects/<projectId:string>/dashboard'
-                  ? withKey(Dashboard(getProps), 'dashboard')
-                  : null,
-              ]),
-              'project-container'
-            )
-          : null,
-      ]);
+const UnexportedApp = (getProps) => {
+  const element = compose('div', {}, () => {
+    const { state } = getProps();
+    const { currentRoute } = state;
+    return [
+      withKey(TitleBar(getProps), 'title-bar'),
+      isProjectsUrl(currentRoute) && withKey(Projects(getProps), 'projects'),
+      hasOpenedProject(currentRoute) &&
+        withKey(
+          compose('div', {}, () => {
+            const { currentRoute } = getProps().state;
+            return [
+              withKey(ProjectNavigator(getProps), 'project-navigator'),
+              isDataSourcesUrl(currentRoute) &&
+                withKey(DataSources(getProps), 'data-sources'),
+              isDashboardEditorUrl(currentRoute) &&
+                withKey(DashboardEditor(getProps), 'dashboard-editor'),
+              isDashboardUrl(currentRoute) &&
+                withKey(Dashboard(getProps), 'dashboard'),
+            ];
+          }),
+          'opened-project'
+        ),
+    ];
+  });
 
   return element;
+};
+
+module.exports = UnexportedApp;
+
+  return module.exports;
+})();
+
+modules['src/app/App.js'] = (() => {
+  const module = { exports: {} };
+  const ExportedApp = include('src/app/exportedApp/ExportedApp.js');
+const UnexportedApp = include('src/app/unexportedApp/UnexportedApp.js');
+
+// getProps::() => { state, viewModel }
+const App = (getProps) => {
+  return getProps().state.isExported
+    ? ExportedApp(getProps)
+    : UnexportedApp(getProps);
 };
 
 module.exports = App;
@@ -2613,7 +2710,6 @@ Object.assign(document.body.style, {
   background: 'GhostWhite',
   height: '100%',
 });
-//const FIREBASE_API_KEY = 'AIzaSyCeGXLqw0MEwiSFHG1Wks1HfQHXRZoOuFY';
 
 const isExported = false;
 
@@ -2651,16 +2747,15 @@ const { state, setState, addStateChangeListener } = simpleState({
 
 const viewModel = Model({ router, isExported, state, setState });
 
-const app = compose('div', () => ({}), [
+const app = compose('div', {}, [
   App(() => ({
     state,
     setState,
     viewModel,
   })),
 ]);
-addStateChangeListener(({ state, setState }) => {
-  app.update();
-});
+
+addStateChangeListener(app.update);
 
 document.body.appendChild(app);
 

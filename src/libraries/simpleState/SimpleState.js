@@ -7,7 +7,6 @@ const simpleState = (initialState) => {
     });
   };
   const setState = (newState) => {
-    console.log('setState: newState: ', newState);
     Object.assign(state, newState);
     emit();
   };

@@ -10,7 +10,6 @@ Object.assign(document.body.style, {
   background: 'GhostWhite',
   height: '100%',
 });
-//const FIREBASE_API_KEY = 'AIzaSyCeGXLqw0MEwiSFHG1Wks1HfQHXRZoOuFY';
 
 const isExported = false;
 
@@ -48,15 +47,14 @@ const { state, setState, addStateChangeListener } = simpleState({
 
 const viewModel = Model({ router, isExported, state, setState });
 
-const app = compose('div', () => ({}), [
+const app = compose('div', {}, [
   App(() => ({
     state,
     setState,
     viewModel,
   })),
 ]);
-addStateChangeListener(({ state, setState }) => {
-  app.update();
-});
+
+addStateChangeListener(app.update);
 
 document.body.appendChild(app);

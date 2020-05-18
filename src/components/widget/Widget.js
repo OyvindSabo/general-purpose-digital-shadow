@@ -50,17 +50,17 @@ const getWidgetElementByType = (getProps) => {
 const Widget = (getProps) => {
   const element = compose(
     'span',
-    () => ({
-      style: {
-        padding: '10px',
-        display: 'inline-block',
-        verticalAlign: 'top',
-        background: 'white',
-        width: '480px', // 24 x SizeUnit
-        height: '320px', // 16 x SizeUnit
-        boxShadow: 'rgba(0, 0, 0, 0.25) 0 0 10px -5px',
-      },
-    }),
+    {
+      // width = 24 x SizeUnit
+      // height = 16 x SizeUnit
+      style: `padding: 10px;
+              display: inline-block;
+              vertical-align: top;
+              background: white;
+              width: 480px;
+              height: 320px;
+              box-shadow: rgba(0, 0, 0, 0.25) 0 0 10px -5px;`,
+    },
     [getWidgetElementByType(getProps)]
   );
   return element;

@@ -4,16 +4,14 @@ const WidgetValue = (getProps) => {
   const { value } = getProps();
   const element = compose(
     'div',
-    () => ({
-      style: {
-        fontSize: '60px',
-        textAlign: 'center',
-        width: '100%',
-        position: 'absolute',
-        top: '50%',
-        transform: 'translate(0, -50%)',
-      },
-    }),
+    {
+      style: `font-size: 60px;
+              text-align: center;
+              width: 100%;
+              position: absolute;
+              top: 50%;
+              transform: translate(0, -50%);`,
+    },
     () => [Number(value).toFixed(2)]
   );
   return element;

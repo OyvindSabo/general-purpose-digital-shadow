@@ -36,7 +36,7 @@ const Model = ({ router, isExported, state, setState }) => {
     if (state.isExported) {
       setState({ selectedProjectId: dataModel.projects[0].id });
     }
-    // I am here now
+
     const selectedProject = dataModel.projects.find(
       ({ id }) => id === state.selectedProjectId
     );
@@ -174,11 +174,10 @@ const Model = ({ router, isExported, state, setState }) => {
     fetch(state.selectedApiUrl)
       .then((response) => response.json())
       .then((jsonResponse) => {
-        // TODO: Make sure this does not cause a Maximum call stack exceeded error
-        /*setState({
+        setState({
           apiResponse: JSON.stringify(jsonResponse, null, 2),
         });
-        updateValues();*/
+        updateValues();
       });
   };
 
@@ -247,6 +246,8 @@ const Model = ({ router, isExported, state, setState }) => {
           lastVisitedProjectView: 'dashboard',
         });
       }
+    } else {
+      setState({ currentRoute, params });
     }
   };
   syncSelectedProjectWithRouter(router);

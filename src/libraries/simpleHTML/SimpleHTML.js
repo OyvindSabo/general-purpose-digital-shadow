@@ -30,8 +30,10 @@ const doPatchChildren = (
       element.insertBefore(newChild, element.childNodes[index]);
       return;
     }
-    console.log('newChild: ', newChild);
-    element.appendChild(newChild);
+    // TODO: Find out why this is needed
+    if (!(newChild.contains && newChild.contains(element))) {
+      element.append(newChild);
+    }
     return;
   });
 
@@ -39,39 +41,6 @@ const doPatchChildren = (
   while (newChildren.length < element.childNodes.length) {
     element.removeChild(element.childNodes[newChildren.length]);
   }
-};
-
-/**
- * https://stackoverflow.com/questions/27936772/how-to-deep-merge-instead-of-shallow-merge
- *
- * Simple object check.
- * @param item
- * @returns {boolean}
- */
-const isObject = (item) => {
-  return item && typeof item === 'object' && !Array.isArray(item);
-};
-/**
- * Deep merge two objects.
- * @param target
- * @param ...sources
- */
-const doDeepMerge = (target, ...sources) => {
-  if (!sources.length) return target;
-  const source = sources.shift();
-
-  if (isObject(target) && isObject(source)) {
-    for (const key in source) {
-      if (isObject(source[key])) {
-        if (!target[key]) Object.assign(target, { [key]: {} });
-        doDeepMerge(target[key], source[key]);
-      } else {
-        Object.assign(target, { [key]: source[key] });
-      }
-    }
-  }
-
-  return doDeepMerge(target, ...sources);
 };
 
 const determineIsNullish = (value) => value === null || value === undefined;
@@ -90,6 +59,11 @@ const callUntilNotFunction = (valueOrFunction) => {
 };
 
 const getCleanedChildNodes = (children) => {
+  console.log('children: ', children);
+  console.log(
+    'cleanedChildren: ',
+    children.map(getNodeRepresentation).filter(Boolean)
+  );
   return children.map(getNodeRepresentation).filter(Boolean);
 };
 
@@ -100,52 +74,48 @@ const getCleanedChildNodes = (children) => {
  * @param {*} children
  */
 const compose = (elementType, getProps, getChildren) => {
-  element = document.createElement(elementType);
-  //Object.assign(element, getProps());
+  const element = document.createElement(elementType);
+
   if (typeof getProps === 'function') {
-    doDeepMerge(element, getProps());
+    Object.assign(element, getProps());
   } else {
-    doDeepMerge(element, getProps);
+    Object.assign(element, getProps);
   }
 
   if (typeof getChildren === 'function') {
-    getCleanedChildNodes(getChildren()).forEach((childNode) => {
-      element.appendChild(childNode);
-    });
+    element.append(...getChildren().filter(Boolean));
   } else {
-    getCleanedChildNodes(getChildren).forEach((childNode) => {
-      element.appendChild(childNode);
-    });
+    element.append(...getChildren.filter(Boolean));
   }
 
   element.update = () => {
     // We update the props only if they are provided as a function. Otherwise they are static.
     if (typeof getProps === 'function') {
-      doDeepMerge(element, getProps());
-    }
-    //const newChildNodes = getCleanedChildNodes(callUntilNotFunction(children));
-    /*doPatchChildren(element, newChildNodes, (node1, node2) => {
-      if (node1 && node2 && node1.key && node2.key) {
-        return node1.key === node2.key;
+      if (element.selectionStart !== null && element.selectionRange !== null) {
+        const { selectionStart, selectionEnd } = element;
+        Object.assign(element, getProps(), { selectionStart, selectionEnd });
+      } else {
+        Object.assign(element, getProps());
       }
-      return false;
-    });*/
-    element.childNodes.forEach((childNode) => {
-      //console.log('element.innerHTML: ', element.innerHTML);
-      //console.log('Calling update from: ', element);
-      //console.log('updating: ', element.childNodes);
-      //console.log('parentNode: ', element.parentNode);
+    }
+    if (typeof getChildren === 'function') {
+      const newChildNodes = getChildren().filter(Boolean);
+      doPatchChildren(element, newChildNodes, (node1, node2) => {
+        if (node1 && node2 && node1.key && node2.key) {
+          return node1.key === node2.key;
+        }
+        return false;
+      });
+    }
+
+    Array.from(element.childNodes).forEach((childNode) => {
       if (typeof childNode.update === 'function') {
-        //console.log('childNodes: ', element.childNodes);
         childNode.update();
       }
     });
   };
   return element;
 };
-
-const nullishCoalesce = (primaryValue, backupValue) =>
-  determineIsNullish(primaryValue) ? secondaryValue : primaryValue;
 
 class SimpleHTML {
   static isProp = (propsOrChild) =>
@@ -199,8 +169,6 @@ const doMerge = (oldElement, newElement) => {
         oldChild.selectionStart = selectionStart;
         oldChild.selectionEnd = selectionEnd;
 
-        console.log('oldChild.update: ', oldChild.update);
-        console.log('newChild.propsAndChildren: ', newChild.propsAndChildren);
         oldChild.update(...newChild.propsAndChildren);
         if (Object.keys(newChild.propsAndChildren[0]).includes('style')) {
           if (!oldChild.style) {
@@ -316,6 +284,7 @@ const button = defineComponent((props, ...children) =>
 
 module.exports = {
   doMerge,
+  callUntilNotFunction,
   compose,
   defineComponent,
   div,

@@ -2,10 +2,6 @@ const { Colors } = include('src/libraries/simpleUI/Constants.js');
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const getColor = (isHovered, isSelected) => {
-  console.log(
-    'finding textColor: ',
-    isSelected || isHovered ? Colors.HighlightedTextColor : Colors.TextColor
-  );
   return isSelected || isHovered
     ? Colors.HighlightedTextColor
     : Colors.TextColor;
@@ -22,16 +18,14 @@ const NavigationButton = (getProps) => {
     () => {
       const { isSelected } = getProps();
       return {
-        style: {
-          display: 'inline-block',
-          textAlign: 'center',
-          boxSizing: 'border-box',
-          width: '160px',
-          height: '40px',
-          lineHeight: '40px',
-          fontSize: '15px',
-          borderBottom: getBorderBottom(isSelected),
-        },
+        style: `display: inline-block;
+                text-align: center;
+                box-sizing: border-box;
+                width: 160px;
+                height: 40px;
+                line-height: 40px;
+                font-size: 15px;
+                border-bottom: ${getBorderBottom(isSelected)};`,
       };
     },
     [
@@ -40,24 +34,23 @@ const NavigationButton = (getProps) => {
         () => {
           const { isSelected, href } = getProps();
           return {
-            style: {
-              textDecoration: 'none',
-              display: 'inline-block',
-              width: '100%',
-              color: getColor(isHovered, isSelected),
-            },
+            style: `text-decoration: none;
+                    display: inline-block;
+                    width: 100%;
+                    color: ${getColor(isHovered, isSelected)};`,
             href,
             onmouseenter: () => {
               isHovered = true;
               element.update();
             },
-            onMouseLeave: () => {
+            onmouseleave: () => {
               isHovered = false;
               element.update();
             },
+            innerText: getProps().label,
           };
         },
-        [getProps().label]
+        []
       ),
     ]
   );

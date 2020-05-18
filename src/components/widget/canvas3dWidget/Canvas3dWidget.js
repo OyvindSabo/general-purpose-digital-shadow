@@ -16,7 +16,7 @@ const Canvas3dWidget = (getProps) => {
     () => ({
       height: 320, // 16 x SizeUnit
       width: 480, // 24 x SizeUnit
-      style: { position: 'absolute' },
+      style: 'position: absolute;',
     }),
     []
   );

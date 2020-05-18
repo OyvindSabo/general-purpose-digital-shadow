@@ -9,8 +9,8 @@ const DashboardButton = include(
 );
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const Navigator = ({}, children) => {
-  element = compose('div', () => ({ style: { height: '40px' } }), children);
+const Navigator = (_, children) => {
+  element = compose('div', { style: 'height: 40px;' }, children);
   return element;
 };
 

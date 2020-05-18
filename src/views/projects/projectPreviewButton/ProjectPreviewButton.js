@@ -14,20 +14,19 @@ const ProjectPreviewButton = (getProps) => {
         isHovered = false;
         element.update();
       },
-      style: {
-        color: isHovered ? 'darkslategray' : 'slategray',
-        height: '64px',
-        background: 'white',
-        lineHeight: '64px',
-        fontSize: '16px',
-        width: '64px',
-        textAlign: 'center',
-        border: 'none',
-        outline: 'none',
-        cursor: 'pointer',
-      },
+      innerText: getProps().innerText,
+      style: `color: ${isHovered ? 'darkslategray' : 'slategray'};
+              height: 64px;
+              background: white;
+              line-height: 64px;
+              font-size: 16px;
+              width: 64px;
+              text-align: center;
+              border: none;
+              outline: none;
+              cursor: pointer;`,
     }),
-    [getProps().value]
+    []
   );
   return element;
 };

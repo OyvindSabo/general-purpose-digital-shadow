@@ -1,9 +1,5 @@
-const FullWidthCard = include('src/components/fullWidthCard/FullWidthCard.js');
 const ApiInputLabel = include(
   'src/views/dataSources/apiInputLabel/ApiInputLabel.js'
-);
-const ApiInputContainer = include(
-  'src/views/dataSources/apiInputContainer/ApiInputContainer.js'
 );
 const TextButton = include('src/components/textButton/TextButton.js');
 const ApiUrlTestPreview = include(
@@ -13,45 +9,87 @@ const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ApiUrlInput = (getProps) => {
   const { viewModel } = getProps();
-  const element = FullWidthCard({}, [
-    compose('div', () => ({ style: { minHeight: '128px' } }), [
-      ApiInputLabel(() => ({}), ['API URL']),
-      ApiInputContainer(() => ({}), [
-        compose(
-          'input',
-          () => ({
-            oninput: ({ value }) => {
-              viewModel.updateApiUrl(getProps().state.selectedProjectId, value);
-            },
-            value: getProps().state.selectedApiUrl,
-          }),
-          []
-        ),
-      ]),
+  const element = compose('div', {}, [
+    // The row where you can enter the API URL
+    compose('div', {}, [
       compose(
         'span',
-        () => ({
-          style: {
-            textAlign: 'left',
-            width: '192px',
-            height: '64px',
-            float: 'left',
-          },
-        }),
+        {
+          style: `box-sizing: border-box;
+                  display: inline-block;
+                  padding: 10px;
+                  width: 160px;`,
+        },
+        [ApiInputLabel(() => ({ innerText: 'API URL' }))]
+      ),
+      compose(
+        'span',
+        {
+          style: `box-sizing: border-box;
+                  display: inline-block;
+                  padding: 10px;
+                  width: calc(100% - 160px);`,
+        },
         [
-          TextButton(
+          compose(
+            'input',
             () => ({
-              onclick: getProps().state.testApiUrlInput,
+              oninput: ({ value }) => {
+                viewModel.updateApiUrl(
+                  getProps().state.selectedProjectId,
+                  value
+                );
+              },
+              style: `border-radius: 5px;
+                      font-family: "Courier New", Courier, monospace;
+                      background: rgba(0, 0, 0, 0.05);
+                      outline: none;
+                      font-size: 15px;
+                      padding: 10px;
+                      border: none;
+                      width: 100%;
+                      box-shadow: inset rgba(0, 0, 0, 0.5) 0 0 10px -5px;`,
+              value: getProps().state.selectedApiUrl,
             }),
-            ['Test API URL']
+            []
           ),
         ]
       ),
-      compose('span', () => ({ style: { width: 'calc(100% - 208px)' } }), [
-        ApiUrlTestPreview(() => ({}), [
-          getProps().state.selectedApiUrlTestPreview,
-        ]),
-      ]),
+    ]),
+    // The row where you can test the API URL
+    compose('div', {}, [
+      compose(
+        'span',
+        {
+          // float: left makes sure the label stays at the top of the parent div
+          // when the preview box next to it expands.
+          style: `box-sizing: border-box;
+                  display: inline-block;
+                  float: left;
+                  padding: 10px;
+                  width: 160px;`,
+        },
+        [
+          TextButton(() => ({
+            innerText: 'Test API URL',
+            onclick: getProps().viewModel.testApiUrlInput,
+          })),
+        ]
+      ),
+      compose(
+        'span',
+        {
+          style: `box-sizing: border-box;
+                  display: inline-block;
+                  padding: 10px;
+                  width: calc(100% - 160px);`,
+        },
+        [
+          ApiUrlTestPreview(() => ({}), [
+            getProps().state.selectedApiUrlTestPreview,
+          ]),
+        ]
+      ),
     ]),
   ]);
   return element;

@@ -1,26 +1,30 @@
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ApiUrlTestPreview = (_, children) => {
+  // TODO: line-height, max-height and min-height here seem kind of random
   const element = compose(
     'div',
-    () => ({
-      style: {
-        color: 'lightslategray',
-        background: 'ghostwhite',
-        lineHeight: '32px',
-        fontSize: '0 16px',
-        width: '100%',
-        margin: '8px',
-        padding: '8px',
-        display: 'inline-block',
-        boxSizing: 'border-box',
-        fontFamily: '"Courier New", Courier, monospace',
-        whiteSpace: 'pre-wrap',
-        maxHeight: '448px',
-        minHeight: '48px',
-        overflow: 'auto',
-      },
-    }),
+    {
+      style: `color: lightslategray;
+              line-height: 32px;
+              display: inline-block;
+              box-sizing: border-box;
+              white-space: pre-wrap;
+              max-height: 448px;
+              min-height: 48px;
+              overflow: auto;
+              
+              border-radius: 5px;
+              font-family: "Courier New", Courier, monospace;
+              background: rgba(0, 0, 0, 0.05);
+              outline: none;
+              font-size: 15px;
+              padding: 10px;
+              border: none;
+              resize: none;
+              width: 100%;
+              box-shadow: inset rgba(0, 0, 0, 0.5) 0 0 10px -5px;`,
+    },
     children
   );
   return element;
