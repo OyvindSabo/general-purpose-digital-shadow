@@ -10,28 +10,25 @@ const ViewTitle = (_, children) => {
     },
     children
   );
-  return Object.assign(element, { key: 'view-title' });
+  return element;
 };
 
 const ExportButton = (getProps) => {
   const element = compose(
     'div',
-    () => {
-      const { innerText, onclick } = getProps();
-      return {
-        innerText,
-        onclick,
-        style: `font-size: 16px;
+    () => ({
+      innerText: getProps().innerText,
+      onclick: getProps().onclick,
+      style: `font-size: 16px;
               padding: 0 16px;
               float: right;
               line-height: 64px;
               cursor: pointer;`,
-      };
-    },
+    }),
     []
   );
 
-  return Object.assign(element, { key: 'export-button' });
+  return element;
 };
 
 module.exports = { ViewTitle, ExportButton };

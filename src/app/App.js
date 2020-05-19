@@ -6,7 +6,7 @@ const App = (getProps) => {
   const element = getProps().state.isExported
     ? ExportedApp(getProps)
     : UnexportedApp(getProps);
-  return Object.assign(element, { key: 'app' });
+  return element;
 };
 
 module.exports = App;

@@ -1094,28 +1094,25 @@ const ViewTitle = (_, children) => {
     },
     children
   );
-  return Object.assign(element, { key: 'view-title' });
+  return element;
 };
 
 const ExportButton = (getProps) => {
   const element = compose(
     'div',
-    () => {
-      const { innerText, onclick } = getProps();
-      return {
-        innerText,
-        onclick,
-        style: `font-size: 16px;
+    () => ({
+      innerText: getProps().innerText,
+      onclick: getProps().onclick,
+      style: `font-size: 16px;
               padding: 0 16px;
               float: right;
               line-height: 64px;
               cursor: pointer;`,
-      };
-    },
+    }),
     []
   );
 
-  return Object.assign(element, { key: 'export-button' });
+  return element;
 };
 
 module.exports = { ViewTitle, ExportButton };
@@ -1133,29 +1130,23 @@ const { ViewTitle } = include('src/app/titleBar/atoms.js');
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ExportedTitleBar = (getProps) => {
-  const element = HorizontalNavigator(
-    () => ({}),
-    () => [
-      ViewTitle(
-        () => ({}),
-        () => [
-          compose(
-            'span',
-            () => ({
-              innerText: getProps().state.selectedProjectName,
-              style: `color: darkslategray;
+  const element = HorizontalNavigator(() => ({}), [
+    ViewTitle(() => ({}), [
+      compose(
+        'span',
+        () => ({
+          innerText: getProps().state.selectedProjectName,
+          style: `color: darkslategray;
                         cursor: pointer;`,
-              onclick: () => {
-                location.hash = '#!/';
-              },
-            }),
-            []
-          ),
-        ]
+          onclick: () => {
+            location.hash = '#!/';
+          },
+        }),
+        []
       ),
-    ]
-  );
-  return Object.assign(element, { key: 'exported-title-bar' });
+    ]),
+  ]);
+  return element;
 };
 
 module.exports = ExportedTitleBar;
@@ -1169,100 +1160,93 @@ modules['src/app/titleBar/unexportedTitleBar/UnexportedTitleBar.js'] = (() => {
   'src/components/horizontalNavigator/HorizontalNavigator.js'
 );
 const { ViewTitle, ExportButton } = include('src/app/titleBar/atoms.js');
-
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const UnexportedTitleBar = (getProps) => {
-  const getCurrentRoute = () => getProps().currentRoute;
+  const getCurrentRoute = () => getProps().state.currentRoute;
   const getSelectedProjectId = () => getProps().state.selectedProjectId;
   const getLastVisitedProjectView = () =>
     getProps().state.lastVisitedProjectView;
-  const element = HorizontalNavigator(
-    () => ({}),
-    () => [
-      ViewTitle(
-        () => ({}),
-        () => [
-          compose(
-            'span',
-            {
-              innerText: 'Projects',
-              onclick: () => (location.hash = '#!/projects'),
-              style: 'cursor: pointer',
-            },
-            []
-          ),
-          compose(
-            'span',
-            () => ({
-              style: `color: ${
-                getCurrentRoute().indexOf('/projects/<projectId:string>') === 0
-                  ? 'darkslategray'
-                  : 'lightgray'
-              };
-                      cursor: pointer;`,
-              onclick: () => {
-                location.hash = `#!/projects/${getSelectedProjectId()}/${
-                  getLastVisitedProjectView() || ''
-                }`;
-              },
-            }),
-            [
-              getProps().state.selectedProjectName
-                ? ` / ${getProps().state.selectedProjectName}`
-                : '',
-            ]
-          ),
-        ]
-      ),
-      ExportButton(
-        () => ({
-          innerText: 'Export',
-          onclick: () => {
-            const { state } = getProps();
-            const element = document.createElement('a');
-            // SInce just the first occurrence of the code will be replaced, we need to make sure that this code does not replace itself, so we construct the match on call time
-            const fileContent = document.head.innerHTML
-              .replace(
-                '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *f*a*l*s*e*;*'
-                  .split('*')
-                  .join(''),
-                '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *t*r*u*e*;*'
-                  .split('*')
-                  .join('')
-              )
-              .replace(
-                '*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>* *[*]*;*'
-                  .split('*')
-                  .join(''),
-                `*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>*`
-                  .split('*')
-                  .join('') +
-                  JSON.stringify([
-                    {
-                      id: state.selectedProjectId,
-                      name: state.selectedProjectName,
-                      apiUrl: state.selectedApiUrl,
-                      apiInterval: state.selectedApiInterval,
-                      derivedValuesCode: state.selectedDerivedValuesCode,
-                      widgetsCode: state.selectedWidgetsCode,
-                    },
-                  ])
-              );
-            const file = new Blob([fileContent], { type: 'text/plain' });
-            element.href = URL.createObjectURL(file);
-            element.download = `${state.selectedProjectName
-              .toLowerCase()
-              .split(' ')
-              .join('-')}.html`;
-            document.body.appendChild(element); // Required for this to work in FireFox
-            element.click();
-          },
-        }),
+  const element = HorizontalNavigator(() => ({}), [
+    ViewTitle(() => ({}), [
+      compose(
+        'span',
+        {
+          innerText: 'Projects',
+          onclick: () => (location.hash = '#!/projects'),
+          style: 'cursor: pointer;',
+        },
         []
       ),
-    ]
-  );
+      compose(
+        'span',
+        () => ({
+          style: `color: ${
+            getCurrentRoute().indexOf('/projects/<projectId:string>') === 0
+              ? 'darkslategray'
+              : 'lightgray'
+          };
+                      cursor: pointer;`,
+          onclick: () => {
+            location.hash = `#!/projects/${getSelectedProjectId()}/${
+              getLastVisitedProjectView() || ''
+            }`;
+          },
+        }),
+        [
+          getProps().state.selectedProjectName
+            ? ` / ${getProps().state.selectedProjectName}`
+            : '',
+        ]
+      ),
+    ]),
+    ExportButton(
+      () => ({
+        innerText: 'Export',
+        onclick: () => {
+          const { state } = getProps();
+          const element = document.createElement('a');
+          // SInce just the first occurrence of the code will be replaced, we need to make sure that this code does not replace itself, so we construct the match on call time
+          const fileContent = document.head.innerHTML
+            .replace(
+              '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *f*a*l*s*e*;*'
+                .split('*')
+                .join(''),
+              '*c*o*n*s*t* *i*s*E*x*p*o*r*t*e*d* *=* *t*r*u*e*;*'
+                .split('*')
+                .join('')
+            )
+            .replace(
+              '*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>* *[*]*;*'
+                .split('*')
+                .join(''),
+              `*c*o*n*s*t* *g*e*t*E*x*p*o*r*t*e*d*P*r*o*j*e*c*t* *=* *(*)* *=*>*`
+                .split('*')
+                .join('') +
+                JSON.stringify([
+                  {
+                    id: state.selectedProjectId,
+                    name: state.selectedProjectName,
+                    apiUrl: state.selectedApiUrl,
+                    apiInterval: state.selectedApiInterval,
+                    derivedValuesCode: state.selectedDerivedValuesCode,
+                    widgetsCode: state.selectedWidgetsCode,
+                  },
+                ])
+            );
+          const file = new Blob([fileContent], { type: 'text/plain' });
+          element.href = URL.createObjectURL(file);
+          element.download = `${state.selectedProjectName
+            .toLowerCase()
+            .split(' ')
+            .join('-')}.html`;
+          document.body.appendChild(element); // Required for this to work in FireFox
+          element.click();
+        },
+      }),
+      []
+    ),
+  ]);
   return element;
 };
 
@@ -1285,7 +1269,7 @@ const TitleBar = (getProps) => {
     ? ExportedTitleBar(getProps)
     : UnexportedTitleBar(getProps);
 
-  return Object.assign(element, { key: 'title-bar' });
+  return element;
 };
 
 module.exports = TitleBar;
@@ -2593,17 +2577,14 @@ modules['src/app/exportedApp/ExportedApp.js'] = (() => {
 );
 const TitleBar = include('src/app/titleBar/TitleBar.js');
 const Dashboard = include('src/views/dashboard/Dashboard.js');
-
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-// getProps::() => { state, viewModel }
 const ExportedApp = (getProps) => {
   const element = compose('div', {}, [
     TitleBar(getProps),
     ProjectContainer({}, [Dashboard(getProps)]),
   ]);
-
-  return Object.assign(element, { key: 'exported-app' });
+  return element;
 };
 
 module.exports = ExportedApp;
@@ -2729,7 +2710,7 @@ const App = (getProps) => {
   const element = getProps().state.isExported
     ? ExportedApp(getProps)
     : UnexportedApp(getProps);
-  return Object.assign(element, { key: 'app' });
+  return element;
 };
 
 module.exports = App;
