@@ -1,9 +1,7 @@
-const { callUntilNotFunction, compose } = include(
-  'src/libraries/simpleHTML/SimpleHTML.js'
-);
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ViewTitle = (_, children) => {
-  return compose(
+  const element = compose(
     'div',
     {
       style: `font-size: 32px;
@@ -12,6 +10,7 @@ const ViewTitle = (_, children) => {
     },
     children
   );
+  return Object.assign(element, { key: 'view-title' });
 };
 
 const ExportButton = (getProps) => {
@@ -31,7 +30,8 @@ const ExportButton = (getProps) => {
     },
     []
   );
-  return element;
+
+  return Object.assign(element, { key: 'export-button' });
 };
 
 module.exports = { ViewTitle, ExportButton };

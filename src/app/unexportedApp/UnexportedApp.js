@@ -10,12 +10,7 @@ const DataSources = include('src/views/dataSources/DataSources.js');
 const Dashboard = include('src/views/dashboard/Dashboard.js');
 const DashboardEditor = include('src/views/dashboardEditor/DashboardEditor.js');
 
-const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const withKey = (element, key) => {
-  element.key = key;
-  return element;
-};
+const { compose, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const isProjectsUrl = (currentRoute) => {
   return currentRoute === '/';
@@ -43,27 +38,32 @@ const isDashboardUrl = (currentRoute) => {
 // getProps::() => { state, viewModel }
 const UnexportedApp = (getProps) => {
   const element = compose('div', {}, () => {
-    const { state } = getProps();
-    const { currentRoute } = state;
+    const getCurrentRoute = () => getProps().state.currentRoute;
     return [
-      withKey(TitleBar(getProps), 'title-bar'),
-      isProjectsUrl(currentRoute) && withKey(Projects(getProps), 'projects'),
-      hasOpenedProject(currentRoute) &&
-        withKey(
-          compose('div', {}, () => {
-            const { currentRoute } = getProps().state;
-            return [
-              withKey(ProjectNavigator(getProps), 'project-navigator'),
-              isDataSourcesUrl(currentRoute) &&
-                withKey(DataSources(getProps), 'data-sources'),
-              isDashboardEditorUrl(currentRoute) &&
-                withKey(DashboardEditor(getProps), 'dashboard-editor'),
-              isDashboardUrl(currentRoute) &&
-                withKey(Dashboard(getProps), 'dashboard'),
-            ];
-          }),
-          'opened-project'
-        ),
+      TitleBar(getProps),
+      If(
+        () => isProjectsUrl(getCurrentRoute()),
+        () => Projects(getProps)
+      ),
+      If(
+        () => hasOpenedProject(getCurrentRoute()),
+        () =>
+          compose('div', {}, [
+            ProjectNavigator(getProps),
+            If(
+              () => isDataSourcesUrl(getCurrentRoute()),
+              () => DataSources(getProps)
+            ),
+            If(
+              () => isDashboardEditorUrl(getCurrentRoute()),
+              () => DashboardEditor(getProps)
+            ),
+            If(
+              () => isDashboardUrl(getCurrentRoute()),
+              () => Dashboard(getProps)
+            ),
+          ])
+      ),
     ];
   });
 

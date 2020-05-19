@@ -16,7 +16,7 @@ const DashboardButton = (getProps) => {
     };
   });
 
-  return element;
+  return Object.assign(element, { key: 'dashboard-button' });
 };
 
 module.exports = DashboardButton;

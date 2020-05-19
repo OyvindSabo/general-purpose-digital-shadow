@@ -8,7 +8,7 @@ const Dashboard = (getProps) => {
     DashboardWidgets(getProps),
   ]);
 
-  return element;
+  return Object.assign(element, { key: 'dashboard' });
 };
 
 module.exports = Dashboard;

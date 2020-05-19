@@ -49,7 +49,7 @@ const ApiIntervalInput = (getProps) => {
       ]
     ),
   ]);
-  return element;
+  return Object.assign(element, { key: 'api-interval-input' });
 };
 
 module.exports = ApiIntervalInput;

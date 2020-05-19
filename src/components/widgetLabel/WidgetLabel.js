@@ -4,6 +4,7 @@ const WidgetLabel = (getProps) => {
   const element = compose(
     'div',
     {
+      innerText: getProps().label,
       style: `font-size: 20px;
               margin-top: 20px;
               text-align: center;
@@ -12,9 +13,9 @@ const WidgetLabel = (getProps) => {
               pointer-events: none;
               user-select: none;`,
     },
-    () => [getProps().label]
+    []
   );
-  return element;
+  return Object.assign(element, { key: 'widget-label' });
 };
 
 module.exports = WidgetLabel;

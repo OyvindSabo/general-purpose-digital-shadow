@@ -9,19 +9,14 @@ const DashboardButton = include(
 );
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const Navigator = (_, children) => {
-  element = compose('div', { style: 'height: 40px;' }, children);
-  return element;
-};
-
 const ProjectNavigator = (getProps) => {
-  const element = Navigator({}, [
+  const element = compose('div', { style: 'height: 40px;' }, [
     DataSourcesButton(getProps),
     DashboardEditorButton(getProps),
     DashboardButton(getProps),
   ]);
 
-  return element;
+  return Object.assign(element, 'project-navigator');
 };
 
 module.exports = ProjectNavigator;

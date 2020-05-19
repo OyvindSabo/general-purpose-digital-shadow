@@ -54,7 +54,7 @@ const NavigationButton = (getProps) => {
       ),
     ]
   );
-  return element;
+  return Object.assign(element, { key: 'navigation-button' });
 };
 
 module.exports = NavigationButton;

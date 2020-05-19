@@ -31,7 +31,7 @@ const TextButton = (getProps) => {
     },
     []
   );
-  return element;
+  return Object.assign(element, { key: 'text-button' });
 };
 
 module.exports = TextButton;

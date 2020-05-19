@@ -7,20 +7,6 @@ const Canvas2dWidget = include(
 const ValueWidget = include('src/components/widget/valueWidget/ValueWidget.js');
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-/**
- *
- * @param {{
- *   type: 'canvas-widget' | 'value-widget';
- *   label: string;
- *   value: number;
- *   surfaces: { color: string, points: [number, number, number][] }[];
- *   edges: [[number, number, number][]];
- *   center: [number, number, number];
- *   is3d: boolean;
- * }} props
- *
- * @returns { HTMLElement }
- */
 const getWidgetElementByType = (getProps) => {
   const { type, is3d } = getProps();
   console.log('widget type: ', getProps().type);
@@ -34,8 +20,7 @@ const getWidgetElementByType = (getProps) => {
 };
 
 /**
- *
- * @param {{
+ * getProps: () => ({
  *   type: 'canvas-widget' | 'value-widget';
  *   label: string;
  *   value: number;
@@ -43,16 +28,14 @@ const getWidgetElementByType = (getProps) => {
  *   edges: [[number, number, number][]];
  *   center: [number, number, number];
  *   is3d: boolean;
- * }} props
- *
- * @returns { HTMLElement }
+ * })
  */
 const Widget = (getProps) => {
   const element = compose(
     'span',
     {
-      // width = 24 x SizeUnit
-      // height = 16 x SizeUnit
+      // width = 24 x 20px
+      // height = 16 x 20px
       style: `padding: 10px;
               display: inline-block;
               vertical-align: top;
@@ -63,7 +46,8 @@ const Widget = (getProps) => {
     },
     [getWidgetElementByType(getProps)]
   );
-  return element;
+
+  return Object.assign(element, { key: 'widget' });
 };
 
 module.exports = Widget;

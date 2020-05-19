@@ -85,14 +85,15 @@ const ApiUrlInput = (getProps) => {
                   width: calc(100% - 160px);`,
         },
         [
-          ApiUrlTestPreview(() => ({}), [
-            getProps().state.selectedApiUrlTestPreview,
-          ]),
+          ApiUrlTestPreview(
+            () => ({ innerText: getProps().state.selectedApiUrlTestPreview }),
+            []
+          ),
         ]
       ),
     ]),
   ]);
-  return element;
+  return Object.assign(element, { key: 'api-url-input' });
 };
 
 module.exports = ApiUrlInput;

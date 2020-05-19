@@ -10,7 +10,7 @@ const TitleBar = (getProps) => {
     ? ExportedTitleBar(getProps)
     : UnexportedTitleBar(getProps);
 
-  return element;
+  return Object.assign(element, { key: 'title-bar' });
 };
 
 module.exports = TitleBar;

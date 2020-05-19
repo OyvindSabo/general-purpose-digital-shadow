@@ -11,7 +11,7 @@ const HorizontalNavigator = (_, children) => {
     },
     children
   );
-  return element;
+  return Object.assign(element, { key: 'horizontal-navigator' });
 };
 
 module.exports = HorizontalNavigator;

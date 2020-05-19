@@ -5,6 +5,7 @@ const WidgetValue = (getProps) => {
   const element = compose(
     'div',
     {
+      innerText: Number(value).toFixed(2),
       style: `font-size: 60px;
               text-align: center;
               width: 100%;
@@ -12,9 +13,9 @@ const WidgetValue = (getProps) => {
               top: 50%;
               transform: translate(0, -50%);`,
     },
-    () => [Number(value).toFixed(2)]
+    []
   );
-  return element;
+  return Object.assign(element, { key: 'widget-value' });
 };
 
 module.exports = WidgetValue;

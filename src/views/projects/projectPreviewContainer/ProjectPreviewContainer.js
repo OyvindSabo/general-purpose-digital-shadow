@@ -1,7 +1,7 @@
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ProjectPreviewContainer = (_, children) => {
-  return compose(
+  const element = compose(
     'div',
     {
       style: `color: dimgray;
@@ -13,6 +13,7 @@ const ProjectPreviewContainer = (_, children) => {
     },
     children
   );
+  return Object.assign(element, { key: 'project-preview-container' });
 };
 
 module.exports = ProjectPreviewContainer;

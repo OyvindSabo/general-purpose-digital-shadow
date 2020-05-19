@@ -28,7 +28,7 @@ const ProjectPreviewButton = (getProps) => {
     }),
     []
   );
-  return element;
+  return Object.assign(element, { key: 'project-preview-button' });
 };
 
 module.exports = ProjectPreviewButton;

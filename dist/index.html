@@ -280,8 +280,6 @@ const doPatchChildren = (
   }
 };
 
-const determineIsNullish = (value) => value === null || value === undefined;
-
 const getNodeRepresentation = (child) => {
   if (typeof child === 'string') return document.createTextNode(child);
   if (typeof child === 'number') return document.createTextNode(child);
@@ -304,25 +302,35 @@ const getCleanedChildNodes = (children) => {
   return children.map(getNodeRepresentation).filter(Boolean);
 };
 
-/**
- * A component is a function which returns an element and and update method
- * @param {*} elementType
- * @param {*} props
- * @param {*} children
- */
+const flatten = (items) => {
+  const flat = [];
+
+  items.forEach((item) => {
+    if (Array.isArray(item)) {
+      flat.push(...flatten(item));
+    } else {
+      flat.push(item);
+    }
+  });
+
+  return flat;
+};
+
 const compose = (elementType, getProps, getChildren) => {
   const element = document.createElement(elementType);
 
+  // Assign props
   if (typeof getProps === 'function') {
     Object.assign(element, getProps());
   } else {
     Object.assign(element, getProps);
   }
 
+  // Append children
   if (typeof getChildren === 'function') {
-    element.append(...getChildren().filter(Boolean));
+    element.append(...flatten(getChildren()).filter(Boolean));
   } else {
-    element.append(...getChildren.filter(Boolean));
+    element.append(...flatten(getChildren).filter(Boolean));
   }
 
   element.update = () => {
@@ -335,7 +343,7 @@ const compose = (elementType, getProps, getChildren) => {
         Object.assign(element, getProps());
       }
     }
-    if (typeof getChildren === 'function') {
+    /*if (typeof getChildren === 'function') {
       const newChildNodes = getChildren().filter(Boolean);
       doPatchChildren(element, newChildNodes, (node1, node2) => {
         if (node1 && node2 && node1.key && node2.key) {
@@ -343,7 +351,7 @@ const compose = (elementType, getProps, getChildren) => {
         }
         return false;
       });
-    }
+    }*/
 
     Array.from(element.childNodes).forEach((childNode) => {
       if (typeof childNode.update === 'function') {
@@ -351,6 +359,47 @@ const compose = (elementType, getProps, getChildren) => {
       }
     });
   };
+  return element;
+};
+
+const createHiddenElement = () => {
+  const element = Object.assign(document.createElement('span'), {
+    style: 'display: none;',
+  });
+  return element;
+};
+
+const If = (getCondition, getThenElement) => {
+  // The hidden element is a span since if it was a div it would be a block
+  // element and block element cannot be children of inline elements.
+  const logicElement = createHiddenElement();
+  let condition = getCondition();
+  let element = condition ? getThenElement() : createHiddenElement();
+  logicElement.update = () => {
+    if (condition && getCondition()) {
+      element.update();
+      return;
+    }
+    if (condition && !getCondition()) {
+      condition = false;
+      const hiddenElement = createHiddenElement();
+      element.parentNode.replaceChild(hiddenElement, element);
+      element = hiddenElement;
+      return;
+    }
+    if (!condition && getCondition()) {
+      condition = true;
+      const newElement = getThenElement();
+      element.parentNode.replaceChild(newElement, element);
+      element = newElement;
+      return;
+    }
+  };
+  return [element, logicElement];
+};
+
+const withKey = (element, key) => {
+  element.key = key;
   return element;
 };
 
@@ -523,6 +572,8 @@ module.exports = {
   doMerge,
   callUntilNotFunction,
   compose,
+  If,
+  withKey,
   defineComponent,
   div,
   span,
@@ -924,7 +975,7 @@ const ProjectContainer = (props, children) => {
     },
     children
   );
-  return element;
+  return Object.assign(element, { key: 'project-container' });
 };
 
 module.exports = ProjectContainer;
@@ -963,10 +1014,47 @@ const NewProject = (getProps) => {
     }),
     []
   );
-  return element;
+  return Object.assign(element, { key: 'new-project' });
 };
 
 module.exports = NewProject;
+
+  return module.exports;
+})();
+
+modules['src/components/codeEditor/CodeEditor.js'] = (() => {
+  const module = { exports: {} };
+  const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const CodeEditor = (getProps) => {
+  const element = compose('div', { style: 'padding: 10px;' }, [
+    compose(
+      'textarea',
+      () => {
+        const { value, oninput } = getProps();
+        return {
+          oninput,
+          style: `height: 300px;
+                  border-radius: 5px;
+                  font-family: "Courier New", Courier, monospace;
+                  background: rgba(0, 0, 0, 0.05);
+                  outline: none;
+                  font-size: 15px;
+                  padding: 10px;
+                  border: none;
+                  resize: none;
+                  width: 100%;
+                  box-shadow: inset rgba(0, 0, 0, 0.5) 0 0 10px -5px;`,
+          value,
+        };
+      },
+      []
+    ),
+  ]);
+  return Object.assign(element, { key: 'code-editor' });
+};
+
+module.exports = CodeEditor;
 
   return module.exports;
 })();
@@ -986,7 +1074,7 @@ const HorizontalNavigator = (_, children) => {
     },
     children
   );
-  return element;
+  return Object.assign(element, { key: 'horizontal-navigator' });
 };
 
 module.exports = HorizontalNavigator;
@@ -996,12 +1084,10 @@ module.exports = HorizontalNavigator;
 
 modules['src/app/titleBar/atoms.js'] = (() => {
   const module = { exports: {} };
-  const { callUntilNotFunction, compose } = include(
-  'src/libraries/simpleHTML/SimpleHTML.js'
-);
+  const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ViewTitle = (_, children) => {
-  return compose(
+  const element = compose(
     'div',
     {
       style: `font-size: 32px;
@@ -1010,6 +1096,7 @@ const ViewTitle = (_, children) => {
     },
     children
   );
+  return Object.assign(element, { key: 'view-title' });
 };
 
 const ExportButton = (getProps) => {
@@ -1029,7 +1116,8 @@ const ExportButton = (getProps) => {
     },
     []
   );
-  return element;
+
+  return Object.assign(element, { key: 'export-button' });
 };
 
 module.exports = { ViewTitle, ExportButton };
@@ -1042,7 +1130,7 @@ modules['src/app/titleBar/exportedTitleBar/ExportedTitleBar.js'] = (() => {
   const HorizontalNavigator = include(
   'src/components/horizontalNavigator/HorizontalNavigator.js'
 );
-const { ViewTitle, ExportButton } = include('src/app/titleBar/atoms.js');
+const { ViewTitle } = include('src/app/titleBar/atoms.js');
 
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
@@ -1055,20 +1143,21 @@ const ExportedTitleBar = (getProps) => {
         () => [
           compose(
             'span',
-            {
+            () => ({
+              innerText: getProps().state.selectedProjectName,
               style: `color: darkslategray;
                         cursor: pointer;`,
               onclick: () => {
                 location.hash = '#!/';
               },
-            },
-            [getProps().state.selectedProjectName]
+            }),
+            []
           ),
         ]
       ),
     ]
   );
-  return element;
+  return Object.assign(element, { key: 'exported-title-bar' });
 };
 
 module.exports = ExportedTitleBar;
@@ -1176,7 +1265,7 @@ const UnexportedTitleBar = (getProps) => {
       ),
     ]
   );
-  return element;
+  return Object.assign(element, { key: 'unexported-title-bar' });
 };
 
 module.exports = UnexportedTitleBar;
@@ -1198,7 +1287,7 @@ const TitleBar = (getProps) => {
     ? ExportedTitleBar(getProps)
     : UnexportedTitleBar(getProps);
 
-  return element;
+  return Object.assign(element, { key: 'title-bar' });
 };
 
 module.exports = TitleBar;
@@ -1211,7 +1300,7 @@ modules['src/views/projects/projectPreviewContainer/ProjectPreviewContainer.js']
   const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ProjectPreviewContainer = (_, children) => {
-  return compose(
+  const element = compose(
     'div',
     {
       style: `color: dimgray;
@@ -1223,6 +1312,7 @@ const ProjectPreviewContainer = (_, children) => {
     },
     children
   );
+  return Object.assign(element, { key: 'project-preview-container' });
 };
 
 module.exports = ProjectPreviewContainer;
@@ -1262,7 +1352,7 @@ const ProjectPreviewButton = (getProps) => {
     }),
     []
   );
-  return element;
+  return Object.assign(element, { key: 'project-preview-button' });
 };
 
 module.exports = ProjectPreviewButton;
@@ -1282,7 +1372,7 @@ const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 // getProps::() => { state, viewModel, name, id }
 const ProjectPreview = (getProps) => {
-  return ProjectPreviewContainer(() => ({}), [
+  const element = ProjectPreviewContainer(() => ({}), [
     compose(
       'div',
       () => {
@@ -1317,6 +1407,8 @@ const ProjectPreview = (getProps) => {
       []
     ),
   ]);
+
+  return Object.assign(element, { key: 'project-preview' });
 };
 
 module.exports = ProjectPreview;
@@ -1349,7 +1441,7 @@ const ProjectNameInputContainer = (getProps) => {
     },
     []
   );
-  return element;
+  return Object.assign(element, { key: 'project-name-input-container' });
 };
 
 module.exports = ProjectNameInputContainer;
@@ -1403,7 +1495,7 @@ const ProjectNameInput = ({ viewModel, id$, nameInputValue$ }) => {
       []
     ),
   ]);
-  return element;
+  return Object.assign(element, { key: 'project-name-input' });
 };
 
 module.exports = ProjectNameInput;
@@ -1426,7 +1518,7 @@ const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 const Projects = (getProps) => {
   const element = compose(
     'div',
-    () => ({}),
+    {},
     getProps()
       .state.projects.filter(({ isEmpty }) => !isEmpty)
       .map(({ id, name, nameInputValue, isEditing, isEmpty }) =>
@@ -1445,7 +1537,7 @@ const Projects = (getProps) => {
       ),
     NewProject(getProps)
   );
-  return element;
+  return Object.assign(element, { key: 'projects' });
 };
 
 module.exports = Projects;
@@ -1476,7 +1568,7 @@ const ApiInputLabel = (getProps) => {
     }),
     []
   );
-  return element;
+  return Object.assign(element, { key: 'api-input-label' });
 };
 
 module.exports = ApiInputLabel;
@@ -1537,7 +1629,7 @@ const ApiIntervalInput = (getProps) => {
       ]
     ),
   ]);
-  return element;
+  return Object.assign(element, { key: 'api-interval-input' });
 };
 
 module.exports = ApiIntervalInput;
@@ -1580,7 +1672,7 @@ const TextButton = (getProps) => {
     },
     []
   );
-  return element;
+  return Object.assign(element, { key: 'text-button' });
 };
 
 module.exports = TextButton;
@@ -1592,11 +1684,12 @@ modules['src/views/dataSources/apiUrlTestPreview/ApiUrlTestPreview.js'] = (() =>
   const module = { exports: {} };
   const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const ApiUrlTestPreview = (_, children) => {
+const ApiUrlTestPreview = (getProps) => {
   // TODO: line-height, max-height and min-height here seem kind of random
   const element = compose(
     'div',
-    {
+    () => ({
+      innerText: getProps().innerText,
       style: `color: lightslategray;
               line-height: 32px;
               display: inline-block;
@@ -1605,7 +1698,6 @@ const ApiUrlTestPreview = (_, children) => {
               max-height: 448px;
               min-height: 48px;
               overflow: auto;
-              
               border-radius: 5px;
               font-family: "Courier New", Courier, monospace;
               background: rgba(0, 0, 0, 0.05);
@@ -1616,10 +1708,11 @@ const ApiUrlTestPreview = (_, children) => {
               resize: none;
               width: 100%;
               box-shadow: inset rgba(0, 0, 0, 0.5) 0 0 10px -5px;`,
-    },
-    children
+    }),
+    []
   );
-  return element;
+
+  return Object.assign(element, { key: 'api-url-test-preview' });
 };
 
 module.exports = ApiUrlTestPreview;
@@ -1716,14 +1809,15 @@ const ApiUrlInput = (getProps) => {
                   width: calc(100% - 160px);`,
         },
         [
-          ApiUrlTestPreview(() => ({}), [
-            getProps().state.selectedApiUrlTestPreview,
-          ]),
+          ApiUrlTestPreview(
+            () => ({ innerText: getProps().state.selectedApiUrlTestPreview }),
+            []
+          ),
         ]
       ),
     ]),
   ]);
-  return element;
+  return Object.assign(element, { key: 'api-url-input' });
 };
 
 module.exports = ApiUrlInput;
@@ -1745,7 +1839,7 @@ const DataSources = (getProps) => {
     ApiUrlInput(getProps),
     ApiIntervalInput(getProps),
   ]);
-  return element;
+  return Object.assign(element, { key: 'data-sources' });
 };
 
 module.exports = DataSources;
@@ -1834,7 +1928,7 @@ const NavigationButton = (getProps) => {
       ),
     ]
   );
-  return element;
+  return Object.assign(element, { key: 'navigation-button' });
 };
 
 module.exports = NavigationButton;
@@ -1866,7 +1960,7 @@ const DataSourcesButton = (getProps) => {
     };
   });
 
-  return element;
+  return Object.assign(element, { key: 'data-sources-button' });
 };
 
 module.exports = DataSourcesButton;
@@ -1894,7 +1988,7 @@ const DashboardEditorButton = (getProps) => {
     };
   });
 
-  return element;
+  return Object.assign(element, { key: 'dashboard-editor-button' });
 };
 
 module.exports = DashboardEditorButton;
@@ -1922,7 +2016,7 @@ const DashboardButton = (getProps) => {
     };
   });
 
-  return element;
+  return Object.assign(element, { key: 'dashboard-button' });
 };
 
 module.exports = DashboardButton;
@@ -1943,19 +2037,14 @@ const DashboardButton = include(
 );
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const Navigator = (_, children) => {
-  element = compose('div', { style: 'height: 40px;' }, children);
-  return element;
-};
-
 const ProjectNavigator = (getProps) => {
-  const element = Navigator({}, [
+  const element = compose('div', { style: 'height: 40px;' }, [
     DataSourcesButton(getProps),
     DashboardEditorButton(getProps),
     DashboardButton(getProps),
   ]);
 
-  return element;
+  return Object.assign(element, 'project-navigator');
 };
 
 module.exports = ProjectNavigator;
@@ -2007,6 +2096,7 @@ const WidgetLabel = (getProps) => {
   const element = compose(
     'div',
     {
+      innerText: getProps().label,
       style: `font-size: 20px;
               margin-top: 20px;
               text-align: center;
@@ -2015,9 +2105,9 @@ const WidgetLabel = (getProps) => {
               pointer-events: none;
               user-select: none;`,
     },
-    () => [getProps().label]
+    []
   );
-  return element;
+  return Object.assign(element, { key: 'widget-label' });
 };
 
 module.exports = WidgetLabel;
@@ -2034,6 +2124,7 @@ const WidgetValue = (getProps) => {
   const element = compose(
     'div',
     {
+      innerText: Number(value).toFixed(2),
       style: `font-size: 60px;
               text-align: center;
               width: 100%;
@@ -2041,9 +2132,9 @@ const WidgetValue = (getProps) => {
               top: 50%;
               transform: translate(0, -50%);`,
     },
-    () => [Number(value).toFixed(2)]
+    []
   );
-  return element;
+  return Object.assign(element, { key: 'widget-value' });
 };
 
 module.exports = WidgetValue;
@@ -2061,8 +2152,8 @@ const ValueWidget = (getProps) => {
   const element = compose(
     'span',
     () => ({
-      // width = 24 x SizeUnit
-      // height = 16 x SizeUnit
+      // width = 24 x 20px
+      // height = 16 x 20px
       style: `display: inline-block;
               position: relative;
               color: dimgray;
@@ -2075,7 +2166,7 @@ const ValueWidget = (getProps) => {
       WidgetValue(() => ({ value: getProps().value })),
     ]
   );
-  return element;
+  return Object.assign(element, { key: 'value-widget' });
 };
 
 module.exports = ValueWidget;
@@ -2268,13 +2359,13 @@ const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 const Canvas3dWidget = (getProps) => {
   const { surfaces, edges, center } = getProps();
   const state = { mouseDown: false };
-  const canvasElement = compose(
+  const element = compose(
     'canvas',
-    () => ({
+    {
       height: 320, // 16 x SizeUnit
       width: 480, // 24 x SizeUnit
       style: 'position: absolute;',
-    }),
+    },
     []
   );
   const camera = new Camera({
@@ -2283,10 +2374,10 @@ const Canvas3dWidget = (getProps) => {
     distance$: new Observable(100),
     focalLength$: new Observable(100),
   });
-  const ctx = canvasElement.getContext('2d');
+  const ctx = element.getContext('2d');
   const rerender = () => {
     const { surfaces, edges, center } = getProps();
-    ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    ctx.clearRect(0, 0, element.width, element.height);
     doRenderVisualization({
       surfaces,
       edges,
@@ -2299,7 +2390,7 @@ const Canvas3dWidget = (getProps) => {
     });
   };
   rerender();
-  canvasElement.onwheel = (event) => {
+  element.onwheel = (event) => {
     camera.setDistance(camera.distance$.value + event.deltaY / 5);
   };
   window.addEventListener('mousedown', (event) => {
@@ -2307,11 +2398,11 @@ const Canvas3dWidget = (getProps) => {
   });
   window.addEventListener(
     'mouseup',
-    (canvasElement.onmouseup = (event) => {
+    (element.onmouseup = (event) => {
       state.mouseDown = false;
     })
   );
-  canvasElement.onmousemove = (event) => {
+  element.onmousemove = (event) => {
     if (state.mouseDown) {
       camera.horizontalRotation$.value =
         camera.horizontalRotation$.value - event.movementX / 100;
@@ -2320,7 +2411,7 @@ const Canvas3dWidget = (getProps) => {
       );
     }
   };
-  canvasElement.update = () => {
+  element.update = () => {
     rerender(getProps());
   };
   window.addEventListener(camera.horizontalRotation$.id, () => {
@@ -2335,7 +2426,7 @@ const Canvas3dWidget = (getProps) => {
   window.addEventListener(camera.focalLength$.id, () => {
     rerender({ surfaces, edges, center });
   });
-  return canvasElement;
+  return Object.assign(element, { key: 'canvas-3d-widget' });
 };
 
 module.exports = Canvas3dWidget;
@@ -2352,8 +2443,8 @@ const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 // TODO: Shouldn't there be a label here?
 // getProps::() => { surfaces, edges, id3d, center }
-const TwoDimVisualization = (getProps) => {
-  const canvasElement = compose(
+const Canvas2dWidget = (getProps) => {
+  const element = compose(
     'canvas',
     () => ({
       height: 320, // 16 x SizeUnit
@@ -2362,19 +2453,19 @@ const TwoDimVisualization = (getProps) => {
     }),
     []
   );
-  const ctx = canvasElement.getContext('2d');
+  const ctx = element.getContext('2d');
   const rerender = ({ surfaces, edges, center }) => {
-    ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    ctx.clearRect(0, 0, element.width, element.height);
     doRenderVisualization({ surfaces, edges, center, ctx });
   };
   rerender(getProps());
-  canvasElement.update = () => {
+  element.update = () => {
     rerender(getProps());
   };
-  return canvasElement;
+  return Object.assign(element, { key: 'canvas-2d-widget' });
 };
 
-module.exports = TwoDimVisualization;
+module.exports = Canvas2dWidget;
 
   return module.exports;
 })();
@@ -2390,20 +2481,6 @@ const Canvas2dWidget = include(
 const ValueWidget = include('src/components/widget/valueWidget/ValueWidget.js');
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-/**
- *
- * @param {{
- *   type: 'canvas-widget' | 'value-widget';
- *   label: string;
- *   value: number;
- *   surfaces: { color: string, points: [number, number, number][] }[];
- *   edges: [[number, number, number][]];
- *   center: [number, number, number];
- *   is3d: boolean;
- * }} props
- *
- * @returns { HTMLElement }
- */
 const getWidgetElementByType = (getProps) => {
   const { type, is3d } = getProps();
   console.log('widget type: ', getProps().type);
@@ -2417,8 +2494,7 @@ const getWidgetElementByType = (getProps) => {
 };
 
 /**
- *
- * @param {{
+ * getProps: () => ({
  *   type: 'canvas-widget' | 'value-widget';
  *   label: string;
  *   value: number;
@@ -2426,16 +2502,14 @@ const getWidgetElementByType = (getProps) => {
  *   edges: [[number, number, number][]];
  *   center: [number, number, number];
  *   is3d: boolean;
- * }} props
- *
- * @returns { HTMLElement }
+ * })
  */
 const Widget = (getProps) => {
   const element = compose(
     'span',
     {
-      // width = 24 x SizeUnit
-      // height = 16 x SizeUnit
+      // width = 24 x 20px
+      // height = 16 x 20px
       style: `padding: 10px;
               display: inline-block;
               vertical-align: top;
@@ -2446,7 +2520,8 @@ const Widget = (getProps) => {
     },
     [getWidgetElementByType(getProps)]
   );
-  return element;
+
+  return Object.assign(element, { key: 'widget' });
 };
 
 module.exports = Widget;
@@ -2482,7 +2557,8 @@ const DashboardWidgets = (getProps) => {
     { style: 'padding: 10px' },
     getWidgetElements({ widgets: getProps().state.widgets })
   );
-  return element;
+
+  return Object.assign(element, { key: 'dashboard-widgets' });
 };
 
 module.exports = DashboardWidgets;
@@ -2502,7 +2578,7 @@ const Dashboard = (getProps) => {
     DashboardWidgets(getProps),
   ]);
 
-  return element;
+  return Object.assign(element, { key: 'dashboard' });
 };
 
 module.exports = Dashboard;
@@ -2520,11 +2596,6 @@ const Dashboard = include('src/views/dashboard/Dashboard.js');
 
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const withKey = (element, key) => {
-  element.key = key;
-  return element;
-};
-
 // getProps::() => { state, viewModel }
 const ExportedApp = (getProps) => {
   const element = compose('div', {}, [
@@ -2532,7 +2603,7 @@ const ExportedApp = (getProps) => {
     ProjectContainer({}, [Dashboard(getProps)]),
   ]);
 
-  return element;
+  return Object.assign(element, { key: 'exported-app' });
 };
 
 module.exports = ExportedApp;
@@ -2545,40 +2616,9 @@ modules['src/views/dashboardEditor/DashboardEditor.js'] = (() => {
   const DashboardWidgets = include(
   'src/components/dashboardWidgets/DashboardWidgets.js'
 );
+const CodeEditor = include('src/components/codeEditor/CodeEditor.js');
+
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const withKey = (element, key) => {
-  element.key = key;
-  return element;
-};
-
-const CodeEditor = (getProps) => {
-  const element = compose('div', { style: 'padding: 10px;' }, [
-    compose(
-      'textarea',
-      () => {
-        const { value, oninput } = getProps();
-        return {
-          oninput,
-          style: `height: 300px;
-                  border-radius: 5px;
-                  font-family: "Courier New", Courier, monospace;
-                  background: rgba(0, 0, 0, 0.05);
-                  outline: none;
-                  font-size: 15px;
-                  padding: 10px;
-                  border: none;
-                  resize: none;
-                  width: 100%;
-                  box-shadow: inset rgba(0, 0, 0, 0.5) 0 0 10px -5px;`,
-          value,
-        };
-      },
-      []
-    ),
-  ]);
-  return element;
-};
 
 // getProps::() => { state, viewModel }
 const DashboardEditor = (getProps) => {
@@ -2593,7 +2633,7 @@ const DashboardEditor = (getProps) => {
     DashboardWidgets(getProps),
   ]);
 
-  return element;
+  return Object.assign(element, { key: 'dashboard-editor' });
 };
 
 module.exports = DashboardEditor;
@@ -2615,12 +2655,7 @@ const DataSources = include('src/views/dataSources/DataSources.js');
 const Dashboard = include('src/views/dashboard/Dashboard.js');
 const DashboardEditor = include('src/views/dashboardEditor/DashboardEditor.js');
 
-const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const withKey = (element, key) => {
-  element.key = key;
-  return element;
-};
+const { compose, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const isProjectsUrl = (currentRoute) => {
   return currentRoute === '/';
@@ -2648,27 +2683,32 @@ const isDashboardUrl = (currentRoute) => {
 // getProps::() => { state, viewModel }
 const UnexportedApp = (getProps) => {
   const element = compose('div', {}, () => {
-    const { state } = getProps();
-    const { currentRoute } = state;
+    const getCurrentRoute = () => getProps().state.currentRoute;
     return [
-      withKey(TitleBar(getProps), 'title-bar'),
-      isProjectsUrl(currentRoute) && withKey(Projects(getProps), 'projects'),
-      hasOpenedProject(currentRoute) &&
-        withKey(
-          compose('div', {}, () => {
-            const { currentRoute } = getProps().state;
-            return [
-              withKey(ProjectNavigator(getProps), 'project-navigator'),
-              isDataSourcesUrl(currentRoute) &&
-                withKey(DataSources(getProps), 'data-sources'),
-              isDashboardEditorUrl(currentRoute) &&
-                withKey(DashboardEditor(getProps), 'dashboard-editor'),
-              isDashboardUrl(currentRoute) &&
-                withKey(Dashboard(getProps), 'dashboard'),
-            ];
-          }),
-          'opened-project'
-        ),
+      TitleBar(getProps),
+      If(
+        () => isProjectsUrl(getCurrentRoute()),
+        () => Projects(getProps)
+      ),
+      If(
+        () => hasOpenedProject(getCurrentRoute()),
+        () =>
+          compose('div', {}, [
+            ProjectNavigator(getProps),
+            If(
+              () => isDataSourcesUrl(getCurrentRoute()),
+              () => DataSources(getProps)
+            ),
+            If(
+              () => isDashboardEditorUrl(getCurrentRoute()),
+              () => DashboardEditor(getProps)
+            ),
+            If(
+              () => isDashboardUrl(getCurrentRoute()),
+              () => Dashboard(getProps)
+            ),
+          ])
+      ),
     ];
   });
 
@@ -2687,9 +2727,10 @@ const UnexportedApp = include('src/app/unexportedApp/UnexportedApp.js');
 
 // getProps::() => { state, viewModel }
 const App = (getProps) => {
-  return getProps().state.isExported
+  const element = getProps().state.isExported
     ? ExportedApp(getProps)
     : UnexportedApp(getProps);
+  return Object.assign(element, { key: 'app' });
 };
 
 module.exports = App;

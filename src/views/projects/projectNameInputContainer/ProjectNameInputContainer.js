@@ -21,7 +21,7 @@ const ProjectNameInputContainer = (getProps) => {
     },
     []
   );
-  return element;
+  return Object.assign(element, { key: 'project-name-input-container' });
 };
 
 module.exports = ProjectNameInputContainer;

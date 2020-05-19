@@ -1,27 +1,31 @@
-const styled = include('src/libraries/styled/styled.js');
-const { textArea$ } = include('src/libraries/observableHtml/ObservableHtml.js');
-const FullWidthCard$ = include('src/components/fullWidthCard/FullWidthCard.js');
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-// TODO: Remvoe this or replace it with newer code
-const CodeEditor$ = (value) => {
-  const textAreaElement = textArea$(value).setStyle({
-    padding: '20px',
-    width: 'calc(100% - 96px)',
-    height: 'calc(100% - 32px)',
-    fontFamily: '"Courier New", Courier, monospace',
-    fontSize: '14px',
-    lineHeight: '20px',
-    whiteSpace: 'nowrap',
-    border: 'none',
-    color: 'darkslategray',
-  });
-  const element = FullWidthCard$(textAreaElement).setStyle({
-    height: 'calc(100% - 64px)',
-    boxSizing: 'border-box',
-    overflow: 'auto',
-  });
-  element.onInput = textAreaElement.onInput;
-  return element;
+const CodeEditor = (getProps) => {
+  const element = compose('div', { style: 'padding: 10px;' }, [
+    compose(
+      'textarea',
+      () => {
+        const { value, oninput } = getProps();
+        return {
+          oninput,
+          style: `height: 300px;
+                  border-radius: 5px;
+                  font-family: "Courier New", Courier, monospace;
+                  background: rgba(0, 0, 0, 0.05);
+                  outline: none;
+                  font-size: 15px;
+                  padding: 10px;
+                  border: none;
+                  resize: none;
+                  width: 100%;
+                  box-shadow: inset rgba(0, 0, 0, 0.5) 0 0 10px -5px;`,
+          value,
+        };
+      },
+      []
+    ),
+  ]);
+  return Object.assign(element, { key: 'code-editor' });
 };
 
-module.exports = CodeEditor$;
+module.exports = CodeEditor;

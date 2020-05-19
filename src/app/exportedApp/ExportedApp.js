@@ -6,11 +6,6 @@ const Dashboard = include('src/views/dashboard/Dashboard.js');
 
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const withKey = (element, key) => {
-  element.key = key;
-  return element;
-};
-
 // getProps::() => { state, viewModel }
 const ExportedApp = (getProps) => {
   const element = compose('div', {}, [
@@ -18,7 +13,7 @@ const ExportedApp = (getProps) => {
     ProjectContainer({}, [Dashboard(getProps)]),
   ]);
 
-  return element;
+  return Object.assign(element, { key: 'exported-app' });
 };
 
 module.exports = ExportedApp;

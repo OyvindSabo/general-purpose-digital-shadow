@@ -8,7 +8,7 @@ const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 // getProps::() => { state, viewModel, name, id }
 const ProjectPreview = (getProps) => {
-  return ProjectPreviewContainer(() => ({}), [
+  const element = ProjectPreviewContainer(() => ({}), [
     compose(
       'div',
       () => {
@@ -43,6 +43,8 @@ const ProjectPreview = (getProps) => {
       []
     ),
   ]);
+
+  return Object.assign(element, { key: 'project-preview' });
 };
 
 module.exports = ProjectPreview;

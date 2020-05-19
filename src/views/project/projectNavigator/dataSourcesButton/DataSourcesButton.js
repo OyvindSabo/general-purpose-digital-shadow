@@ -20,7 +20,7 @@ const DataSourcesButton = (getProps) => {
     };
   });
 
-  return element;
+  return Object.assign(element, { key: 'data-sources-button' });
 };
 
 module.exports = DataSourcesButton;

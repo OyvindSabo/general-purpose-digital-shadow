@@ -10,7 +10,7 @@ const DataSources = (getProps) => {
     ApiUrlInput(getProps),
     ApiIntervalInput(getProps),
   ]);
-  return element;
+  return Object.assign(element, { key: 'data-sources' });
 };
 
 module.exports = DataSources;

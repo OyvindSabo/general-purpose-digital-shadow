@@ -19,7 +19,7 @@ const ApiInputLabel = (getProps) => {
     }),
     []
   );
-  return element;
+  return Object.assign(element, { key: 'api-input-label' });
 };
 
 module.exports = ApiInputLabel;

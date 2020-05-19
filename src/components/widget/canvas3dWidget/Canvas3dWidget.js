@@ -11,13 +11,13 @@ const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 const Canvas3dWidget = (getProps) => {
   const { surfaces, edges, center } = getProps();
   const state = { mouseDown: false };
-  const canvasElement = compose(
+  const element = compose(
     'canvas',
-    () => ({
+    {
       height: 320, // 16 x SizeUnit
       width: 480, // 24 x SizeUnit
       style: 'position: absolute;',
-    }),
+    },
     []
   );
   const camera = new Camera({
@@ -26,10 +26,10 @@ const Canvas3dWidget = (getProps) => {
     distance$: new Observable(100),
     focalLength$: new Observable(100),
   });
-  const ctx = canvasElement.getContext('2d');
+  const ctx = element.getContext('2d');
   const rerender = () => {
     const { surfaces, edges, center } = getProps();
-    ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    ctx.clearRect(0, 0, element.width, element.height);
     doRenderVisualization({
       surfaces,
       edges,
@@ -42,7 +42,7 @@ const Canvas3dWidget = (getProps) => {
     });
   };
   rerender();
-  canvasElement.onwheel = (event) => {
+  element.onwheel = (event) => {
     camera.setDistance(camera.distance$.value + event.deltaY / 5);
   };
   window.addEventListener('mousedown', (event) => {
@@ -50,11 +50,11 @@ const Canvas3dWidget = (getProps) => {
   });
   window.addEventListener(
     'mouseup',
-    (canvasElement.onmouseup = (event) => {
+    (element.onmouseup = (event) => {
       state.mouseDown = false;
     })
   );
-  canvasElement.onmousemove = (event) => {
+  element.onmousemove = (event) => {
     if (state.mouseDown) {
       camera.horizontalRotation$.value =
         camera.horizontalRotation$.value - event.movementX / 100;
@@ -63,7 +63,7 @@ const Canvas3dWidget = (getProps) => {
       );
     }
   };
-  canvasElement.update = () => {
+  element.update = () => {
     rerender(getProps());
   };
   window.addEventListener(camera.horizontalRotation$.id, () => {
@@ -78,7 +78,7 @@ const Canvas3dWidget = (getProps) => {
   window.addEventListener(camera.focalLength$.id, () => {
     rerender({ surfaces, edges, center });
   });
-  return canvasElement;
+  return Object.assign(element, { key: 'canvas-3d-widget' });
 };
 
 module.exports = Canvas3dWidget;

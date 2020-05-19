@@ -43,8 +43,6 @@ const doPatchChildren = (
   }
 };
 
-const determineIsNullish = (value) => value === null || value === undefined;
-
 const getNodeRepresentation = (child) => {
   if (typeof child === 'string') return document.createTextNode(child);
   if (typeof child === 'number') return document.createTextNode(child);
@@ -67,25 +65,35 @@ const getCleanedChildNodes = (children) => {
   return children.map(getNodeRepresentation).filter(Boolean);
 };
 
-/**
- * A component is a function which returns an element and and update method
- * @param {*} elementType
- * @param {*} props
- * @param {*} children
- */
+const flatten = (items) => {
+  const flat = [];
+
+  items.forEach((item) => {
+    if (Array.isArray(item)) {
+      flat.push(...flatten(item));
+    } else {
+      flat.push(item);
+    }
+  });
+
+  return flat;
+};
+
 const compose = (elementType, getProps, getChildren) => {
   const element = document.createElement(elementType);
 
+  // Assign props
   if (typeof getProps === 'function') {
     Object.assign(element, getProps());
   } else {
     Object.assign(element, getProps);
   }
 
+  // Append children
   if (typeof getChildren === 'function') {
-    element.append(...getChildren().filter(Boolean));
+    element.append(...flatten(getChildren()).filter(Boolean));
   } else {
-    element.append(...getChildren.filter(Boolean));
+    element.append(...flatten(getChildren).filter(Boolean));
   }
 
   element.update = () => {
@@ -98,7 +106,7 @@ const compose = (elementType, getProps, getChildren) => {
         Object.assign(element, getProps());
       }
     }
-    if (typeof getChildren === 'function') {
+    /*if (typeof getChildren === 'function') {
       const newChildNodes = getChildren().filter(Boolean);
       doPatchChildren(element, newChildNodes, (node1, node2) => {
         if (node1 && node2 && node1.key && node2.key) {
@@ -106,7 +114,7 @@ const compose = (elementType, getProps, getChildren) => {
         }
         return false;
       });
-    }
+    }*/
 
     Array.from(element.childNodes).forEach((childNode) => {
       if (typeof childNode.update === 'function') {
@@ -114,6 +122,47 @@ const compose = (elementType, getProps, getChildren) => {
       }
     });
   };
+  return element;
+};
+
+const createHiddenElement = () => {
+  const element = Object.assign(document.createElement('span'), {
+    style: 'display: none;',
+  });
+  return element;
+};
+
+const If = (getCondition, getThenElement) => {
+  // The hidden element is a span since if it was a div it would be a block
+  // element and block element cannot be children of inline elements.
+  const logicElement = createHiddenElement();
+  let condition = getCondition();
+  let element = condition ? getThenElement() : createHiddenElement();
+  logicElement.update = () => {
+    if (condition && getCondition()) {
+      element.update();
+      return;
+    }
+    if (condition && !getCondition()) {
+      condition = false;
+      const hiddenElement = createHiddenElement();
+      element.parentNode.replaceChild(hiddenElement, element);
+      element = hiddenElement;
+      return;
+    }
+    if (!condition && getCondition()) {
+      condition = true;
+      const newElement = getThenElement();
+      element.parentNode.replaceChild(newElement, element);
+      element = newElement;
+      return;
+    }
+  };
+  return [element, logicElement];
+};
+
+const withKey = (element, key) => {
+  element.key = key;
   return element;
 };
 
@@ -286,6 +335,8 @@ module.exports = {
   doMerge,
   callUntilNotFunction,
   compose,
+  If,
+  withKey,
   defineComponent,
   div,
   span,

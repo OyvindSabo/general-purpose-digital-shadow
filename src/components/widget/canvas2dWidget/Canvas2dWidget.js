@@ -5,8 +5,8 @@ const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 // TODO: Shouldn't there be a label here?
 // getProps::() => { surfaces, edges, id3d, center }
-const TwoDimVisualization = (getProps) => {
-  const canvasElement = compose(
+const Canvas2dWidget = (getProps) => {
+  const element = compose(
     'canvas',
     () => ({
       height: 320, // 16 x SizeUnit
@@ -15,16 +15,16 @@ const TwoDimVisualization = (getProps) => {
     }),
     []
   );
-  const ctx = canvasElement.getContext('2d');
+  const ctx = element.getContext('2d');
   const rerender = ({ surfaces, edges, center }) => {
-    ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    ctx.clearRect(0, 0, element.width, element.height);
     doRenderVisualization({ surfaces, edges, center, ctx });
   };
   rerender(getProps());
-  canvasElement.update = () => {
+  element.update = () => {
     rerender(getProps());
   };
-  return canvasElement;
+  return Object.assign(element, { key: 'canvas-2d-widget' });
 };
 
-module.exports = TwoDimVisualization;
+module.exports = Canvas2dWidget;

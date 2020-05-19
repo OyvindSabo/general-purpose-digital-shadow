@@ -6,8 +6,8 @@ const ValueWidget = (getProps) => {
   const element = compose(
     'span',
     () => ({
-      // width = 24 x SizeUnit
-      // height = 16 x SizeUnit
+      // width = 24 x 20px
+      // height = 16 x 20px
       style: `display: inline-block;
               position: relative;
               color: dimgray;
@@ -20,7 +20,7 @@ const ValueWidget = (getProps) => {
       WidgetValue(() => ({ value: getProps().value })),
     ]
   );
-  return element;
+  return Object.assign(element, { key: 'value-widget' });
 };
 
 module.exports = ValueWidget;

@@ -16,7 +16,7 @@ const DashboardEditorButton = (getProps) => {
     };
   });
 
-  return element;
+  return Object.assign(element, { key: 'dashboard-editor-button' });
 };
 
 module.exports = DashboardEditorButton;

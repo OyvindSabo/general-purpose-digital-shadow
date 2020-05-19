@@ -24,7 +24,8 @@ const DashboardWidgets = (getProps) => {
     { style: 'padding: 10px' },
     getWidgetElements({ widgets: getProps().state.widgets })
   );
-  return element;
+
+  return Object.assign(element, { key: 'dashboard-widgets' });
 };
 
 module.exports = DashboardWidgets;

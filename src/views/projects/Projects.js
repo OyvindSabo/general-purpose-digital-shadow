@@ -11,7 +11,7 @@ const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 const Projects = (getProps) => {
   const element = compose(
     'div',
-    () => ({}),
+    {},
     getProps()
       .state.projects.filter(({ isEmpty }) => !isEmpty)
       .map(({ id, name, nameInputValue, isEditing, isEmpty }) =>
@@ -30,7 +30,7 @@ const Projects = (getProps) => {
       ),
     NewProject(getProps)
   );
-  return element;
+  return Object.assign(element, { key: 'projects' });
 };
 
 module.exports = Projects;
