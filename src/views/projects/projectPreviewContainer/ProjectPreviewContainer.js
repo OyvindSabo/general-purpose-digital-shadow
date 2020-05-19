@@ -13,7 +13,7 @@ const ProjectPreviewContainer = (_, children) => {
     },
     children
   );
-  return Object.assign(element, { key: 'project-preview-container' });
+  return element;
 };
 
 module.exports = ProjectPreviewContainer;

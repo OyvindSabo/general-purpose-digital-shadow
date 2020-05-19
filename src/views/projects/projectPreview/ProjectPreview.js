@@ -38,13 +38,13 @@ const ProjectPreview = (getProps) => {
     ProjectPreviewButton(
       () => ({
         innerText: 'Edit',
-        onclick: () => viewModel.editProjectName(id$.value),
+        onclick: () => viewModel.editProjectName(getProps().id),
       }),
       []
     ),
   ]);
 
-  return Object.assign(element, { key: 'project-preview' });
+  return element;
 };
 
 module.exports = ProjectPreview;

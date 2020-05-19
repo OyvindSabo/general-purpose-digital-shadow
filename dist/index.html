@@ -1312,7 +1312,7 @@ const ProjectPreviewContainer = (_, children) => {
     },
     children
   );
-  return Object.assign(element, { key: 'project-preview-container' });
+  return element;
 };
 
 module.exports = ProjectPreviewContainer;
@@ -1352,7 +1352,7 @@ const ProjectPreviewButton = (getProps) => {
     }),
     []
   );
-  return Object.assign(element, { key: 'project-preview-button' });
+  return element;
 };
 
 module.exports = ProjectPreviewButton;
@@ -1402,13 +1402,13 @@ const ProjectPreview = (getProps) => {
     ProjectPreviewButton(
       () => ({
         innerText: 'Edit',
-        onclick: () => viewModel.editProjectName(id$.value),
+        onclick: () => viewModel.editProjectName(getProps().id),
       }),
       []
     ),
   ]);
 
-  return Object.assign(element, { key: 'project-preview' });
+  return element;
 };
 
 module.exports = ProjectPreview;
