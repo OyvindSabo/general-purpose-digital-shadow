@@ -37,35 +37,33 @@ const isDashboardUrl = (currentRoute) => {
 
 // getProps::() => { state, viewModel }
 const UnexportedApp = (getProps) => {
-  const element = compose('div', {}, () => {
-    const getCurrentRoute = () => getProps().state.currentRoute;
-    return [
-      TitleBar(getProps),
-      If(
-        () => isProjectsUrl(getCurrentRoute()),
-        () => Projects(getProps)
-      ),
-      If(
-        () => hasOpenedProject(getCurrentRoute()),
-        () =>
-          compose('div', {}, [
-            ProjectNavigator(getProps),
-            If(
-              () => isDataSourcesUrl(getCurrentRoute()),
-              () => DataSources(getProps)
-            ),
-            If(
-              () => isDashboardEditorUrl(getCurrentRoute()),
-              () => DashboardEditor(getProps)
-            ),
-            If(
-              () => isDashboardUrl(getCurrentRoute()),
-              () => Dashboard(getProps)
-            ),
-          ])
-      ),
-    ];
-  });
+  const getCurrentRoute = () => getProps().state.currentRoute;
+  const element = compose('div', {}, [
+    TitleBar(getProps),
+    If(
+      () => isProjectsUrl(getCurrentRoute()),
+      () => Projects(getProps)
+    ),
+    If(
+      () => hasOpenedProject(getCurrentRoute()),
+      () =>
+        compose('div', {}, [
+          ProjectNavigator(getProps),
+          If(
+            () => isDataSourcesUrl(getCurrentRoute()),
+            () => DataSources(getProps)
+          ),
+          If(
+            () => isDashboardEditorUrl(getCurrentRoute()),
+            () => DashboardEditor(getProps)
+          ),
+          If(
+            () => isDashboardUrl(getCurrentRoute()),
+            () => Dashboard(getProps)
+          ),
+        ])
+    ),
+  ]);
 
   return element;
 };
