@@ -6,29 +6,23 @@ const { ViewTitle } = include('src/app/titleBar/atoms.js');
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ExportedTitleBar = (getProps) => {
-  const element = HorizontalNavigator(
-    () => ({}),
-    () => [
-      ViewTitle(
-        () => ({}),
-        () => [
-          compose(
-            'span',
-            () => ({
-              innerText: getProps().state.selectedProjectName,
-              style: `color: darkslategray;
+  const element = HorizontalNavigator(() => ({}), [
+    ViewTitle(() => ({}), [
+      compose(
+        'span',
+        () => ({
+          innerText: getProps().state.selectedProjectName,
+          style: `color: darkslategray;
                         cursor: pointer;`,
-              onclick: () => {
-                location.hash = '#!/';
-              },
-            }),
-            []
-          ),
-        ]
+          onclick: () => {
+            location.hash = '#!/';
+          },
+        }),
+        []
       ),
-    ]
-  );
-  return Object.assign(element, { key: 'exported-title-bar' });
+    ]),
+  ]);
+  return element;
 };
 
 module.exports = ExportedTitleBar;

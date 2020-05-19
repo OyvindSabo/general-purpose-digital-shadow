@@ -1,26 +1,27 @@
 const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
 
-// getProps::() => { state }
+const determineIsSelected = (currentRoute) => {
+  return [
+    '/projects/<projectId:string>',
+    '/projects/<projectId:string>/data-sources',
+  ].includes(currentRoute);
+};
+
+const getHref = (selectedProjectId) => {
+  return `#!/projects/${selectedProjectId}/data-sources`;
+};
+
 const DataSourcesButton = (getProps) => {
-  const determineIsSelected = (currentRoute) =>
-    [
-      '/projects/<projectId:string>',
-      '/projects/<projectId:string>/data-sources',
-    ].includes(currentRoute);
+  const getCurrentRoute = () => getProps().state.currentRoute;
+  const getSelectedProjectId = () => getProps().state.selectedProjectId;
 
-  const getHref = (selectedProjectId) =>
-    `#!/projects/${selectedProjectId}/data-sources`;
+  const element = NavigationButton(() => ({
+    label: 'Data sources',
+    isSelected: determineIsSelected(getCurrentRoute()),
+    href: getHref(getSelectedProjectId()),
+  }));
 
-  const element = NavigationButton(() => {
-    const { currentRoute, selectedProjectId } = getProps().state;
-    return {
-      label: 'Data sources',
-      isSelected: determineIsSelected(currentRoute),
-      href: getHref(selectedProjectId),
-    };
-  });
-
-  return Object.assign(element, { key: 'data-sources-button' });
+  return element;
 };
 
 module.exports = DataSourcesButton;

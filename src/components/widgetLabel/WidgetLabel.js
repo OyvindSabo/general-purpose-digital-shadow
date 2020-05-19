@@ -3,7 +3,7 @@ const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 const WidgetLabel = (getProps) => {
   const element = compose(
     'div',
-    {
+    () => ({
       innerText: getProps().label,
       style: `font-size: 20px;
               margin-top: 20px;
@@ -12,10 +12,10 @@ const WidgetLabel = (getProps) => {
               width: 100%;
               pointer-events: none;
               user-select: none;`,
-    },
+    }),
     []
   );
-  return Object.assign(element, { key: 'widget-label' });
+  return element;
 };
 
 module.exports = WidgetLabel;

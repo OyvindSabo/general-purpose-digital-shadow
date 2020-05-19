@@ -42,7 +42,7 @@ const ProjectNameInput = ({ viewModel, id$, nameInputValue$ }) => {
       []
     ),
   ]);
-  return Object.assign(element, { key: 'project-name-input' });
+  return element;
 };
 
 module.exports = ProjectNameInput;

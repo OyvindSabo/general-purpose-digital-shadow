@@ -47,7 +47,7 @@ const Widget = (getProps) => {
     [getWidgetElementByType(getProps)]
   );
 
-  return Object.assign(element, { key: 'widget' });
+  return element;
 };
 
 module.exports = Widget;

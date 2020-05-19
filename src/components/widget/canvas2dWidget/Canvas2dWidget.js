@@ -24,7 +24,7 @@ const Canvas2dWidget = (getProps) => {
   element.update = () => {
     rerender(getProps());
   };
-  return Object.assign(element, { key: 'canvas-2d-widget' });
+  return element;
 };
 
 module.exports = Canvas2dWidget;

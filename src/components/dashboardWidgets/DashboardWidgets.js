@@ -17,7 +17,6 @@ const getWidgetElements = ({ widgets }) => {
   );
 };
 
-// getProps::() => { state, viewModel }
 const DashboardWidgets = (getProps) => {
   const element = compose(
     'div',
@@ -25,7 +24,7 @@ const DashboardWidgets = (getProps) => {
     getWidgetElements({ widgets: getProps().state.widgets })
   );
 
-  return Object.assign(element, { key: 'dashboard-widgets' });
+  return element;
 };
 
 module.exports = DashboardWidgets;

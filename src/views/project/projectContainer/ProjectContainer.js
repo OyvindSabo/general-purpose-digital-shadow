@@ -11,7 +11,7 @@ const ProjectContainer = (props, children) => {
     },
     children
   );
-  return Object.assign(element, { key: 'project-container' });
+  return element;
 };
 
 module.exports = ProjectContainer;

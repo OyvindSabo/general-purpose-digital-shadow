@@ -975,7 +975,7 @@ const ProjectContainer = (props, children) => {
     },
     children
   );
-  return Object.assign(element, { key: 'project-container' });
+  return element;
 };
 
 module.exports = ProjectContainer;
@@ -1014,7 +1014,7 @@ const NewProject = (getProps) => {
     }),
     []
   );
-  return Object.assign(element, { key: 'new-project' });
+  return element;
 };
 
 module.exports = NewProject;
@@ -1030,28 +1030,26 @@ const CodeEditor = (getProps) => {
   const element = compose('div', { style: 'padding: 10px;' }, [
     compose(
       'textarea',
-      () => {
-        const { value, oninput } = getProps();
-        return {
-          oninput,
-          style: `height: 300px;
-                  border-radius: 5px;
-                  font-family: "Courier New", Courier, monospace;
-                  background: rgba(0, 0, 0, 0.05);
-                  outline: none;
-                  font-size: 15px;
-                  padding: 10px;
-                  border: none;
-                  resize: none;
-                  width: 100%;
-                  box-shadow: inset rgba(0, 0, 0, 0.5) 0 0 10px -5px;`,
-          value,
-        };
-      },
+      () => ({
+        oninput: getProps().oninput,
+        style: `height: 300px;
+                border-radius: 5px;
+                font-family: "Courier New", Courier, monospace;
+                background: rgba(0, 0, 0, 0.05);
+                outline: none;
+                font-size: 15px;
+                padding: 10px;
+                border: none;
+                resize: none;
+                width: 100%;
+                box-shadow: inset rgba(0, 0, 0, 0.5) 0 0 10px -5px;`,
+        value: getProps().value,
+      }),
       []
     ),
   ]);
-  return Object.assign(element, { key: 'code-editor' });
+
+  return element;
 };
 
 module.exports = CodeEditor;
@@ -1074,7 +1072,7 @@ const HorizontalNavigator = (_, children) => {
     },
     children
   );
-  return Object.assign(element, { key: 'horizontal-navigator' });
+  return element;
 };
 
 module.exports = HorizontalNavigator;
@@ -1175,6 +1173,10 @@ const { ViewTitle, ExportButton } = include('src/app/titleBar/atoms.js');
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const UnexportedTitleBar = (getProps) => {
+  const getCurrentRoute = () => getProps().currentRoute;
+  const getSelectedProjectId = () => getProps().state.selectedProjectId;
+  const getLastVisitedProjectView = () =>
+    getProps().state.lastVisitedProjectView;
   const element = HorizontalNavigator(
     () => ({}),
     () => [
@@ -1192,24 +1194,20 @@ const UnexportedTitleBar = (getProps) => {
           ),
           compose(
             'span',
-            () => {
-              const { state, viewModel } = getProps();
-              const { currentRoute } = state;
-              return {
-                style: `color: ${
-                  currentRoute.indexOf('/projects/<projectId:string>') === 0
-                    ? 'darkslategray'
-                    : 'lightgray'
-                };
-                      cursor: pointer;`,
-                onclick: () => {
-                  location.hash = `#!/projects/${state.selectedProjectId}/${
-                    viewModel.lastVisitedProjectView || ''
-                  }`;
-                },
+            () => ({
+              style: `color: ${
+                getCurrentRoute().indexOf('/projects/<projectId:string>') === 0
+                  ? 'darkslategray'
+                  : 'lightgray'
               };
-            },
-            () => [
+                      cursor: pointer;`,
+              onclick: () => {
+                location.hash = `#!/projects/${getSelectedProjectId()}/${
+                  getLastVisitedProjectView() || ''
+                }`;
+              },
+            }),
+            [
               getProps().state.selectedProjectName
                 ? ` / ${getProps().state.selectedProjectName}`
                 : '',
@@ -1265,7 +1263,7 @@ const UnexportedTitleBar = (getProps) => {
       ),
     ]
   );
-  return Object.assign(element, { key: 'unexported-title-bar' });
+  return element;
 };
 
 module.exports = UnexportedTitleBar;
@@ -1441,7 +1439,7 @@ const ProjectNameInputContainer = (getProps) => {
     },
     []
   );
-  return Object.assign(element, { key: 'project-name-input-container' });
+  return element;
 };
 
 module.exports = ProjectNameInputContainer;
@@ -1495,7 +1493,7 @@ const ProjectNameInput = ({ viewModel, id$, nameInputValue$ }) => {
       []
     ),
   ]);
-  return Object.assign(element, { key: 'project-name-input' });
+  return element;
 };
 
 module.exports = ProjectNameInput;
@@ -1537,7 +1535,7 @@ const Projects = (getProps) => {
       ),
     NewProject(getProps)
   );
-  return Object.assign(element, { key: 'projects' });
+  return element;
 };
 
 module.exports = Projects;
@@ -1554,7 +1552,6 @@ const ApiInputLabel = (getProps) => {
     'span',
     () => ({
       innerText: getProps().innerText,
-      // TODO: Make this one align nicely next to the input
       // width = 8 x 20px
       // height = 2 x 20px
       style: `color: dimgray;
@@ -1568,7 +1565,7 @@ const ApiInputLabel = (getProps) => {
     }),
     []
   );
-  return Object.assign(element, { key: 'api-input-label' });
+  return element;
 };
 
 module.exports = ApiInputLabel;
@@ -1607,14 +1604,18 @@ const ApiIntervalInput = (getProps) => {
       [
         compose(
           'input',
-          () => ({
-            type: 'number',
-            min: '0',
-            oninput: ({ value }) => {
-              const { state, viewModel } = getProps();
-              viewModel.updateApiInterval(state.selectedProjectId, value);
-            },
-            style: `border-radius: 5px;
+          () => {
+            return {
+              type: 'number',
+              min: '0',
+              oninput: ({ target }) => {
+                const { state, viewModel } = getProps();
+                viewModel.updateApiInterval(
+                  state.selectedProjectId,
+                  target.value
+                );
+              },
+              style: `border-radius: 5px;
                     font-family: "Courier New", Courier, monospace;
                     background: rgba(0, 0, 0, 0.05);
                     outline: none;
@@ -1623,13 +1624,15 @@ const ApiIntervalInput = (getProps) => {
                     border: none;
                     width: 100%;
                     box-shadow: inset rgba(0, 0, 0, 0.5) 0 0 10px -5px;`,
-          }),
-          [getProps().state.selectedApiInterval]
+              value: getProps().state.selectedApiInterval,
+            };
+          },
+          []
         ),
       ]
     ),
   ]);
-  return Object.assign(element, { key: 'api-interval-input' });
+  return element;
 };
 
 module.exports = ApiIntervalInput;
@@ -1643,36 +1646,34 @@ modules['src/components/textButton/TextButton.js'] = (() => {
 
 const TextButton = (getProps) => {
   let isHovered = false;
+
   const element = compose(
     'button',
-    () => {
-      const { innerText, onclick } = getProps();
-      return {
-        innerText,
-        onclick,
-        onmouseenter: () => {
-          isHovered = true;
-          element.update();
-        },
-        onmouseleave: () => {
-          isHovered = false;
-          element.update();
-        },
-        style: `color: ${isHovered ? 'darkslategray' : 'slategray'};
-                background: none;
-                height: 40px;
-                line-height: 40px;
-                font-size: 15px;
-                width: 100%;
-                text-align: left;
-                border: none;
-                outline: none;
-                cursor: pointer;`,
-      };
-    },
+    () => ({
+      innerText: getProps().innerText,
+      onclick: getProps().onclick,
+      onmouseenter: () => {
+        isHovered = true;
+        element.update();
+      },
+      onmouseleave: () => {
+        isHovered = false;
+        element.update();
+      },
+      style: `color: ${isHovered ? 'darkslategray' : 'slategray'};
+              background: none;
+              height: 40px;
+              line-height: 40px;
+              font-size: 15px;
+              width: 100%;
+              text-align: left;
+              border: none;
+              outline: none;
+              cursor: pointer;`,
+    }),
     []
   );
-  return Object.assign(element, { key: 'text-button' });
+  return element;
 };
 
 module.exports = TextButton;
@@ -1712,7 +1713,7 @@ const ApiUrlTestPreview = (getProps) => {
     []
   );
 
-  return Object.assign(element, { key: 'api-url-test-preview' });
+  return element;
 };
 
 module.exports = ApiUrlTestPreview;
@@ -1817,7 +1818,7 @@ const ApiUrlInput = (getProps) => {
       ),
     ]),
   ]);
-  return Object.assign(element, { key: 'api-url-input' });
+  return element;
 };
 
 module.exports = ApiUrlInput;
@@ -1833,13 +1834,12 @@ modules['src/views/dataSources/DataSources.js'] = (() => {
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 const ApiUrlInput = include('src/views/dataSources/apiUrlInput/ApiUrlInput.js');
 
-// getProps:: () => { viewModel, state }
 const DataSources = (getProps) => {
-  const element = compose('div', () => ({}), [
+  const element = compose('div', {}, [
     ApiUrlInput(getProps),
     ApiIntervalInput(getProps),
   ]);
-  return Object.assign(element, { key: 'data-sources' });
+  return element;
 };
 
 module.exports = DataSources;
@@ -1887,48 +1887,46 @@ const getBorderBottom = (isSelected) => {
 
 const NavigationButton = (getProps) => {
   let isHovered = false;
+
+  const getIsSelected = () => getProps().isSelected;
+  const getHref = () => getProps().href;
+
   const element = compose(
     'span',
-    () => {
-      const { isSelected } = getProps();
-      return {
-        style: `display: inline-block;
-                text-align: center;
-                box-sizing: border-box;
-                width: 160px;
-                height: 40px;
-                line-height: 40px;
-                font-size: 15px;
-                border-bottom: ${getBorderBottom(isSelected)};`,
-      };
-    },
+    () => ({
+      style: `display: inline-block;
+              text-align: center;
+              box-sizing: border-box;
+              width: 160px;
+              height: 40px;
+              line-height: 40px;
+              font-size: 15px;
+              border-bottom: ${getBorderBottom(getIsSelected())};`,
+    }),
     [
       compose(
         'a',
-        () => {
-          const { isSelected, href } = getProps();
-          return {
-            style: `text-decoration: none;
-                    display: inline-block;
-                    width: 100%;
-                    color: ${getColor(isHovered, isSelected)};`,
-            href,
-            onmouseenter: () => {
-              isHovered = true;
-              element.update();
-            },
-            onmouseleave: () => {
-              isHovered = false;
-              element.update();
-            },
-            innerText: getProps().label,
-          };
-        },
+        () => ({
+          href: getHref(),
+          innerText: getProps().label,
+          style: `text-decoration: none;
+                  display: inline-block;
+                  width: 100%;
+                  color: ${getColor(isHovered, getIsSelected())};`,
+          onmouseenter: () => {
+            isHovered = true;
+            element.update();
+          },
+          onmouseleave: () => {
+            isHovered = false;
+            element.update();
+          },
+        }),
         []
       ),
     ]
   );
-  return Object.assign(element, { key: 'navigation-button' });
+  return element;
 };
 
 module.exports = NavigationButton;
@@ -1940,27 +1938,28 @@ modules['src/views/project/projectNavigator/dataSourcesButton/DataSourcesButton.
   const module = { exports: {} };
   const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
 
-// getProps::() => { state }
+const determineIsSelected = (currentRoute) => {
+  return [
+    '/projects/<projectId:string>',
+    '/projects/<projectId:string>/data-sources',
+  ].includes(currentRoute);
+};
+
+const getHref = (selectedProjectId) => {
+  return `#!/projects/${selectedProjectId}/data-sources`;
+};
+
 const DataSourcesButton = (getProps) => {
-  const determineIsSelected = (currentRoute) =>
-    [
-      '/projects/<projectId:string>',
-      '/projects/<projectId:string>/data-sources',
-    ].includes(currentRoute);
+  const getCurrentRoute = () => getProps().state.currentRoute;
+  const getSelectedProjectId = () => getProps().state.selectedProjectId;
 
-  const getHref = (selectedProjectId) =>
-    `#!/projects/${selectedProjectId}/data-sources`;
+  const element = NavigationButton(() => ({
+    label: 'Data sources',
+    isSelected: determineIsSelected(getCurrentRoute()),
+    href: getHref(getSelectedProjectId()),
+  }));
 
-  const element = NavigationButton(() => {
-    const { currentRoute, selectedProjectId } = getProps().state;
-    return {
-      label: 'Data sources',
-      isSelected: determineIsSelected(currentRoute),
-      href: getHref(selectedProjectId),
-    };
-  });
-
-  return Object.assign(element, { key: 'data-sources-button' });
+  return element;
 };
 
 module.exports = DataSourcesButton;
@@ -1972,23 +1971,25 @@ modules['src/views/project/projectNavigator/dashboardEditorButton/DashboardEdito
   const module = { exports: {} };
   const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
 
+const determineIsSelected = (currentRoute) => {
+  return currentRoute === '/projects/<projectId:string>/dashboard/edit';
+};
+
+const getHref = (selectedProjectId) => {
+  return `#!/projects/${selectedProjectId}/dashboard/edit`;
+};
+
 const DashboardEditorButton = (getProps) => {
-  const determineIsSelected = (currentRoute) =>
-    currentRoute === '/projects/<projectId:string>/dashboard/edit';
+  const getCurrentRoute = () => getProps().state.currentRoute;
+  const getSelectedProjectId = () => getProps().state.selectedProjectId;
 
-  const getHref = (selectedProjectId) =>
-    `#!/projects/${selectedProjectId}/dashboard/edit`;
+  const element = NavigationButton(() => ({
+    label: 'Dashboard editor',
+    isSelected: determineIsSelected(getCurrentRoute()),
+    href: getHref(getSelectedProjectId()),
+  }));
 
-  const element = NavigationButton(() => {
-    const { currentRoute, selectedProjectId } = getProps().state;
-    return {
-      label: 'Dashboard editor',
-      isSelected: determineIsSelected(currentRoute),
-      href: getHref(selectedProjectId),
-    };
-  });
-
-  return Object.assign(element, { key: 'dashboard-editor-button' });
+  return element;
 };
 
 module.exports = DashboardEditorButton;
@@ -2000,23 +2001,25 @@ modules['src/views/project/projectNavigator/dashboardButton/DashboardButton.js']
   const module = { exports: {} };
   const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
 
+const determineIsSelected = (currentRoute) => {
+  return currentRoute === '/projects/<projectId:string>/dashboard';
+};
+
+const getHref = (selectedProjectId) => {
+  return `#!/projects/${selectedProjectId}/dashboard`;
+};
+
 const DashboardButton = (getProps) => {
-  const determineIsSelected = (currentRoute) =>
-    currentRoute === '/projects/<projectId:string>/dashboard';
+  const getCurrentRoute = () => getProps().state.currentRoute;
+  const getSelectedProjectId = () => getProps().state.selectedProjectId;
 
-  const getHref = (selectedProjectId) =>
-    `#!/projects/${selectedProjectId}/dashboard`;
+  const element = NavigationButton(() => ({
+    label: 'Dashboard',
+    isSelected: determineIsSelected(getCurrentRoute()),
+    href: getHref(getSelectedProjectId()),
+  }));
 
-  const element = NavigationButton(() => {
-    const { currentRoute, selectedProjectId } = getProps().state;
-    return {
-      label: 'Dashboard',
-      isSelected: determineIsSelected(currentRoute),
-      href: getHref(selectedProjectId),
-    };
-  });
-
-  return Object.assign(element, { key: 'dashboard-button' });
+  return element;
 };
 
 module.exports = DashboardButton;
@@ -2044,7 +2047,7 @@ const ProjectNavigator = (getProps) => {
     DashboardButton(getProps),
   ]);
 
-  return Object.assign(element, 'project-navigator');
+  return element;
 };
 
 module.exports = ProjectNavigator;
@@ -2095,7 +2098,7 @@ modules['src/components/widgetLabel/WidgetLabel.js'] = (() => {
 const WidgetLabel = (getProps) => {
   const element = compose(
     'div',
-    {
+    () => ({
       innerText: getProps().label,
       style: `font-size: 20px;
               margin-top: 20px;
@@ -2104,10 +2107,10 @@ const WidgetLabel = (getProps) => {
               width: 100%;
               pointer-events: none;
               user-select: none;`,
-    },
+    }),
     []
   );
-  return Object.assign(element, { key: 'widget-label' });
+  return element;
 };
 
 module.exports = WidgetLabel;
@@ -2120,21 +2123,20 @@ modules['src/components/widgetValue/WidgetValue.js'] = (() => {
   const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const WidgetValue = (getProps) => {
-  const { value } = getProps();
   const element = compose(
     'div',
-    {
-      innerText: Number(value).toFixed(2),
+    () => ({
+      innerText: Number(getProps().value).toFixed(2),
       style: `font-size: 60px;
               text-align: center;
               width: 100%;
               position: absolute;
               top: 50%;
               transform: translate(0, -50%);`,
-    },
+    }),
     []
   );
-  return Object.assign(element, { key: 'widget-value' });
+  return element;
 };
 
 module.exports = WidgetValue;
@@ -2158,15 +2160,14 @@ const ValueWidget = (getProps) => {
               position: relative;
               color: dimgray;
               width: 480px;
-              height: 320px;
-              background: ${Number(getProps().value) === 500 ? 'blue' : 'red'}`,
+              height: 320px;`,
     }),
     [
       WidgetLabel(() => ({ label: getProps().label })),
       WidgetValue(() => ({ value: getProps().value })),
     ]
   );
-  return Object.assign(element, { key: 'value-widget' });
+  return element;
 };
 
 module.exports = ValueWidget;
@@ -2362,8 +2363,8 @@ const Canvas3dWidget = (getProps) => {
   const element = compose(
     'canvas',
     {
-      height: 320, // 16 x SizeUnit
-      width: 480, // 24 x SizeUnit
+      height: 320, // 16 x 20px
+      width: 480, // 24 x 20px
       style: 'position: absolute;',
     },
     []
@@ -2426,7 +2427,7 @@ const Canvas3dWidget = (getProps) => {
   window.addEventListener(camera.focalLength$.id, () => {
     rerender({ surfaces, edges, center });
   });
-  return Object.assign(element, { key: 'canvas-3d-widget' });
+  return element;
 };
 
 module.exports = Canvas3dWidget;
@@ -2462,7 +2463,7 @@ const Canvas2dWidget = (getProps) => {
   element.update = () => {
     rerender(getProps());
   };
-  return Object.assign(element, { key: 'canvas-2d-widget' });
+  return element;
 };
 
 module.exports = Canvas2dWidget;
@@ -2521,7 +2522,7 @@ const Widget = (getProps) => {
     [getWidgetElementByType(getProps)]
   );
 
-  return Object.assign(element, { key: 'widget' });
+  return element;
 };
 
 module.exports = Widget;
@@ -2550,7 +2551,6 @@ const getWidgetElements = ({ widgets }) => {
   );
 };
 
-// getProps::() => { state, viewModel }
 const DashboardWidgets = (getProps) => {
   const element = compose(
     'div',
@@ -2558,7 +2558,7 @@ const DashboardWidgets = (getProps) => {
     getWidgetElements({ widgets: getProps().state.widgets })
   );
 
-  return Object.assign(element, { key: 'dashboard-widgets' });
+  return element;
 };
 
 module.exports = DashboardWidgets;
@@ -2578,7 +2578,7 @@ const Dashboard = (getProps) => {
     DashboardWidgets(getProps),
   ]);
 
-  return Object.assign(element, { key: 'dashboard' });
+  return element;
 };
 
 module.exports = Dashboard;
@@ -2617,23 +2617,24 @@ modules['src/views/dashboardEditor/DashboardEditor.js'] = (() => {
   'src/components/dashboardWidgets/DashboardWidgets.js'
 );
 const CodeEditor = include('src/components/codeEditor/CodeEditor.js');
-
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-// getProps::() => { state, viewModel }
 const DashboardEditor = (getProps) => {
+  const getViewModel = () => getProps().viewModel;
+  const getSelectedProjectId = () => getProps().state.selectedProjectId;
+  const getSelectedWidgetsCode = () => getProps().state.selectedWidgetsCode;
+
   const element = compose('div', { style: 'padding: 10px;' }, [
-    CodeEditor(() => {
-      const { state, viewModel } = getProps();
-      const oninput = ({ target }) => {
-        viewModel.updateWidgetsCode(state.selectedProjectId, target.value);
-      };
-      return { value: state.selectedWidgetsCode, oninput };
-    }),
+    CodeEditor(() => ({
+      value: getSelectedWidgetsCode(),
+      oninput: ({ target }) => {
+        getViewModel().updateWidgetsCode(getSelectedProjectId(), target.value);
+      },
+    })),
     DashboardWidgets(getProps),
   ]);
 
-  return Object.assign(element, { key: 'dashboard-editor' });
+  return element;
 };
 
 module.exports = DashboardEditor;

@@ -6,6 +6,10 @@ const { ViewTitle, ExportButton } = include('src/app/titleBar/atoms.js');
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const UnexportedTitleBar = (getProps) => {
+  const getCurrentRoute = () => getProps().currentRoute;
+  const getSelectedProjectId = () => getProps().state.selectedProjectId;
+  const getLastVisitedProjectView = () =>
+    getProps().state.lastVisitedProjectView;
   const element = HorizontalNavigator(
     () => ({}),
     () => [
@@ -23,24 +27,20 @@ const UnexportedTitleBar = (getProps) => {
           ),
           compose(
             'span',
-            () => {
-              const { state, viewModel } = getProps();
-              const { currentRoute } = state;
-              return {
-                style: `color: ${
-                  currentRoute.indexOf('/projects/<projectId:string>') === 0
-                    ? 'darkslategray'
-                    : 'lightgray'
-                };
-                      cursor: pointer;`,
-                onclick: () => {
-                  location.hash = `#!/projects/${state.selectedProjectId}/${
-                    viewModel.lastVisitedProjectView || ''
-                  }`;
-                },
+            () => ({
+              style: `color: ${
+                getCurrentRoute().indexOf('/projects/<projectId:string>') === 0
+                  ? 'darkslategray'
+                  : 'lightgray'
               };
-            },
-            () => [
+                      cursor: pointer;`,
+              onclick: () => {
+                location.hash = `#!/projects/${getSelectedProjectId()}/${
+                  getLastVisitedProjectView() || ''
+                }`;
+              },
+            }),
+            [
               getProps().state.selectedProjectName
                 ? ` / ${getProps().state.selectedProjectName}`
                 : '',
@@ -96,7 +96,7 @@ const UnexportedTitleBar = (getProps) => {
       ),
     ]
   );
-  return Object.assign(element, { key: 'unexported-title-bar' });
+  return element;
 };
 
 module.exports = UnexportedTitleBar;

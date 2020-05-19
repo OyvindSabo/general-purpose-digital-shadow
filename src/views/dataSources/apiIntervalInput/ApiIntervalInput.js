@@ -27,14 +27,18 @@ const ApiIntervalInput = (getProps) => {
       [
         compose(
           'input',
-          () => ({
-            type: 'number',
-            min: '0',
-            oninput: ({ value }) => {
-              const { state, viewModel } = getProps();
-              viewModel.updateApiInterval(state.selectedProjectId, value);
-            },
-            style: `border-radius: 5px;
+          () => {
+            return {
+              type: 'number',
+              min: '0',
+              oninput: ({ target }) => {
+                const { state, viewModel } = getProps();
+                viewModel.updateApiInterval(
+                  state.selectedProjectId,
+                  target.value
+                );
+              },
+              style: `border-radius: 5px;
                     font-family: "Courier New", Courier, monospace;
                     background: rgba(0, 0, 0, 0.05);
                     outline: none;
@@ -43,13 +47,15 @@ const ApiIntervalInput = (getProps) => {
                     border: none;
                     width: 100%;
                     box-shadow: inset rgba(0, 0, 0, 0.5) 0 0 10px -5px;`,
-          }),
-          [getProps().state.selectedApiInterval]
+              value: getProps().state.selectedApiInterval,
+            };
+          },
+          []
         ),
       ]
     ),
   ]);
-  return Object.assign(element, { key: 'api-interval-input' });
+  return element;
 };
 
 module.exports = ApiIntervalInput;

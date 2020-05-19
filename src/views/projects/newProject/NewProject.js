@@ -27,7 +27,7 @@ const NewProject = (getProps) => {
     }),
     []
   );
-  return Object.assign(element, { key: 'new-project' });
+  return element;
 };
 
 module.exports = NewProject;

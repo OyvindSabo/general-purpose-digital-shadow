@@ -93,7 +93,7 @@ const ApiUrlInput = (getProps) => {
       ),
     ]),
   ]);
-  return Object.assign(element, { key: 'api-url-input' });
+  return element;
 };
 
 module.exports = ApiUrlInput;

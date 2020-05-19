@@ -28,7 +28,7 @@ const ApiUrlTestPreview = (getProps) => {
     []
   );
 
-  return Object.assign(element, { key: 'api-url-test-preview' });
+  return element;
 };
 
 module.exports = ApiUrlTestPreview;

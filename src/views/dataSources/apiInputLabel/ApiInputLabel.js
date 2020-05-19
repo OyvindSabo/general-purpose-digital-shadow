@@ -5,7 +5,6 @@ const ApiInputLabel = (getProps) => {
     'span',
     () => ({
       innerText: getProps().innerText,
-      // TODO: Make this one align nicely next to the input
       // width = 8 x 20px
       // height = 2 x 20px
       style: `color: dimgray;
@@ -19,7 +18,7 @@ const ApiInputLabel = (getProps) => {
     }),
     []
   );
-  return Object.assign(element, { key: 'api-input-label' });
+  return element;
 };
 
 module.exports = ApiInputLabel;

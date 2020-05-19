@@ -16,7 +16,7 @@ const ProjectNavigator = (getProps) => {
     DashboardButton(getProps),
   ]);
 
-  return Object.assign(element, 'project-navigator');
+  return element;
 };
 
 module.exports = ProjectNavigator;

@@ -13,48 +13,46 @@ const getBorderBottom = (isSelected) => {
 
 const NavigationButton = (getProps) => {
   let isHovered = false;
+
+  const getIsSelected = () => getProps().isSelected;
+  const getHref = () => getProps().href;
+
   const element = compose(
     'span',
-    () => {
-      const { isSelected } = getProps();
-      return {
-        style: `display: inline-block;
-                text-align: center;
-                box-sizing: border-box;
-                width: 160px;
-                height: 40px;
-                line-height: 40px;
-                font-size: 15px;
-                border-bottom: ${getBorderBottom(isSelected)};`,
-      };
-    },
+    () => ({
+      style: `display: inline-block;
+              text-align: center;
+              box-sizing: border-box;
+              width: 160px;
+              height: 40px;
+              line-height: 40px;
+              font-size: 15px;
+              border-bottom: ${getBorderBottom(getIsSelected())};`,
+    }),
     [
       compose(
         'a',
-        () => {
-          const { isSelected, href } = getProps();
-          return {
-            style: `text-decoration: none;
-                    display: inline-block;
-                    width: 100%;
-                    color: ${getColor(isHovered, isSelected)};`,
-            href,
-            onmouseenter: () => {
-              isHovered = true;
-              element.update();
-            },
-            onmouseleave: () => {
-              isHovered = false;
-              element.update();
-            },
-            innerText: getProps().label,
-          };
-        },
+        () => ({
+          href: getHref(),
+          innerText: getProps().label,
+          style: `text-decoration: none;
+                  display: inline-block;
+                  width: 100%;
+                  color: ${getColor(isHovered, getIsSelected())};`,
+          onmouseenter: () => {
+            isHovered = true;
+            element.update();
+          },
+          onmouseleave: () => {
+            isHovered = false;
+            element.update();
+          },
+        }),
         []
       ),
     ]
   );
-  return Object.assign(element, { key: 'navigation-button' });
+  return element;
 };
 
 module.exports = NavigationButton;

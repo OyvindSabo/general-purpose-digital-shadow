@@ -12,15 +12,14 @@ const ValueWidget = (getProps) => {
               position: relative;
               color: dimgray;
               width: 480px;
-              height: 320px;
-              background: ${Number(getProps().value) === 500 ? 'blue' : 'red'}`,
+              height: 320px;`,
     }),
     [
       WidgetLabel(() => ({ label: getProps().label })),
       WidgetValue(() => ({ value: getProps().value })),
     ]
   );
-  return Object.assign(element, { key: 'value-widget' });
+  return element;
 };
 
 module.exports = ValueWidget;

@@ -30,7 +30,7 @@ const Projects = (getProps) => {
       ),
     NewProject(getProps)
   );
-  return Object.assign(element, { key: 'projects' });
+  return element;
 };
 
 module.exports = Projects;

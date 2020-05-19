@@ -14,8 +14,8 @@ const Canvas3dWidget = (getProps) => {
   const element = compose(
     'canvas',
     {
-      height: 320, // 16 x SizeUnit
-      width: 480, // 24 x SizeUnit
+      height: 320, // 16 x 20px
+      width: 480, // 24 x 20px
       style: 'position: absolute;',
     },
     []
@@ -78,7 +78,7 @@ const Canvas3dWidget = (getProps) => {
   window.addEventListener(camera.focalLength$.id, () => {
     rerender({ surfaces, edges, center });
   });
-  return Object.assign(element, { key: 'canvas-3d-widget' });
+  return element;
 };
 
 module.exports = Canvas3dWidget;
