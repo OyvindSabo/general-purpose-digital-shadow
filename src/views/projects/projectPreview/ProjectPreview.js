@@ -8,6 +8,8 @@ const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 // getProps::() => { state, viewModel, name, id }
 const ProjectPreview = (getProps) => {
+  const getId = () => getProps().id;
+  const getViewModel = () => getProps().viewModel;
   const element = ProjectPreviewContainer(() => ({}), [
     compose(
       'div',
@@ -31,14 +33,14 @@ const ProjectPreview = (getProps) => {
     ProjectPreviewButton(
       () => ({
         innerText: 'Delete',
-        onclick: () => viewModel.deleteProject(getProps().id),
+        onclick: () => getViewModel().deleteProject(getId()),
       }),
       []
     ),
     ProjectPreviewButton(
       () => ({
         innerText: 'Edit',
-        onclick: () => viewModel.editProjectName(getProps().id),
+        onclick: () => getViewModel().editProjectName(getId()),
       }),
       []
     ),

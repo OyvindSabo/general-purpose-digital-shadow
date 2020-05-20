@@ -252,7 +252,7 @@ const doPatchChildren = (
     // If the new child node already exists on the correct index, jump to next iteration
     if (compareFunction(newChild, element.childNodes[index])) return;
 
-    // As long as there is an old child node at the current index which is not correspond to any of the new childNodes, remove it
+    // As long as there is an old child node at the current index which does not correspond to any of the new childNodes, remove it
     while (
       element.childNodes[index] &&
       !newChildren.some((newChild) =>
@@ -332,6 +332,81 @@ const createHiddenElement = () => {
     style: 'display: none;',
   });
   return element;
+};
+
+const Each = (getArray, mappingFunction) => {
+  const logicElement = createHiddenElement();
+  let array = getArray();
+  let childNodes = flatten(
+    array.map((_, i) =>
+      mappingFunction(
+        () => getArray()[i],
+        () => i,
+        getArray
+      )
+    )
+  );
+
+  logicElement.update = () => {
+    const newArray = getArray();
+
+    if (newArray.length === array.length) {
+      childNodes.forEach((childNode) => {
+        if (typeof childNode.update === 'function') {
+          childNode.update();
+        }
+      });
+      return;
+    }
+
+    if (newArray.length > array.length) {
+      childNodes.forEach((childNode) => {
+        if (typeof childNode.update === 'function') {
+          childNode.update();
+        }
+      });
+
+      // Add new child nodes
+      const newChildNodes = flatten(
+        newArray.slice(array.length).map((_, i) =>
+          mappingFunction(
+            () => getArray()[i + array.length],
+            () => i + array.length,
+            getArray
+          )
+        )
+      );
+
+      newChildNodes.forEach((newChildNode) => {
+        logicElement.parentNode.insertBefore(newChildNode, logicElement);
+      });
+
+      array = newArray;
+      childNodes = [...childNodes, ...newChildNodes];
+      return;
+    }
+
+    if (newArray.length < array.length) {
+      // Remove superfluous nodes
+      const childrenToBeRemoved = childNodes.slice(newArray.length);
+      childrenToBeRemoved.forEach((childNodeToBeRemoved) => {
+        logicElement.parentNode.removeChild(childNodeToBeRemoved);
+      });
+
+      // Update variables
+      array = newArray;
+      childNodes = childNodes.slice(0, newArray.length);
+
+      // Update current child nodes
+      childNodes.forEach((childNode) => {
+        if (typeof childNode.update === 'function') {
+          childNode.update();
+        }
+      });
+    }
+  };
+
+  return [...childNodes, logicElement];
 };
 
 // For the child nodes to be updatable they do need to be nodes which can be
@@ -559,6 +634,7 @@ const button = defineComponent((props, ...children) =>
 module.exports = {
   doMerge,
   compose,
+  Each,
   If,
   withKey,
   defineComponent,
@@ -1234,6 +1310,7 @@ const ProjectPreviewButton = (getProps) => {
   const element = compose(
     'button',
     () => ({
+      onclick: getProps().onclick,
       onmouseenter: () => {
         isHovered = true;
         element.update();
@@ -1276,6 +1353,8 @@ const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 // getProps::() => { state, viewModel, name, id }
 const ProjectPreview = (getProps) => {
+  const getId = () => getProps().id;
+  const getViewModel = () => getProps().viewModel;
   const element = ProjectPreviewContainer(() => ({}), [
     compose(
       'div',
@@ -1299,14 +1378,14 @@ const ProjectPreview = (getProps) => {
     ProjectPreviewButton(
       () => ({
         innerText: 'Delete',
-        onclick: () => viewModel.deleteProject(getProps().id),
+        onclick: () => getViewModel().deleteProject(getId()),
       }),
       []
     ),
     ProjectPreviewButton(
       () => ({
         innerText: 'Edit',
-        onclick: () => viewModel.editProjectName(getProps().id),
+        onclick: () => getViewModel().editProjectName(getId()),
       }),
       []
     ),
@@ -1366,7 +1445,7 @@ const ProjectNameInputContainer = include(
 );
 
 // getProps::() => { viewModel, id, nameInputValue }
-const ProjectNameInput = ({ viewModel, id$, nameInputValue$ }) => {
+const ProjectNameInput = (getProps) => {
   const element = ProjectPreviewContainer(() => ({}), [
     ProjectNameInputContainer(
       () => ({
@@ -1416,35 +1495,43 @@ const ProjectNameInput = include(
   'src/views/projects/projectNameInput/ProjectNameInput.js'
 );
 const NewProject = include('src/views/projects/newProject/NewProject.js');
-const { compose, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const { compose, Each, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const withKey = (element, key) => {
+  element.key = key;
+  return element;
+};
 
 // getProps::() => { viewModel, state }
 const Projects = (getProps) => {
   const element = compose(
     'div',
     {},
-    getProps()
-      .state.projects.filter(({ isEmpty }) => !isEmpty)
-      .map(({ id, name, nameInputValue, isEditing, isEmpty }) =>
-        If(
-          () => isEditing,
-          () => [
-            ProjectNameInput(() => ({
-              viewModel: getProps().viewModel,
-              id,
-              nameInputValue,
-            })),
-          ],
-          () => [
-            ProjectPreview(() => ({
-              state: getProps().state,
-              viewModel: getProps().viewModel,
-              id,
-              name,
-            })),
-          ]
-        )
+    [
+      Each(
+        () => getProps().state.projects.filter(({ isEmpty }) => !isEmpty),
+        (getCurrentValue) => [
+          If(
+            () => getCurrentValue().isEditing,
+            () => [
+              ProjectNameInput(() => ({
+                viewModel: getProps().viewModel,
+                id: getCurrentValue().id,
+                nameInputValue: getCurrentValue().nameInputValue,
+              })),
+            ],
+            () => [
+              ProjectPreview(() => ({
+                state: getProps().state,
+                viewModel: getProps().viewModel,
+                id: getCurrentValue().id,
+                name: getCurrentValue().name,
+              })),
+            ]
+          ),
+        ]
       ),
+    ],
     NewProject(getProps)
   );
   return element;

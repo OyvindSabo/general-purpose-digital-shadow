@@ -15,7 +15,7 @@ const doPatchChildren = (
     // If the new child node already exists on the correct index, jump to next iteration
     if (compareFunction(newChild, element.childNodes[index])) return;
 
-    // As long as there is an old child node at the current index which is not correspond to any of the new childNodes, remove it
+    // As long as there is an old child node at the current index which does not correspond to any of the new childNodes, remove it
     while (
       element.childNodes[index] &&
       !newChildren.some((newChild) =>
@@ -95,6 +95,81 @@ const createHiddenElement = () => {
     style: 'display: none;',
   });
   return element;
+};
+
+const Each = (getArray, mappingFunction) => {
+  const logicElement = createHiddenElement();
+  let array = getArray();
+  let childNodes = flatten(
+    array.map((_, i) =>
+      mappingFunction(
+        () => getArray()[i],
+        () => i,
+        getArray
+      )
+    )
+  );
+
+  logicElement.update = () => {
+    const newArray = getArray();
+
+    if (newArray.length === array.length) {
+      childNodes.forEach((childNode) => {
+        if (typeof childNode.update === 'function') {
+          childNode.update();
+        }
+      });
+      return;
+    }
+
+    if (newArray.length > array.length) {
+      childNodes.forEach((childNode) => {
+        if (typeof childNode.update === 'function') {
+          childNode.update();
+        }
+      });
+
+      // Add new child nodes
+      const newChildNodes = flatten(
+        newArray.slice(array.length).map((_, i) =>
+          mappingFunction(
+            () => getArray()[i + array.length],
+            () => i + array.length,
+            getArray
+          )
+        )
+      );
+
+      newChildNodes.forEach((newChildNode) => {
+        logicElement.parentNode.insertBefore(newChildNode, logicElement);
+      });
+
+      array = newArray;
+      childNodes = [...childNodes, ...newChildNodes];
+      return;
+    }
+
+    if (newArray.length < array.length) {
+      // Remove superfluous nodes
+      const childrenToBeRemoved = childNodes.slice(newArray.length);
+      childrenToBeRemoved.forEach((childNodeToBeRemoved) => {
+        logicElement.parentNode.removeChild(childNodeToBeRemoved);
+      });
+
+      // Update variables
+      array = newArray;
+      childNodes = childNodes.slice(0, newArray.length);
+
+      // Update current child nodes
+      childNodes.forEach((childNode) => {
+        if (typeof childNode.update === 'function') {
+          childNode.update();
+        }
+      });
+    }
+  };
+
+  return [...childNodes, logicElement];
 };
 
 // For the child nodes to be updatable they do need to be nodes which can be
@@ -322,6 +397,7 @@ const button = defineComponent((props, ...children) =>
 module.exports = {
   doMerge,
   compose,
+  Each,
   If,
   withKey,
   defineComponent,

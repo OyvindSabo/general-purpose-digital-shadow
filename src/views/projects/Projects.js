@@ -5,35 +5,43 @@ const ProjectNameInput = include(
   'src/views/projects/projectNameInput/ProjectNameInput.js'
 );
 const NewProject = include('src/views/projects/newProject/NewProject.js');
-const { compose, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const { compose, Each, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const withKey = (element, key) => {
+  element.key = key;
+  return element;
+};
 
 // getProps::() => { viewModel, state }
 const Projects = (getProps) => {
   const element = compose(
     'div',
     {},
-    getProps()
-      .state.projects.filter(({ isEmpty }) => !isEmpty)
-      .map(({ id, name, nameInputValue, isEditing, isEmpty }) =>
-        If(
-          () => isEditing,
-          () => [
-            ProjectNameInput(() => ({
-              viewModel: getProps().viewModel,
-              id,
-              nameInputValue,
-            })),
-          ],
-          () => [
-            ProjectPreview(() => ({
-              state: getProps().state,
-              viewModel: getProps().viewModel,
-              id,
-              name,
-            })),
-          ]
-        )
+    [
+      Each(
+        () => getProps().state.projects.filter(({ isEmpty }) => !isEmpty),
+        (getCurrentValue) => [
+          If(
+            () => getCurrentValue().isEditing,
+            () => [
+              ProjectNameInput(() => ({
+                viewModel: getProps().viewModel,
+                id: getCurrentValue().id,
+                nameInputValue: getCurrentValue().nameInputValue,
+              })),
+            ],
+            () => [
+              ProjectPreview(() => ({
+                state: getProps().state,
+                viewModel: getProps().viewModel,
+                id: getCurrentValue().id,
+                name: getCurrentValue().name,
+              })),
+            ]
+          ),
+        ]
       ),
+    ],
     NewProject(getProps)
   );
   return element;

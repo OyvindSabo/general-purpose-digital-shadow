@@ -9,7 +9,7 @@ const ProjectNameInputContainer = include(
 );
 
 // getProps::() => { viewModel, id, nameInputValue }
-const ProjectNameInput = ({ viewModel, id$, nameInputValue$ }) => {
+const ProjectNameInput = (getProps) => {
   const element = ProjectPreviewContainer(() => ({}), [
     ProjectNameInputContainer(
       () => ({

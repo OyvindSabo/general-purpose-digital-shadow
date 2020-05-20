@@ -6,6 +6,7 @@ const ProjectPreviewButton = (getProps) => {
   const element = compose(
     'button',
     () => ({
+      onclick: getProps().onclick,
       onmouseenter: () => {
         isHovered = true;
         element.update();
