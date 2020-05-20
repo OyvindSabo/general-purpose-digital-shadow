@@ -103,7 +103,7 @@ const Model = ({ router, isExported, state, setState }) => {
   viewModel.saveProjectName = (projectId) => {
     const project = state.projects.find(({ id }) => id === projectId);
     updateProjectById(projectId, {
-      name: project.nameInputValue$.value,
+      name: project.nameInputValue,
     });
     viewModel.loadAllProjects();
   };
@@ -204,6 +204,7 @@ const Model = ({ router, isExported, state, setState }) => {
       const selectedProject = dataModel.projects.find(
         ({ id }) => id === params.projectId
       );
+      console.log('selectedProject: ', selectedProject);
       setState({
         currentRoute,
         params,

@@ -23,23 +23,22 @@ const UnexportedTitleBar = (getProps) => {
       compose(
         'span',
         () => ({
+          innerText: getProps().state.selectedProjectName
+            ? ` / ${getProps().state.selectedProjectName}`
+            : '',
           style: `color: ${
             getCurrentRoute().indexOf('/projects/<projectId:string>') === 0
               ? 'darkslategray'
               : 'lightgray'
           };
-                      cursor: pointer;`,
+                  cursor: pointer;`,
           onclick: () => {
             location.hash = `#!/projects/${getSelectedProjectId()}/${
               getLastVisitedProjectView() || ''
             }`;
           },
         }),
-        [
-          getProps().state.selectedProjectName
-            ? ` / ${getProps().state.selectedProjectName}`
-            : '',
-        ]
+        []
       ),
     ]),
     ExportButton(

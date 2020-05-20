@@ -97,6 +97,10 @@ const createHiddenElement = () => {
   return element;
 };
 
+// For the child nodes to be updatable they do need to be nodes which can be
+// referenced, and not strings, for instance. Strings should rather be passed
+// as an innerText prop. If both text and elements need to exist side by side,
+// the text should be passed as text nodes.
 const If = (getCondition, getThenChildNodes, getElseChildNodes = () => []) => {
   // The hidden element is a span since if it was a div it would be a block
   // element and block element cannot be children of inline elements.
