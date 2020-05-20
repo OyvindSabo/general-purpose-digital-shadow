@@ -13,7 +13,7 @@ const ProjectNameInput = (getProps) => {
   const element = ProjectPreviewContainer(() => ({}), [
     ProjectNameInputContainer(
       () => ({
-        innerText: getProps().nameInputValue,
+        value: getProps().nameInputValue,
         oninput: ({ value }) => {
           const { id, viewModel } = getProps();
           viewModel.setProjectNameInputValue(id, value);

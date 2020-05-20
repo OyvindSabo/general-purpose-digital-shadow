@@ -2,12 +2,12 @@ const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const ProjectNameInputContainer = (getProps) => {
   const element = compose(
-    'span',
+    'input',
     () => {
-      const { innerText, oninput } = getProps();
+      const { value, oninput } = getProps();
       return {
         // TODO: Make this one align nicely next to the input
-        innerText,
+        value,
         oninput,
         style: `color: dimgray;
               height: 64px;
