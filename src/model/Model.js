@@ -159,7 +159,6 @@ const Model = ({ router, isExported, state, setState }) => {
   };
 
   const updateValues = () => {
-    console.log('updateValues');
     let evaluatedCode;
     try {
       evaluatedCode = evaluateCode(
@@ -204,7 +203,6 @@ const Model = ({ router, isExported, state, setState }) => {
       const selectedProject = dataModel.projects.find(
         ({ id }) => id === params.projectId
       );
-      console.log('selectedProject: ', selectedProject);
       setState({
         currentRoute,
         params,

@@ -14,9 +14,9 @@ const ProjectNameInput = (getProps) => {
     ProjectNameInputContainer(
       () => ({
         value: getProps().nameInputValue,
-        oninput: ({ value }) => {
+        oninput: ({ target }) => {
           const { id, viewModel } = getProps();
-          viewModel.setProjectNameInputValue(id, value);
+          viewModel.setProjectNameInputValue(id, target.value);
         },
       }),
       []
