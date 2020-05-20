@@ -129,7 +129,6 @@ const Each = (getArray, mappingFunction) => {
         }
       });
 
-      // Add new child nodes
       const newChildNodes = flatten(
         newArray.slice(array.length).map((_, i) =>
           mappingFunction(
