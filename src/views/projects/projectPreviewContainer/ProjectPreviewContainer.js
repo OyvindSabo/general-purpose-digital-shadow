@@ -9,7 +9,8 @@ const ProjectPreviewContainer = (_, children) => {
               height: 64px;
               background: white;
               line-height: 64px;
-              font-size: 16px;`,
+              font-size: 16px;
+              cursor: pointer;`,
     },
     children
   );
