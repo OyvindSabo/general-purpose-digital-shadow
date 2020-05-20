@@ -25,7 +25,7 @@ const router = isExported
       '/projects/<projectId:string>/values': 'Values',
       '/projects/<projectId:string>/values/edit': 'Edit values',
       '/projects/<projectId:string>/dashboard': 'Dashboard',
-      '/projects/<projectId:string>/dashboard/edit': 'Edit dashboard',
+      '/projects/<projectId:string>/dashboard-editor': 'Edit dashboard',
     });
 
 const { state, setState, addStateChangeListener } = simpleState({

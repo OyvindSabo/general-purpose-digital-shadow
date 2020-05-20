@@ -1,11 +1,11 @@
 const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
 
 const determineIsSelected = (currentRoute) => {
-  return currentRoute === '/projects/<projectId:string>/dashboard/edit';
+  return currentRoute === '/projects/<projectId:string>/dashboard-editor';
 };
 
 const getHref = (selectedProjectId) => {
-  return `#!/projects/${selectedProjectId}/dashboard/edit`;
+  return `#!/projects/${selectedProjectId}/dashboard-editor`;
 };
 
 const DashboardEditorButton = (getProps) => {

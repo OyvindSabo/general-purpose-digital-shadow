@@ -3,7 +3,6 @@ const ApiInputLabel = include(
 );
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-// getProps::() => { state, viewModel }
 const ApiIntervalInput = (getProps) => {
   const element = compose('div', {}, [
     compose(
@@ -27,18 +26,15 @@ const ApiIntervalInput = (getProps) => {
       [
         compose(
           'input',
-          () => {
-            return {
-              type: 'number',
-              min: '0',
-              oninput: ({ target }) => {
-                const { state, viewModel } = getProps();
-                viewModel.updateApiInterval(
-                  state.selectedProjectId,
-                  target.value
-                );
-              },
-              style: `border-radius: 5px;
+          () => ({
+            oninput: ({ target }) => {
+              const { state, viewModel } = getProps();
+              viewModel.updateApiInterval(
+                state.selectedProjectId,
+                Number(target.value)
+              );
+            },
+            style: `border-radius: 5px;
                     font-family: "Courier New", Courier, monospace;
                     background: rgba(0, 0, 0, 0.05);
                     outline: none;
@@ -47,9 +43,8 @@ const ApiIntervalInput = (getProps) => {
                     border: none;
                     width: 100%;
                     box-shadow: inset rgba(0, 0, 0, 0.5) 0 0 10px -5px;`,
-              value: getProps().state.selectedApiInterval,
-            };
-          },
+            value: getProps().state.selectedApiInterval,
+          }),
           []
         ),
       ]

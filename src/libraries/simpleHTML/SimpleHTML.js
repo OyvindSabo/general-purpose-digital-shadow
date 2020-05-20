@@ -43,28 +43,6 @@ const doPatchChildren = (
   }
 };
 
-const getNodeRepresentation = (child) => {
-  if (typeof child === 'string') return document.createTextNode(child);
-  if (typeof child === 'number') return document.createTextNode(child);
-  return child;
-};
-
-const callUntilNotFunction = (valueOrFunction) => {
-  if (typeof valueOrFunction === 'function') {
-    return callUntilNotFunction(valueOrFunction());
-  }
-  return valueOrFunction;
-};
-
-const getCleanedChildNodes = (children) => {
-  console.log('children: ', children);
-  console.log(
-    'cleanedChildren: ',
-    children.map(getNodeRepresentation).filter(Boolean)
-  );
-  return children.map(getNodeRepresentation).filter(Boolean);
-};
-
 const flatten = (items) => {
   const flat = [];
 
@@ -79,7 +57,7 @@ const flatten = (items) => {
   return flat;
 };
 
-const compose = (elementType, getProps, getChildren) => {
+const compose = (elementType, getProps, children) => {
   const element = document.createElement(elementType);
 
   // Assign props
@@ -90,31 +68,18 @@ const compose = (elementType, getProps, getChildren) => {
   }
 
   // Append children
-  if (typeof getChildren === 'function') {
-    element.append(...flatten(getChildren()).filter(Boolean));
-  } else {
-    element.append(...flatten(getChildren).filter(Boolean));
-  }
+  element.append(...flatten(children).filter(Boolean));
 
   element.update = () => {
     // We update the props only if they are provided as a function. Otherwise they are static.
     if (typeof getProps === 'function') {
-      if (element.selectionStart !== null && element.selectionRange !== null) {
+      if (element.setSelectionRange) {
         const { selectionStart, selectionEnd } = element;
-        Object.assign(element, getProps(), { selectionStart, selectionEnd });
+        element.setSelectionRange(selectionStart, selectionEnd);
       } else {
         Object.assign(element, getProps());
       }
     }
-    /*if (typeof getChildren === 'function') {
-      const newChildNodes = getChildren().filter(Boolean);
-      doPatchChildren(element, newChildNodes, (node1, node2) => {
-        if (node1 && node2 && node1.key && node2.key) {
-          return node1.key === node2.key;
-        }
-        return false;
-      });
-    }*/
 
     Array.from(element.childNodes).forEach((childNode) => {
       if (typeof childNode.update === 'function') {
@@ -132,33 +97,52 @@ const createHiddenElement = () => {
   return element;
 };
 
-const If = (getCondition, getThenElement) => {
+const If = (getCondition, getThenChildNodes, getElseChildNodes = () => []) => {
   // The hidden element is a span since if it was a div it would be a block
   // element and block element cannot be children of inline elements.
   const logicElement = createHiddenElement();
   let condition = getCondition();
-  let element = condition ? getThenElement() : createHiddenElement();
+  // TODO: Maybe these should be flattened? Or maybe not? WIll nested If's work?
+  let childNodes = condition ? getThenChildNodes() : getElseChildNodes();
   logicElement.update = () => {
     if (condition && getCondition()) {
-      element.update();
-      return;
-    }
-    if (condition && !getCondition()) {
-      condition = false;
-      const hiddenElement = createHiddenElement();
-      element.parentNode.replaceChild(hiddenElement, element);
-      element = hiddenElement;
+      childNodes.forEach((childNode) => {
+        if (typeof childNode.update === 'function') {
+          childNode.update();
+        }
+      });
       return;
     }
     if (!condition && getCondition()) {
       condition = true;
-      const newElement = getThenElement();
-      element.parentNode.replaceChild(newElement, element);
-      element = newElement;
+      const thenChildNodes = getThenChildNodes();
+      // Remove the old children
+      childNodes.forEach((childNode) => {
+        childNode.parentNode.removeChild(childNode);
+      });
+      // Add the new children
+      thenChildNodes.forEach((thenChildNode) => {
+        logicElement.parentNode.insertBefore(thenChildNode, logicElement);
+      });
+      childNodes = thenChildNodes;
+      return;
+    }
+    if (condition && !getCondition()) {
+      condition = false;
+      const elseChildNodes = getElseChildNodes();
+      // Remove the old children
+      childNodes.forEach((childNode) => {
+        childNode.parentNode.removeChild(childNode);
+      });
+      // Add the new children
+      elseChildNodes.forEach((elseChildNode) => {
+        logicElement.parentNode.insertBefore(elseChildNode, logicElement);
+      });
+      childNodes = elseChildNodes;
       return;
     }
   };
-  return [element, logicElement];
+  return [...childNodes, logicElement];
 };
 
 const withKey = (element, key) => {
@@ -333,7 +317,6 @@ const button = defineComponent((props, ...children) =>
 
 module.exports = {
   doMerge,
-  callUntilNotFunction,
   compose,
   If,
   withKey,

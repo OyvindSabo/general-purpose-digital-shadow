@@ -1,8 +1,6 @@
-const Observable = include('src/libraries/observable/Observable.js');
 const {
   getExportedProject,
   getAllProjects,
-  getProjectById,
   createProject,
   updateProjectById,
   deleteProjectById,
@@ -53,7 +51,7 @@ const Model = ({ router, isExported, state, setState }) => {
     setState({
       selectedProjectName: selectedProject.name,
       selectedApiUrl: selectedProject.apiUrl,
-      selectedAPiInterval: selectedProject.apiInterval,
+      selectedApiInterval: selectedProject.apiInterval,
       selectedWidgetsCode: selectedProject.widgetsCode,
     });
   };
@@ -103,7 +101,7 @@ const Model = ({ router, isExported, state, setState }) => {
   };
 
   viewModel.saveProjectName = (projectId) => {
-    const project = state.projects.find(({ id$ }) => id$.value === projectId);
+    const project = state.projects.find(({ id }) => id === projectId);
     updateProjectById(projectId, {
       name: project.nameInputValue$.value,
     });
@@ -111,12 +109,12 @@ const Model = ({ router, isExported, state, setState }) => {
   };
 
   viewModel.saveSelectedProject = () => {
-    updateProjectById(viewModel.selectedProjectId$.value, {
-      name: viewModel.selectedName$.value,
-      apiUrl: viewModel.selectedApiUrl$.value,
-      apiInterval: viewModel.selectedApiInterval$.value,
-      derivedValuesCode: viewModel.selectedDerivedValuesCode$.value,
-      widgetsCode: viewModel.selectedWidgetsCode$.value,
+    updateProjectById(state.selectedProjectId, {
+      name: state.selectedName,
+      apiUrl: state.selectedApiUrl,
+      apiInterval: state.selectedApiInterval,
+      derivedValuesCode: state.selectedDerivedValuesCode,
+      widgetsCode: state.selectedWidgetsCode,
     });
     viewModel.loadAllProjects();
   };
@@ -129,11 +127,19 @@ const Model = ({ router, isExported, state, setState }) => {
   viewModel.updateApiUrl = (projectId, apiUrl) => {
     updateProjectById(projectId, { apiUrl });
     viewModel.loadAllProjects();
+    setTimeout(() => {
+      fetchDataFromApi();
+      repeatedlyFetchDataFromApi(state.selectedApiInterval);
+    }, 1000);
   };
 
   viewModel.updateApiInterval = (projectId, apiInterval) => {
     updateProjectById(projectId, { apiInterval });
     viewModel.loadAllProjects();
+    setTimeout(() => {
+      fetchDataFromApi();
+      repeatedlyFetchDataFromApi(state.selectedApiInterval);
+    }, 1000);
   };
 
   viewModel.updateWidgetsCode = (projectId, widgetsCode) => {
@@ -193,21 +199,6 @@ const Model = ({ router, isExported, state, setState }) => {
     }, timeoutInSeconds * 1000);
   repeatedlyFetchDataFromApi();
 
-  /** TODO
-  addEventListener(viewModel.selectedApiInterval$.id, () =>
-    setTimeout(() => {
-      fetchDataFromApi();
-      repeatedlyFetchDataFromApi(viewModel.selectedApiInterval$.value);
-    }, 1000)
-  );
-  addEventListener(viewModel.selectedApiUrl$.id, () =>
-    setTimeout(() => {
-      fetchDataFromApi();
-      repeatedlyFetchDataFromApi(viewModel.selectedApiInterval$.value);
-    }, 1000)
-  );
-  */
-
   const syncSelectedProjectWithRouter = ({ params, currentRoute }) => {
     if (currentRoute.indexOf('/projects/<projectId:string>') === 0) {
       const selectedProject = dataModel.projects.find(
@@ -230,13 +221,14 @@ const Model = ({ router, isExported, state, setState }) => {
         });
       }
       if (
-        currentRoute.indexOf('/projects/<projectId:string>/dashboard/edit') ===
-        0
+        currentRoute.indexOf(
+          '/projects/<projectId:string>/dashboard-editor'
+        ) === 0
       ) {
         setState({
           currentRoute,
           params,
-          lastVisitedProjectView: 'edit-dashboard', // TODO: Check that this works
+          lastVisitedProjectView: 'dashboard-editor',
         });
       }
       if (currentRoute === '/projects/<projectId:string>/dashboard') {

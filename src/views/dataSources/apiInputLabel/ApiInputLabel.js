@@ -13,8 +13,7 @@ const ApiInputLabel = (getProps) => {
               line-height: 40px;
               font-size: 15px;
               width: 160px;
-              display: inline-block;
-              box-sizing: border-box;`,
+              display: inline-block;`,
     }),
     []
   );

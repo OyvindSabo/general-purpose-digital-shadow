@@ -1,9 +1,6 @@
 const ProjectNavigator = include(
   'src/views/project/projectNavigator/ProjectNavigator.js'
 );
-const ProjectContainer = include(
-  'src/views/project/projectContainer/ProjectContainer.js'
-);
 const TitleBar = include('src/app/titleBar/TitleBar.js');
 const Projects = include('src/views/projects/Projects.js');
 const DataSources = include('src/views/dataSources/DataSources.js');
@@ -28,7 +25,7 @@ const isDataSourcesUrl = (currentRoute) => {
 };
 
 const isDashboardEditorUrl = (currentRoute) => {
-  return currentRoute === '/projects/<projectId:string>/dashboard/edit';
+  return currentRoute === '/projects/<projectId:string>/dashboard-editor';
 };
 
 const isDashboardUrl = (currentRoute) => {
@@ -42,26 +39,27 @@ const UnexportedApp = (getProps) => {
     TitleBar(getProps),
     If(
       () => isProjectsUrl(getCurrentRoute()),
-      () => Projects(getProps)
+      () => [Projects(getProps)]
     ),
     If(
       () => hasOpenedProject(getCurrentRoute()),
-      () =>
+      () => [
         compose('div', {}, [
           ProjectNavigator(getProps),
           If(
             () => isDataSourcesUrl(getCurrentRoute()),
-            () => DataSources(getProps)
+            () => [DataSources(getProps)]
           ),
           If(
             () => isDashboardEditorUrl(getCurrentRoute()),
-            () => DashboardEditor(getProps)
+            () => [DashboardEditor(getProps)]
           ),
           If(
             () => isDashboardUrl(getCurrentRoute()),
-            () => Dashboard(getProps)
+            () => [Dashboard(getProps)]
           ),
-        ])
+        ]),
+      ]
     ),
   ]);
 
