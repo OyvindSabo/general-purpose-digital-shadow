@@ -92,13 +92,6 @@ const compose = (elementType, getProps, children) => {
   return element;
 };
 
-const createHiddenElement = () => {
-  const element = Object.assign(document.createElement('span'), {
-    style: 'display: none;',
-  });
-  return element;
-};
-
 const createContentsContainer = () => {
   const element = Object.assign(document.createElement('div'), {
     style: 'display: contents;',
@@ -106,14 +99,10 @@ const createContentsContainer = () => {
   return element;
 };
 
-const insertAfter = (newChild, refChild) => {
-  refChild.parentNode.insertBefore(newChild, refChild.nextSibling);
-};
-
 const Each = (getArray, mappingFunction) => {
   const logicElement = createContentsContainer();
   let array = getArray();
-  let childNodes = flatten(
+  const childNodes = flatten(
     array.map((_, i) =>
       mappingFunction(
         () => getArray()[i],
@@ -129,7 +118,7 @@ const Each = (getArray, mappingFunction) => {
     const newArray = getArray();
 
     if (newArray.length === array.length) {
-      childNodes.forEach((childNode) => {
+      Array.from(logicElement.childNodes).forEach((childNode) => {
         if (typeof childNode.update === 'function') {
           childNode.update();
         }
@@ -139,7 +128,7 @@ const Each = (getArray, mappingFunction) => {
 
     // If some elements should be added
     if (newArray.length > array.length) {
-      childNodes.forEach((childNode) => {
+      Array.from(logicElement.childNodes).forEach((childNode) => {
         if (typeof childNode.update === 'function') {
           childNode.update();
         }
@@ -159,7 +148,6 @@ const Each = (getArray, mappingFunction) => {
       logicElement.append(...newChildNodes);
 
       array = newArray;
-      childNodes = [...childNodes, ...newChildNodes];
       return;
     }
 
@@ -179,17 +167,18 @@ const Each = (getArray, mappingFunction) => {
       );
 
       // Remove superfluous nodes
-      const childrenToBeRemoved = childNodes.slice(newChildNodes.length);
+      const childrenToBeRemoved = Array.from(logicElement.childNodes).slice(
+        newChildNodes.length
+      );
       childrenToBeRemoved.forEach((childNodeToBeRemoved) => {
         logicElement.removeChild(childNodeToBeRemoved);
       });
 
       // Update variables
       array = newArray;
-      childNodes = childNodes.slice(0, newChildNodes.length);
 
       // Update current child nodes
-      childNodes.forEach((childNode) => {
+      Array.from(logicElement.childNodes).forEach((childNode) => {
         if (typeof childNode.update === 'function') {
           childNode.update();
         }
@@ -200,22 +189,18 @@ const Each = (getArray, mappingFunction) => {
   return logicElement;
 };
 
-// For the child nodes to be updatable they do need to be nodes which can be
-// referenced, and not strings, for instance. Strings should rather be passed
-// as an innerText prop. If both text and elements need to exist side by side,
-// the text should be passed as text nodes.
 const If = (getCondition, getThenChildNodes, getElseChildNodes = () => []) => {
-  // The hidden element is a span since if it was a div it would be a block
-  // element and block element cannot be children of inline elements.
-  const logicElement = createHiddenElement();
+  const logicElement = createContentsContainer();
   let condition = getCondition();
-  // TODO: Maybe these should be flattened? Or maybe not? WIll nested If's work?
-  let childNodes = condition
+  const childNodes = condition
     ? flatten(getThenChildNodes()).filter(Boolean)
     : flatten(getElseChildNodes()).filter(Boolean);
+
+  logicElement.append(...childNodes);
+
   logicElement.update = () => {
     if (condition && getCondition()) {
-      childNodes.forEach((childNode) => {
+      Array.from(logicElement.childNodes).forEach((childNode) => {
         if (typeof childNode.update === 'function') {
           childNode.update();
         }
@@ -226,32 +211,24 @@ const If = (getCondition, getThenChildNodes, getElseChildNodes = () => []) => {
       condition = true;
       const thenChildNodes = flatten(getThenChildNodes()).filter(Boolean);
       // Remove the old children
-      childNodes.forEach((childNode) => {
-        childNode.parentNode.removeChild(childNode);
-      });
+      logicElement.innerHTML = '';
+
       // Add the new children after the logic element
-      [...thenChildNodes].reverse().forEach((thenChildNode) => {
-        insertAfter(thenChildNode, logicElement);
-      });
-      childNodes = thenChildNodes;
+      logicElement.append(...thenChildNodes);
       return;
     }
     if (condition && !getCondition()) {
       condition = false;
       const elseChildNodes = flatten(getElseChildNodes()).filter(Boolean);
       // Remove the old children
-      childNodes.forEach((childNode) => {
-        childNode.parentNode.removeChild(childNode);
-      });
+      logicElement.innerHTML = '';
+
       // Add the new children
-      [...elseChildNodes].reverse().forEach((elseChildNode) => {
-        insertAfter(elseChildNode, logicElement);
-      });
-      childNodes = elseChildNodes;
+      logicElement.append(...elseChildNodes);
       return;
     }
   };
-  return [logicElement, ...childNodes];
+  return logicElement;
 };
 
 class SimpleHTML {
