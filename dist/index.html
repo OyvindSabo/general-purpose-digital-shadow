@@ -319,7 +319,9 @@ const compose = (elementType, getProps, children) => {
     }
 
     Array.from(element.childNodes).forEach((childNode) => {
-      if (typeof childNode.update === 'function') {
+      // We check that the parent node exists because a previous sibling might
+      // be a logic element which has unmounted a later element
+      if (typeof childNode.update === 'function' && childNode.parentNode) {
         childNode.update();
       }
     });
