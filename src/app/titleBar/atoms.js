@@ -4,8 +4,9 @@ const ViewTitle = (_, children) => {
   const element = compose(
     'div',
     {
-      style: `font-size: 32px;
-              padding: '16px';
+      style: `font-size: 25px;
+              padding: 0 10px;
+              line-height: 60px;
               display: inline-block;`,
     },
     children

@@ -10,7 +10,7 @@ const HorizontalNavigatorButton$ = ({
 }) => {
   return div$(label)
     .setStyle({
-      height: '64px',
+      height: '60px',
       width: '192px',
       display: 'inline-block',
       textAlign: 'center',
@@ -20,12 +20,12 @@ const HorizontalNavigatorButton$ = ({
       color: choose$(isActive$, highlightLabelColor$, labelColor$),
       userSelect: 'none',
     })
-    .onMouseEnter(element => {
+    .onMouseEnter((element) => {
       element.setStyle({
         color: highlightLabelColor$,
       });
     })
-    .onMouseLeave(element => {
+    .onMouseLeave((element) => {
       element.setStyle({
         borderBottom: choose$(isActive$, '2px solid deepskyblue', 'none'),
         color: choose$(isActive$, highlightLabelColor$, labelColor$),

@@ -1067,7 +1067,7 @@ const HorizontalNavigator = (_, children) => {
   const element = compose(
     'div',
     {
-      style: `height: 64px;
+      style: `height: 60px;
               box-shadow: rgba(0, 0, 0, 0.25) 0 0 10px -5px;
               background: white;
               color: darkslategray;`,
@@ -1090,8 +1090,9 @@ const ViewTitle = (_, children) => {
   const element = compose(
     'div',
     {
-      style: `font-size: 32px;
-              padding: '16px';
+      style: `font-size: 25px;
+              padding: 0 10px;
+              line-height: 60px;
               display: inline-block;`,
     },
     children
@@ -2792,7 +2793,7 @@ const { state, setState, addStateChangeListener } = simpleState({
   widgets: [],
 });
 
-const viewModel = Model({ router, isExported, state, setState });
+const viewModel = Model({ router, state, setState });
 
 const app = compose('div', {}, [
   App(() => ({

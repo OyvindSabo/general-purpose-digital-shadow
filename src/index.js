@@ -45,7 +45,7 @@ const { state, setState, addStateChangeListener } = simpleState({
   widgets: [],
 });
 
-const viewModel = Model({ router, isExported, state, setState });
+const viewModel = Model({ router, state, setState });
 
 const app = compose('div', {}, [
   App(() => ({
