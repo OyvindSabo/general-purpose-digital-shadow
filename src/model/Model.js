@@ -6,9 +6,13 @@ const {
   deleteProjectById,
 } = include('src/data/Data.js');
 
+const LanguageParser = include(
+  'src/libraries/languageParser/LanguageParser.js'
+);
+
 const evaluateCode = (apiResponse, widgetsCode) => {
-  const evaluatedCode = eval(widgetsCode);
-  const evaluatedCodeCalledWithApiResponse = evaluatedCode(
+  const evaluatedCodeCalledWithApiResponse = LanguageParser.callWithJavaScriptArguments(
+    widgetsCode,
     JSON.parse(apiResponse)
   );
   return evaluatedCodeCalledWithApiResponse;
