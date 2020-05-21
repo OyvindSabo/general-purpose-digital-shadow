@@ -11,13 +11,7 @@ const { compose, Each, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
 const Projects = (getProps) => {
   const element = compose('div', {}, [
     Each(
-      () => {
-        console.log(
-          'project props: ',
-          getProps().state.projects.filter(({ isEmpty }) => !isEmpty)
-        );
-        return getProps().state.projects.filter(({ isEmpty }) => !isEmpty);
-      },
+      () => getProps().state.projects.filter(({ isEmpty }) => !isEmpty),
       (getCurrentValue) => [
         If(
           () => getCurrentValue().isEditing,

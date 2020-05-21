@@ -99,12 +99,19 @@ const createHiddenElement = () => {
   return element;
 };
 
+const createContentsContainer = () => {
+  const element = Object.assign(document.createElement('div'), {
+    style: 'display: contents;',
+  });
+  return element;
+};
+
 const insertAfter = (newChild, refChild) => {
   refChild.parentNode.insertBefore(newChild, refChild.nextSibling);
 };
 
 const Each = (getArray, mappingFunction) => {
-  const logicElement = createHiddenElement();
+  const logicElement = createContentsContainer();
   let array = getArray();
   let childNodes = flatten(
     array.map((_, i) =>
@@ -115,6 +122,8 @@ const Each = (getArray, mappingFunction) => {
       )
     )
   );
+
+  logicElement.append(...childNodes);
 
   logicElement.update = () => {
     const newArray = getArray();
@@ -128,6 +137,7 @@ const Each = (getArray, mappingFunction) => {
       return;
     }
 
+    // If some elements should be added
     if (newArray.length > array.length) {
       childNodes.forEach((childNode) => {
         if (typeof childNode.update === 'function') {
@@ -146,25 +156,37 @@ const Each = (getArray, mappingFunction) => {
         })
       );
 
-      [...newChildNodes].reverse().forEach((newChildNode) => {
-        insertAfter(newChildNode, childNodes.slice(-1)[0] || logicElement);
-      });
+      logicElement.append(...newChildNodes);
 
       array = newArray;
       childNodes = [...childNodes, ...newChildNodes];
       return;
     }
 
+    // If some elements should be removed
     if (newArray.length < array.length) {
+      // Even if we already have nodes which can be updated to match the new
+      // child nodes, we need to see how many nodes we should keep, since each
+      // item in the array can potentially be mapped to several nodes.
+      const newChildNodes = flatten(
+        newArray.map((_, i) =>
+          mappingFunction(
+            () => getArray()[i],
+            () => i,
+            getArray
+          )
+        )
+      );
+
       // Remove superfluous nodes
-      const childrenToBeRemoved = childNodes.slice(newArray.length);
+      const childrenToBeRemoved = childNodes.slice(newChildNodes.length);
       childrenToBeRemoved.forEach((childNodeToBeRemoved) => {
-        logicElement.parentNode.removeChild(childNodeToBeRemoved);
+        logicElement.removeChild(childNodeToBeRemoved);
       });
 
       // Update variables
       array = newArray;
-      childNodes = childNodes.slice(0, newArray.length);
+      childNodes = childNodes.slice(0, newChildNodes.length);
 
       // Update current child nodes
       childNodes.forEach((childNode) => {
@@ -175,7 +197,7 @@ const Each = (getArray, mappingFunction) => {
     }
   };
 
-  return [logicElement, ...childNodes];
+  return logicElement;
 };
 
 // For the child nodes to be updatable they do need to be nodes which can be
