@@ -267,7 +267,9 @@ const specialForms = {
     tokenType: 'function',
     function: (args, scope) => {
       if (args.length !== 2) {
-        throw SyntaxError(`${args.length} passed to define. Expected 2`);
+        throw SyntaxError(
+          `${args.length} arguments passed to define. Expected 2`
+        );
       }
       if (args[0].tokenType !== 'word') {
         throw SyntaxError(
@@ -841,6 +843,13 @@ const evaluateSyntaxTree = (syntaxTree, scope) => {
 };
 
 const convertFromJavaScriptValue = (javaScriptValue) => {
+  if (javaScriptValue === null || javaScriptValue === undefined) {
+    return {
+      tokenType: 'value',
+      dataType: 'number',
+      value: 0,
+    };
+  }
   if (typeof javaScriptValue === 'string') {
     return {
       tokenType: 'value',
