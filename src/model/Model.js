@@ -158,6 +158,10 @@ const Model = ({ router, isExported, state, setState }) => {
       });
   };
 
+  const evaluatedCodeIsValid = (evaluatedCode) => {
+    return evaluatedCode.every((widget) => typeof widget === 'object');
+  };
+
   const updateValues = () => {
     let evaluatedCode;
     try {
@@ -166,13 +170,14 @@ const Model = ({ router, isExported, state, setState }) => {
         state.selectedWidgetsCode
       );
     } catch (e) {
-      console.log('Failed to evaluate code: ', e);
+      console.warn('Failed to evaluate code: ', e);
       evaluatedCode = [];
     }
-
-    setState({
-      widgets: evaluatedCode,
-    });
+    if (evaluatedCodeIsValid(evaluatedCode)) {
+      setState({
+        widgets: evaluatedCode,
+      });
+    }
   };
 
   const fetchDataFromApi = () => {

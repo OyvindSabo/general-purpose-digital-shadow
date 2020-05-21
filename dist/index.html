@@ -334,6 +334,10 @@ const createHiddenElement = () => {
   return element;
 };
 
+const insertAfter = (newChild, refChild) => {
+  refChild.parentNode.insertBefore(newChild, refChild.nextSibling);
+};
+
 const Each = (getArray, mappingFunction) => {
   const logicElement = createHiddenElement();
   let array = getArray();
@@ -367,17 +371,18 @@ const Each = (getArray, mappingFunction) => {
       });
 
       const newChildNodes = flatten(
-        newArray.slice(array.length).map((_, i) =>
-          mappingFunction(
-            () => getArray()[i + array.length],
-            () => i + array.length,
+        newArray.slice(array.length).map((_, _i) => {
+          const i = _i + array.length;
+          return mappingFunction(
+            () => getArray()[i],
+            () => i,
             getArray
-          )
-        )
+          );
+        })
       );
 
-      newChildNodes.forEach((newChildNode) => {
-        logicElement.parentNode.insertBefore(newChildNode, logicElement);
+      [...newChildNodes].reverse().forEach((newChildNode) => {
+        insertAfter(newChildNode, childNodes.slice(-1)[0] || logicElement);
       });
 
       array = newArray;
@@ -405,7 +410,7 @@ const Each = (getArray, mappingFunction) => {
     }
   };
 
-  return [...childNodes, logicElement];
+  return [logicElement, ...childNodes];
 };
 
 // For the child nodes to be updatable they do need to be nodes which can be
@@ -435,9 +440,9 @@ const If = (getCondition, getThenChildNodes, getElseChildNodes = () => []) => {
       childNodes.forEach((childNode) => {
         childNode.parentNode.removeChild(childNode);
       });
-      // Add the new children
-      thenChildNodes.forEach((thenChildNode) => {
-        logicElement.parentNode.insertBefore(thenChildNode, logicElement);
+      // Add the new children after the logic element
+      [...thenChildNodes].reverse().forEach((thenChildNode) => {
+        insertAfter(thenChildNode, logicElement);
       });
       childNodes = thenChildNodes;
       return;
@@ -450,14 +455,14 @@ const If = (getCondition, getThenChildNodes, getElseChildNodes = () => []) => {
         childNode.parentNode.removeChild(childNode);
       });
       // Add the new children
-      elseChildNodes.forEach((elseChildNode) => {
-        logicElement.parentNode.insertBefore(elseChildNode, logicElement);
+      [...elseChildNodes].reverse().forEach((elseChildNode) => {
+        insertAfter(elseChildNode, logicElement);
       });
       childNodes = elseChildNodes;
       return;
     }
   };
-  return [...childNodes, logicElement];
+  return [logicElement, ...childNodes];
 };
 
 const withKey = (element, key) => {
@@ -695,8 +700,6 @@ const createProject = (newProject) => {
 const updateProjectById = (projectId, project) => {
   const projects = getAllProjects();
   const projectIndex = projects.findIndex(({ id }) => id === projectId);
-  console.log('projectId: ', projectId);
-  console.log('project: ', project);
   if (projectIndex === -1) {
     console.warn('Tried to update nonexistent project');
     return;
@@ -885,6 +888,10 @@ const Model = ({ router, isExported, state, setState }) => {
       });
   };
 
+  const evaluatedCodeIsValid = (evaluatedCode) => {
+    return evaluatedCode.every((widget) => typeof widget === 'object');
+  };
+
   const updateValues = () => {
     let evaluatedCode;
     try {
@@ -893,13 +900,14 @@ const Model = ({ router, isExported, state, setState }) => {
         state.selectedWidgetsCode
       );
     } catch (e) {
-      console.log('Failed to evaluate code: ', e);
+      console.warn('Failed to evaluate code: ', e);
       evaluatedCode = [];
     }
-
-    setState({
-      widgets: evaluatedCode,
-    });
+    if (evaluatedCodeIsValid(evaluatedCode)) {
+      setState({
+        widgets: evaluatedCode,
+      });
+    }
   };
 
   const fetchDataFromApi = () => {
@@ -2509,19 +2517,7 @@ const Canvas2dWidget = include(
   'src/components/widget/canvas2dWidget/Canvas2dWidget.js'
 );
 const ValueWidget = include('src/components/widget/valueWidget/ValueWidget.js');
-const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const getWidgetElementByType = (getProps) => {
-  const { type, is3d } = getProps();
-  console.log('widget type: ', getProps().type);
-  if (type === 'canvas-widget') {
-    return is3d ? Canvas3dWidget(getProps) : Canvas2dWidget(getProps);
-  }
-  if (type === 'value-widget') {
-    return ValueWidget(getProps);
-  }
-  throw Error('A widget must have type canvas-widget or value-widget');
-};
+const { compose, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 /**
  * getProps: () => ({
@@ -2548,7 +2544,22 @@ const Widget = (getProps) => {
               height: 320px;
               box-shadow: rgba(0, 0, 0, 0.25) 0 0 10px -5px;`,
     },
-    [getWidgetElementByType(getProps)]
+    [
+      If(
+        () => getProps().type === 'canvas-widget',
+        () => [
+          If(
+            () => getProps().is3d,
+            [Canvas3dWidget(getProps)],
+            [Canvas2dWidget(getProps)]
+          ),
+        ]
+      ),
+      If(
+        () => getProps().type === 'value-widget',
+        () => [ValueWidget(getProps)]
+      ),
+    ]
   );
 
   return element;
@@ -2562,30 +2573,15 @@ module.exports = Widget;
 modules['src/components/dashboardWidgets/DashboardWidgets.js'] = (() => {
   const module = { exports: {} };
   const Widget = include('src/components/widget/Widget.js');
-const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const getWidgetElements = ({ widgets }) => {
-  return widgets.map(
-    ({ type, label, value, surfaces, edges, is3d, center }) => {
-      return Widget(() => ({
-        type,
-        label,
-        value,
-        surfaces,
-        edges,
-        is3d,
-        center,
-      }));
-    }
-  );
-};
+const { compose, Each, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const DashboardWidgets = (getProps) => {
-  const element = compose(
-    'div',
-    { style: 'padding: 10px' },
-    getWidgetElements({ widgets: getProps().state.widgets })
-  );
+  const element = compose('div', { style: 'padding: 10px' }, [
+    Each(
+      () => getProps().state.widgets,
+      (getCurrentValue) => [Widget(getCurrentValue)]
+    ),
+  ]);
 
   return element;
 };

@@ -97,6 +97,10 @@ const createHiddenElement = () => {
   return element;
 };
 
+const insertAfter = (newChild, refChild) => {
+  refChild.parentNode.insertBefore(newChild, refChild.nextSibling);
+};
+
 const Each = (getArray, mappingFunction) => {
   const logicElement = createHiddenElement();
   let array = getArray();
@@ -130,17 +134,18 @@ const Each = (getArray, mappingFunction) => {
       });
 
       const newChildNodes = flatten(
-        newArray.slice(array.length).map((_, i) =>
-          mappingFunction(
-            () => getArray()[i + array.length],
-            () => i + array.length,
+        newArray.slice(array.length).map((_, _i) => {
+          const i = _i + array.length;
+          return mappingFunction(
+            () => getArray()[i],
+            () => i,
             getArray
-          )
-        )
+          );
+        })
       );
 
-      newChildNodes.forEach((newChildNode) => {
-        logicElement.parentNode.insertBefore(newChildNode, logicElement);
+      [...newChildNodes].reverse().forEach((newChildNode) => {
+        insertAfter(newChildNode, childNodes.slice(-1)[0] || logicElement);
       });
 
       array = newArray;
@@ -168,7 +173,7 @@ const Each = (getArray, mappingFunction) => {
     }
   };
 
-  return [...childNodes, logicElement];
+  return [logicElement, ...childNodes];
 };
 
 // For the child nodes to be updatable they do need to be nodes which can be
@@ -198,9 +203,9 @@ const If = (getCondition, getThenChildNodes, getElseChildNodes = () => []) => {
       childNodes.forEach((childNode) => {
         childNode.parentNode.removeChild(childNode);
       });
-      // Add the new children
-      thenChildNodes.forEach((thenChildNode) => {
-        logicElement.parentNode.insertBefore(thenChildNode, logicElement);
+      // Add the new children after the logic element
+      [...thenChildNodes].reverse().forEach((thenChildNode) => {
+        insertAfter(thenChildNode, logicElement);
       });
       childNodes = thenChildNodes;
       return;
@@ -213,14 +218,14 @@ const If = (getCondition, getThenChildNodes, getElseChildNodes = () => []) => {
         childNode.parentNode.removeChild(childNode);
       });
       // Add the new children
-      elseChildNodes.forEach((elseChildNode) => {
-        logicElement.parentNode.insertBefore(elseChildNode, logicElement);
+      [...elseChildNodes].reverse().forEach((elseChildNode) => {
+        insertAfter(elseChildNode, logicElement);
       });
       childNodes = elseChildNodes;
       return;
     }
   };
-  return [...childNodes, logicElement];
+  return [logicElement, ...childNodes];
 };
 
 const withKey = (element, key) => {

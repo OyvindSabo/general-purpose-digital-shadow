@@ -5,19 +5,7 @@ const Canvas2dWidget = include(
   'src/components/widget/canvas2dWidget/Canvas2dWidget.js'
 );
 const ValueWidget = include('src/components/widget/valueWidget/ValueWidget.js');
-const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const getWidgetElementByType = (getProps) => {
-  const { type, is3d } = getProps();
-  console.log('widget type: ', getProps().type);
-  if (type === 'canvas-widget') {
-    return is3d ? Canvas3dWidget(getProps) : Canvas2dWidget(getProps);
-  }
-  if (type === 'value-widget') {
-    return ValueWidget(getProps);
-  }
-  throw Error('A widget must have type canvas-widget or value-widget');
-};
+const { compose, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 /**
  * getProps: () => ({
@@ -44,7 +32,22 @@ const Widget = (getProps) => {
               height: 320px;
               box-shadow: rgba(0, 0, 0, 0.25) 0 0 10px -5px;`,
     },
-    [getWidgetElementByType(getProps)]
+    [
+      If(
+        () => getProps().type === 'canvas-widget',
+        () => [
+          If(
+            () => getProps().is3d,
+            [Canvas3dWidget(getProps)],
+            [Canvas2dWidget(getProps)]
+          ),
+        ]
+      ),
+      If(
+        () => getProps().type === 'value-widget',
+        () => [ValueWidget(getProps)]
+      ),
+    ]
   );
 
   return element;
