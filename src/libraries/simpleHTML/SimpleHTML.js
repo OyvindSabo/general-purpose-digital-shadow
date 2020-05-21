@@ -232,11 +232,6 @@ const If = (getCondition, getThenChildNodes, getElseChildNodes = () => []) => {
   return [logicElement, ...childNodes];
 };
 
-const withKey = (element, key) => {
-  element.key = key;
-  return element;
-};
-
 class SimpleHTML {
   static isProp = (propsOrChild) =>
     !(propsOrChild instanceof HTMLElement || typeof propsOrChild === 'string');
@@ -407,7 +402,6 @@ module.exports = {
   compose,
   Each,
   If,
-  withKey,
   defineComponent,
   div,
   span,

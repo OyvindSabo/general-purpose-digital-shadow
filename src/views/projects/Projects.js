@@ -7,11 +7,6 @@ const ProjectNameInput = include(
 const NewProject = include('src/views/projects/newProject/NewProject.js');
 const { compose, Each, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-const withKey = (element, key) => {
-  element.key = key;
-  return element;
-};
-
 // getProps::() => { viewModel, state }
 const Projects = (getProps) => {
   const element = compose(
