@@ -2382,6 +2382,7 @@ const Camera = include(
 const doRenderVisualization = include(
   'src/components/widget/doRenderVisualization/doRenderVisualization.js'
 );
+const WidgetLabel = include('src/components/widgetLabel/WidgetLabel.js');
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 // TODO: Shouldn't there be a label here?
@@ -2455,7 +2456,19 @@ const Canvas3dWidget = (getProps) => {
   window.addEventListener(camera.focalLength$.id, () => {
     rerender({ surfaces, edges, center });
   });
-  return element;
+  return compose(
+    'span',
+    () => ({
+      // width = 24 x 20px
+      // height = 16 x 20px
+      style: `display: inline-block;
+              position: relative;
+              color: dimgray;
+              width: 480px;
+              height: 320px;`,
+    }),
+    [WidgetLabel(() => ({ label: getProps().label })), element]
+  );
 };
 
 module.exports = Canvas3dWidget;
@@ -2468,6 +2481,7 @@ modules['src/components/widget/canvas2dWidget/Canvas2dWidget.js'] = (() => {
   const doRenderVisualization = include(
   'src/components/widget/doRenderVisualization/doRenderVisualization.js'
 );
+const WidgetLabel = include('src/components/widgetLabel/WidgetLabel.js');
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 // TODO: Shouldn't there be a label here?
@@ -2491,7 +2505,19 @@ const Canvas2dWidget = (getProps) => {
   element.update = () => {
     rerender(getProps());
   };
-  return element;
+  return compose(
+    'span',
+    () => ({
+      // width = 24 x 20px
+      // height = 16 x 20px
+      style: `display: inline-block;
+              position: relative;
+              color: dimgray;
+              width: 480px;
+              height: 320px;`,
+    }),
+    [WidgetLabel(() => ({ label: getProps().label })), element]
+  );
 };
 
 module.exports = Canvas2dWidget;
@@ -2524,31 +2550,40 @@ const { compose, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
 const Widget = (getProps) => {
   const element = compose(
     'span',
-    {
-      // width = 24 x 20px
-      // height = 16 x 20px
+    () => ({
       style: `padding: 10px;
               display: inline-block;
-              vertical-align: top;
-              background: white;
-              width: 480px;
-              height: 320px;
-              box-shadow: rgba(0, 0, 0, 0.25) 0 0 10px -5px;`,
-    },
+              `,
+    }),
     [
-      If(
-        () => getProps().type === 'canvas-widget',
-        () => [
+      compose(
+        'span',
+        {
+          // width = 24 x 20px
+          // height = 16 x 20px
+          style: `display: inline-block;
+                  vertical-align: top;
+                  background: white;
+                  width: 480px;
+                  height: 320px;
+                  box-shadow: rgba(0, 0, 0, 0.25) 0 0 10px -5px;`,
+        },
+        [
           If(
-            () => getProps().is3d,
-            () => [Canvas3dWidget(getProps)],
-            () => [Canvas2dWidget(getProps)]
+            () => getProps().type === 'canvas-widget',
+            () => [
+              If(
+                () => getProps().is3d,
+                () => [Canvas3dWidget(getProps)],
+                () => [Canvas2dWidget(getProps)]
+              ),
+            ]
+          ),
+          If(
+            () => getProps().type === 'value-widget',
+            () => [ValueWidget(getProps)]
           ),
         ]
-      ),
-      If(
-        () => getProps().type === 'value-widget',
-        () => [ValueWidget(getProps)]
       ),
     ]
   );
@@ -2567,7 +2602,7 @@ modules['src/components/dashboardWidgets/DashboardWidgets.js'] = (() => {
 const { compose, Each, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const DashboardWidgets = (getProps) => {
-  const element = compose('div', { style: 'padding: 10px' }, [
+  const element = compose('div', {}, [
     Each(
       () => getProps().state.widgets,
       (getCurrentValue) => [Widget(getCurrentValue)]

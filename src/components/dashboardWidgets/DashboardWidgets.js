@@ -2,7 +2,7 @@ const Widget = include('src/components/widget/Widget.js');
 const { compose, Each, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const DashboardWidgets = (getProps) => {
-  const element = compose('div', { style: 'padding: 10px' }, [
+  const element = compose('div', {}, [
     Each(
       () => getProps().state.widgets,
       (getCurrentValue) => [Widget(getCurrentValue)]
