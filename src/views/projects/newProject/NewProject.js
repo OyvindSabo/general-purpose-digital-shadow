@@ -16,7 +16,8 @@ const NewProject = (getProps) => {
         element.update();
       },
       onclick: getProps().viewModel.createNewProject,
-      style: `${color};
+      style: `color: ${color};
+              cursor: pointer;
               margin: 32px;
               padding: 0 16px;
               height: 64px;
