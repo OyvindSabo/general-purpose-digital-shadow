@@ -188,7 +188,9 @@ const If = (getCondition, getThenChildNodes, getElseChildNodes = () => []) => {
   const logicElement = createHiddenElement();
   let condition = getCondition();
   // TODO: Maybe these should be flattened? Or maybe not? WIll nested If's work?
-  let childNodes = condition ? getThenChildNodes() : getElseChildNodes();
+  let childNodes = condition
+    ? flatten(getThenChildNodes()).filter(Boolean)
+    : flatten(getElseChildNodes()).filter(Boolean);
   logicElement.update = () => {
     if (condition && getCondition()) {
       childNodes.forEach((childNode) => {
@@ -200,7 +202,7 @@ const If = (getCondition, getThenChildNodes, getElseChildNodes = () => []) => {
     }
     if (!condition && getCondition()) {
       condition = true;
-      const thenChildNodes = getThenChildNodes();
+      const thenChildNodes = flatten(getThenChildNodes()).filter(Boolean);
       // Remove the old children
       childNodes.forEach((childNode) => {
         childNode.parentNode.removeChild(childNode);
@@ -214,7 +216,7 @@ const If = (getCondition, getThenChildNodes, getElseChildNodes = () => []) => {
     }
     if (condition && !getCondition()) {
       condition = false;
-      const elseChildNodes = getElseChildNodes();
+      const elseChildNodes = flatten(getElseChildNodes()).filter(Boolean);
       // Remove the old children
       childNodes.forEach((childNode) => {
         childNode.parentNode.removeChild(childNode);

@@ -38,8 +38,8 @@ const Widget = (getProps) => {
         () => [
           If(
             () => getProps().is3d,
-            [Canvas3dWidget(getProps)],
-            [Canvas2dWidget(getProps)]
+            () => [Canvas3dWidget(getProps)],
+            () => [Canvas2dWidget(getProps)]
           ),
         ]
       ),
