@@ -34,10 +34,10 @@ const ApiUrlInput = (getProps) => {
           compose(
             'input',
             () => ({
-              oninput: ({ value }) => {
+              oninput: ({ target }) => {
                 viewModel.updateApiUrl(
                   getProps().state.selectedProjectId,
-                  value
+                  target.value
                 );
               },
               style: `border-radius: 5px;
