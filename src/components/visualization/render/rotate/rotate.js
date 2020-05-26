@@ -1,20 +1,21 @@
-const rotate = ([x, y, z], rx, ry) => {
-  const theta = rx;
-  const phi = ry;
+const { pipe } = include('src/libraries/simpleFP/SimpleFP.js');
 
-  const horizontallyRotatedVertex = [
-    x * Math.cos(theta) + z * Math.sin(theta),
-    y,
-    z * Math.cos(theta) - x * Math.sin(theta),
-  ];
+const rotateHorizontally = (azimuthAngle) => ([x, y, z]) => [
+  x * Math.cos(azimuthAngle) + z * Math.sin(azimuthAngle),
+  y,
+  z * Math.cos(azimuthAngle) - x * Math.sin(azimuthAngle),
+];
 
-  return [
-    horizontallyRotatedVertex[0],
-    horizontallyRotatedVertex[1] * Math.cos(phi) -
-      horizontallyRotatedVertex[2] * Math.sin(phi),
-    horizontallyRotatedVertex[1] * Math.sin(phi) +
-      horizontallyRotatedVertex[2] * Math.cos(phi),
-  ];
-};
+const rotateVertically = (polarAngle) => ([x, y, z]) => [
+  x,
+  y * Math.cos(polarAngle) - z * Math.sin(polarAngle),
+  y * Math.sin(polarAngle) + z * Math.cos(polarAngle),
+];
+
+const rotate = (currentCoordinates, azimuthAngle, polarAngle) =>
+  pipe(
+    rotateHorizontally(azimuthAngle),
+    rotateVertically(polarAngle)
+  )(currentCoordinates);
 
 module.exports = rotate;
