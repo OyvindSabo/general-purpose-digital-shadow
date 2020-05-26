@@ -905,7 +905,9 @@ const callWithJavaScriptArguments = (codeString, ...javaScriptArguments) => {
       {
         tokenType: 'apply',
         operator: parseExpression(codeString),
-        args: javaScriptArguments.map(convertFromJavaScriptValue),
+        args: javaScriptArguments
+          .filter((arg) => arg !== null && arg !== undefined)
+          .map(convertFromJavaScriptValue),
       },
       core
     )

@@ -11,9 +11,15 @@ const LanguageParser = include(
 );
 
 const evaluateCode = (apiResponse, widgetsCode) => {
+  let parsedApiResponse;
+  try {
+    parsedApiResponse = JSON.parse(apiResponse);
+  } catch (e) {
+    parsedApiResponse = null;
+  }
   const evaluatedCodeCalledWithApiResponse = LanguageParser.callWithJavaScriptArguments(
     widgetsCode,
-    JSON.parse(apiResponse)
+    parsedApiResponse
   );
   return evaluatedCodeCalledWithApiResponse;
 };
