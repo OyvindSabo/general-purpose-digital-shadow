@@ -47,7 +47,7 @@ const doRenderVisualization = ({
     points
       .map((point) =>
         pipe(
-          (point) => toCenterOfStructure(point, center),
+          toCenterOfStructure(center),
           rotateHorizontally(azimuthAngle),
           rotateVertically(polarAngle),
           (point) => toPerspective(point, d, focalLength),
@@ -78,7 +78,7 @@ const doRenderVisualization = ({
   edges.forEach(({ color, points, width }) => {
     // Draw the first vertex
     const startPoint = pipe(
-      (point) => toCenterOfStructure(point, center),
+      toCenterOfStructure(center),
       rotateHorizontally(azimuthAngle),
       rotateVertically(polarAngle),
       (point) => toPerspective(point, d, focalLength),
@@ -86,7 +86,7 @@ const doRenderVisualization = ({
     )(points[0]);
 
     const endPoint = pipe(
-      (point) => toCenterOfStructure(point, center),
+      toCenterOfStructure(center),
       rotateHorizontally(azimuthAngle),
       rotateVertically(polarAngle),
       (point) => toPerspective(point, d, focalLength),

@@ -3202,7 +3202,7 @@ module.exports = toPerspective;
 
 modules['src/components/visualization/render/toCenterOfStructure/toCenterOfStructure.js'] = (() => {
   const module = { exports: {} };
-  const toCenterOfStructure = (currentCoordinates, centerCoordinates) => [
+  const toCenterOfStructure = (centerCoordinates) => (currentCoordinates) => [
   currentCoordinates[0] - centerCoordinates[0],
   currentCoordinates[1] - centerCoordinates[1],
   currentCoordinates[2] - centerCoordinates[2],
@@ -3290,7 +3290,7 @@ const doRenderVisualization = ({
     points
       .map((point) =>
         pipe(
-          (point) => toCenterOfStructure(point, center),
+          toCenterOfStructure(center),
           rotateHorizontally(azimuthAngle),
           rotateVertically(polarAngle),
           (point) => toPerspective(point, d, focalLength),
@@ -3321,7 +3321,7 @@ const doRenderVisualization = ({
   edges.forEach(({ color, points, width }) => {
     // Draw the first vertex
     const startPoint = pipe(
-      (point) => toCenterOfStructure(point, center),
+      toCenterOfStructure(center),
       rotateHorizontally(azimuthAngle),
       rotateVertically(polarAngle),
       (point) => toPerspective(point, d, focalLength),
@@ -3329,7 +3329,7 @@ const doRenderVisualization = ({
     )(points[0]);
 
     const endPoint = pipe(
-      (point) => toCenterOfStructure(point, center),
+      toCenterOfStructure(center),
       rotateHorizontally(azimuthAngle),
       rotateVertically(polarAngle),
       (point) => toPerspective(point, d, focalLength),
