@@ -50,7 +50,7 @@ const doRenderVisualization = ({
           toCenterOfStructure(center),
           rotateHorizontally(azimuthAngle),
           rotateVertically(polarAngle),
-          (point) => toPerspective(point, d, focalLength),
+          toPerspective(d, focalLength),
           (point) => toCenterOfWidget(point, ctx)
         )(point)
       )
@@ -81,7 +81,7 @@ const doRenderVisualization = ({
       toCenterOfStructure(center),
       rotateHorizontally(azimuthAngle),
       rotateVertically(polarAngle),
-      (point) => toPerspective(point, d, focalLength),
+      toPerspective(d, focalLength),
       (point) => toCenterOfWidget(point, ctx)
     )(points[0]);
 
@@ -89,7 +89,7 @@ const doRenderVisualization = ({
       toCenterOfStructure(center),
       rotateHorizontally(azimuthAngle),
       rotateVertically(polarAngle),
-      (point) => toPerspective(point, d, focalLength),
+      toPerspective(d, focalLength),
       (point) => toCenterOfWidget(point, ctx)
     )(points[1]);
 

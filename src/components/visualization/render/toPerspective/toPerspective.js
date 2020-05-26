@@ -1,4 +1,4 @@
-const toPerspective = ([x, y, z], d, focalLength) =>
+const toPerspective = (d, focalLength) => ([x, y, z]) =>
   focalLength
     ? [
         x * (focalLength / (d + focalLength + z)),

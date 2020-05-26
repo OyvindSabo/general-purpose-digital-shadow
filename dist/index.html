@@ -3186,7 +3186,7 @@ module.exports = toCenterOfWidget;
 
 modules['src/components/visualization/render/toPerspective/toPerspective.js'] = (() => {
   const module = { exports: {} };
-  const toPerspective = ([x, y, z], d, focalLength) =>
+  const toPerspective = (d, focalLength) => ([x, y, z]) =>
   focalLength
     ? [
         x * (focalLength / (d + focalLength + z)),
@@ -3293,7 +3293,7 @@ const doRenderVisualization = ({
           toCenterOfStructure(center),
           rotateHorizontally(azimuthAngle),
           rotateVertically(polarAngle),
-          (point) => toPerspective(point, d, focalLength),
+          toPerspective(d, focalLength),
           (point) => toCenterOfWidget(point, ctx)
         )(point)
       )
@@ -3324,7 +3324,7 @@ const doRenderVisualization = ({
       toCenterOfStructure(center),
       rotateHorizontally(azimuthAngle),
       rotateVertically(polarAngle),
-      (point) => toPerspective(point, d, focalLength),
+      toPerspective(d, focalLength),
       (point) => toCenterOfWidget(point, ctx)
     )(points[0]);
 
@@ -3332,7 +3332,7 @@ const doRenderVisualization = ({
       toCenterOfStructure(center),
       rotateHorizontally(azimuthAngle),
       rotateVertically(polarAngle),
-      (point) => toPerspective(point, d, focalLength),
+      toPerspective(d, focalLength),
       (point) => toCenterOfWidget(point, ctx)
     )(points[1]);
 
