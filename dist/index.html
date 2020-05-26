@@ -3173,9 +3173,9 @@ module.exports = { pipe };
 
 modules['src/components/visualization/render/toCenterOfWidget/toCenterOfWidget.js'] = (() => {
   const module = { exports: {} };
-  const toCenterOfWidget = (ctx) => ([x, y, z]) => [
-  x + ctx.canvas.width / 2,
-  y - ctx.canvas.height / 2,
+  const toCenterOfWidget = (canvasWidth, canvasHeight) => ([x, y, z]) => [
+  x + canvasWidth / 2,
+  y - canvasHeight / 2,
   z,
 ];
 
@@ -3186,14 +3186,14 @@ module.exports = toCenterOfWidget;
 
 modules['src/components/visualization/render/toPerspective/toPerspective.js'] = (() => {
   const module = { exports: {} };
-  const toPerspective = (d, focalLength) => ([x, y, z]) =>
-  focalLength
-    ? [
-        x * (focalLength / (d + focalLength + z)),
-        y * (focalLength / (d + focalLength + z)),
-        z,
-      ]
-    : [x, y, z];
+  const toPerspective = (d, focalLength) => ([x, y, z]) => {
+  if (!focalLength) return [x, y, z];
+  return [
+    x * (focalLength / (d + focalLength + z)),
+    y * (focalLength / (d + focalLength + z)),
+    z,
+  ];
+};
 
 module.exports = toPerspective;
 
@@ -3202,10 +3202,10 @@ module.exports = toPerspective;
 
 modules['src/components/visualization/render/toCenterOfStructure/toCenterOfStructure.js'] = (() => {
   const module = { exports: {} };
-  const toCenterOfStructure = (centerCoordinates) => (currentCoordinates) => [
-  currentCoordinates[0] - centerCoordinates[0],
-  currentCoordinates[1] - centerCoordinates[1],
-  currentCoordinates[2] - centerCoordinates[2],
+  const toCenterOfStructure = ([centerX, centerY, centerZ]) => ([x, y, z]) => [
+  x - centerX,
+  y - centerY,
+  z - centerZ,
 ];
 
 module.exports = toCenterOfStructure;
@@ -3268,12 +3268,15 @@ const doRenderVisualization = ({
   d = 0,
   focalLength = 0,
 }) => {
+  const canvasWidth = ctx.canvas.width;
+  const canvasHeight = ctx.canvas.height;
+
   const transformPoint = pipe(
     toCenterOfStructure(center),
     rotateHorizontally(azimuthAngle),
     rotateVertically(polarAngle),
     toPerspective(d, focalLength),
-    toCenterOfWidget(ctx)
+    toCenterOfWidget(canvasWidth, canvasHeight)
   );
 
   // Render the faces

@@ -1,6 +1,6 @@
-const toCenterOfWidget = (ctx) => ([x, y, z]) => [
-  x + ctx.canvas.width / 2,
-  y - ctx.canvas.height / 2,
+const toCenterOfWidget = (canvasWidth, canvasHeight) => ([x, y, z]) => [
+  x + canvasWidth / 2,
+  y - canvasHeight / 2,
   z,
 ];
 

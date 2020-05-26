@@ -25,12 +25,15 @@ const doRenderVisualization = ({
   d = 0,
   focalLength = 0,
 }) => {
+  const canvasWidth = ctx.canvas.width;
+  const canvasHeight = ctx.canvas.height;
+
   const transformPoint = pipe(
     toCenterOfStructure(center),
     rotateHorizontally(azimuthAngle),
     rotateVertically(polarAngle),
     toPerspective(d, focalLength),
-    toCenterOfWidget(ctx)
+    toCenterOfWidget(canvasWidth, canvasHeight)
   );
 
   // Render the faces
