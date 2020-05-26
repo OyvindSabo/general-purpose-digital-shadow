@@ -1,3 +1,4 @@
+const { pipe } = include('src/libraries/simpleFP/SimpleFP.js');
 const toCenterOfWidget = include(
   'src/components/visualization/render/toCenterOfWidget/toCenterOfWidget.js'
 );
@@ -7,7 +8,12 @@ const toPerspective = include(
 const toCenterOfStructure = include(
   'src/components/visualization/render/toCenterOfStructure/toCenterOfStructure.js'
 );
-const rotate = include('src/components/visualization/render/rotate/rotate.js');
+const rotateHorizontally = include(
+  'src/components/visualization/render/rotateHorizontally/rotateHorizontally.js'
+);
+const rotateVertically = include(
+  'src/components/visualization/render/rotateVertically/rotateVertically.js'
+);
 
 /**
  * @param {number} dx
@@ -31,18 +37,23 @@ const doRenderVisualization = ({
   edges,
   ctx,
   center,
-  rx = 0,
-  ry = 0,
+  azimuthAngle = 0,
+  polarAngle = 0,
   d = 0,
   focalLength = 0,
 }) => {
   // Render the faces
   surfaces.forEach(({ color, points }) => {
     points
-      .map((point) => toCenterOfStructure(point, center))
-      .map((point) => rotate(point, rx, ry))
-      .map((point) => toPerspective(point, d, focalLength))
-      .map((point) => toCenterOfWidget(point, ctx))
+      .map((point) =>
+        pipe(
+          (point) => toCenterOfStructure(point, center),
+          rotateHorizontally(azimuthAngle),
+          rotateVertically(polarAngle),
+          (point) => toPerspective(point, d, focalLength),
+          (point) => toCenterOfWidget(point, ctx)
+        )(point)
+      )
       .forEach((point, index) => {
         if (index === 0) {
           ctx.beginPath();
@@ -66,23 +77,22 @@ const doRenderVisualization = ({
   // Render the edges
   edges.forEach(({ color, points, width }) => {
     // Draw the first vertex
-    const startPoint = toCenterOfWidget(
-      toPerspective(
-        rotate(toCenterOfStructure(points[0], center), rx, ry),
-        d,
-        focalLength
-      ),
+    const startPoint = pipe(
+      (point) => toCenterOfStructure(point, center),
+      rotateHorizontally(azimuthAngle),
+      rotateVertically(polarAngle),
+      (point) => toPerspective(point, d, focalLength),
+      (point) => toCenterOfWidget(point, ctx)
+    )(points[0]);
 
-      ctx
-    );
-    const endPoint = toCenterOfWidget(
-      toPerspective(
-        rotate(toCenterOfStructure(points[1], center), rx, ry),
-        d,
-        focalLength
-      ),
-      ctx
-    );
+    const endPoint = pipe(
+      (point) => toCenterOfStructure(point, center),
+      rotateHorizontally(azimuthAngle),
+      rotateVertically(polarAngle),
+      (point) => toPerspective(point, d, focalLength),
+      (point) => toCenterOfWidget(point, ctx)
+    )(points[1]);
+
     ctx.beginPath();
     ctx.lineCap = 'round';
     ctx.moveTo(startPoint[0], -startPoint[1]);

@@ -36,8 +36,8 @@ const Canvas3dWidget = (getProps) => {
       edges,
       ctx,
       center,
-      rx: camera.horizontalRotation$.value,
-      ry: camera.verticalRotation$.value,
+      azimuthAngle: camera.horizontalRotation$.value,
+      polarAngle: camera.verticalRotation$.value,
       d: camera.distance$.value,
       focalLength: camera.focalLength$.value,
     });
