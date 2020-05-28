@@ -5,6 +5,7 @@ const DashboardEditorNavigator = include(
   'src/views/dashboardEditor/dashboardEditorNavigator/DashboardEditorNavigator.js'
 );
 const CodeEditor = include('src/components/codeEditor/CodeEditor.js');
+const CodePreview = include('src/components/codePreview/CodePreview.js');
 const { compose, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const isWidgetsPreviewUrl = (currentRoute) => {
@@ -33,26 +34,38 @@ const DashboardEditor = (getProps) => {
   const getSelectedProjectId = () => getProps().state.selectedProjectId;
   const getSelectedWidgetsCode = () => getProps().state.selectedWidgetsCode;
 
-  const element = compose('div', { style: 'padding: 10px;' }, [
-    CodeEditor(() => ({
-      value: getSelectedWidgetsCode(),
-      oninput: ({ target }) => {
-        getViewModel().updateWidgetsCode(getSelectedProjectId(), target.value);
-      },
-    })),
+  const element = compose('div', {}, [
+    compose('div', { style: 'padding: 10px;' }, [
+      CodeEditor(() => ({
+        value: getSelectedWidgetsCode(),
+        oninput: ({ target }) => {
+          getViewModel().updateWidgetsCode(
+            getSelectedProjectId(),
+            target.value
+          );
+        },
+      })),
+    ]),
     DashboardEditorNavigator(getProps),
-    If(
-      () => isWidgetsPreviewUrl(getCurrentRoute()),
-      () => [DashboardWidgets(getProps)]
-    ),
-    If(
-      () => isRawOutputUrl(getCurrentRoute()),
-      () => [compose('div', { innerText: 'Raw output' }, [])]
-    ),
-    If(
-      () => isProblemsUrl(getCurrentRoute()),
-      () => [compose('div', { innerText: 'Problems' }, [])]
-    ),
+    compose('div', { style: 'padding: 20px;' }, [
+      If(
+        () => isWidgetsPreviewUrl(getCurrentRoute()),
+        () => [DashboardWidgets(getProps)]
+      ),
+      If(
+        () => isRawOutputUrl(getCurrentRoute()),
+        () => [
+          CodePreview(
+            () => ({ innerText: getProps().state.widgetsCodeRawOutput }),
+            []
+          ),
+        ]
+      ),
+      If(
+        () => isProblemsUrl(getCurrentRoute()),
+        () => [compose('div', { innerText: 'Problems' }, [])]
+      ),
+    ]),
   ]);
 
   return element;

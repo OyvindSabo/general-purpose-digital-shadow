@@ -1859,6 +1859,7 @@ const Model = ({ router, isExported, state, setState }) => {
       console.warn('Failed to evaluate code: ', e);
       evaluatedCode = [];
     }
+    setState({ widgetsCodeRawOutput: JSON.stringify(evaluatedCode) });
     if (evaluatedCodeIsValid(evaluatedCode)) {
       setState({
         widgets: evaluatedCode,
@@ -2014,6 +2015,45 @@ const CodeEditor = (getProps) => {
 };
 
 module.exports = CodeEditor;
+
+  return module.exports;
+})();
+
+modules['src/components/codePreview/CodePreview.js'] = (() => {
+  const module = { exports: {} };
+  const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const CodePreview = (getProps) => {
+  const element = compose(
+    'div',
+    () => ({
+      innerText: getProps().innerText,
+      style: `box-shadow: inset rgba(0, 0, 0, 0.5) 0 0 10px -5px;
+              font-family: "Courier New", Courier, monospace;
+              background: rgba(0, 0, 0, 0.05);
+              box-sizing: border-box;
+              color: lightslategray;
+              display: inline-block;
+              white-space: pre-wrap;
+              border-radius: 5px;
+              line-height: 40px;
+              max-height: 300px;
+              min-height: 40px;
+              font-size: 15px;
+              overflow: auto;
+              outline: none;
+              padding: 10px;
+              border: none;
+              resize: none;
+              width: 100%;`,
+    }),
+    []
+  );
+
+  return element;
+};
+
+module.exports = CodePreview;
 
   return module.exports;
 })();
@@ -3745,6 +3785,7 @@ const DashboardEditorNavigator = include(
   'src/views/dashboardEditor/dashboardEditorNavigator/DashboardEditorNavigator.js'
 );
 const CodeEditor = include('src/components/codeEditor/CodeEditor.js');
+const CodePreview = include('src/components/codePreview/CodePreview.js');
 const { compose, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const isWidgetsPreviewUrl = (currentRoute) => {
@@ -3773,26 +3814,38 @@ const DashboardEditor = (getProps) => {
   const getSelectedProjectId = () => getProps().state.selectedProjectId;
   const getSelectedWidgetsCode = () => getProps().state.selectedWidgetsCode;
 
-  const element = compose('div', { style: 'padding: 10px;' }, [
-    CodeEditor(() => ({
-      value: getSelectedWidgetsCode(),
-      oninput: ({ target }) => {
-        getViewModel().updateWidgetsCode(getSelectedProjectId(), target.value);
-      },
-    })),
+  const element = compose('div', {}, [
+    compose('div', { style: 'padding: 10px;' }, [
+      CodeEditor(() => ({
+        value: getSelectedWidgetsCode(),
+        oninput: ({ target }) => {
+          getViewModel().updateWidgetsCode(
+            getSelectedProjectId(),
+            target.value
+          );
+        },
+      })),
+    ]),
     DashboardEditorNavigator(getProps),
-    If(
-      () => isWidgetsPreviewUrl(getCurrentRoute()),
-      () => [DashboardWidgets(getProps)]
-    ),
-    If(
-      () => isRawOutputUrl(getCurrentRoute()),
-      () => [compose('div', { innerText: 'Raw output' }, [])]
-    ),
-    If(
-      () => isProblemsUrl(getCurrentRoute()),
-      () => [compose('div', { innerText: 'Problems' }, [])]
-    ),
+    compose('div', { style: 'padding: 20px;' }, [
+      If(
+        () => isWidgetsPreviewUrl(getCurrentRoute()),
+        () => [DashboardWidgets(getProps)]
+      ),
+      If(
+        () => isRawOutputUrl(getCurrentRoute()),
+        () => [
+          CodePreview(
+            () => ({ innerText: getProps().state.widgetsCodeRawOutput }),
+            []
+          ),
+        ]
+      ),
+      If(
+        () => isProblemsUrl(getCurrentRoute()),
+        () => [compose('div', { innerText: 'Problems' }, [])]
+      ),
+    ]),
   ]);
 
   return element;
@@ -3954,6 +4007,7 @@ const { state, setState, addStateChangeListener } = simpleState({
   apiResponse: '',
   selectedDerivedValuesCode: '',
   selectedWidgetsCode: '',
+  widgetsCodeRawOutput: '',
   widgets: [],
 });
 

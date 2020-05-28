@@ -183,6 +183,7 @@ const Model = ({ router, isExported, state, setState }) => {
       console.warn('Failed to evaluate code: ', e);
       evaluatedCode = [];
     }
+    setState({ widgetsCodeRawOutput: JSON.stringify(evaluatedCode) });
     if (evaluatedCodeIsValid(evaluatedCode)) {
       setState({
         widgets: evaluatedCode,

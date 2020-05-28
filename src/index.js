@@ -48,6 +48,7 @@ const { state, setState, addStateChangeListener } = simpleState({
   apiResponse: '',
   selectedDerivedValuesCode: '',
   selectedWidgetsCode: '',
+  widgetsCodeRawOutput: '',
   widgets: [],
 });
 
