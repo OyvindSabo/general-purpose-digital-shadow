@@ -2,25 +2,20 @@ const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
 
 const determineIsSelected = (currentRoute) => {
   return (
-    currentRoute === '/projects/<projectId:string>/dashboard-editor' ||
-    currentRoute ===
-      '/projects/<projectId:string>/dashboard-editor/widgets-preview' ||
-    currentRoute ===
-      '/projects/<projectId:string>/dashboard-editor/raw-output' ||
     currentRoute === '/projects/<projectId:string>/dashboard-editor/problems'
   );
 };
 
 const getHref = (selectedProjectId) => {
-  return `#!/projects/${selectedProjectId}/dashboard-editor`;
+  return `#!/projects/${selectedProjectId}/dashboard-editor/problems`;
 };
 
-const DashboardEditorButton = (getProps) => {
+const ProblemsButton = (getProps) => {
   const getCurrentRoute = () => getProps().state.currentRoute;
   const getSelectedProjectId = () => getProps().state.selectedProjectId;
 
   const element = NavigationButton(() => ({
-    label: 'Dashboard editor',
+    label: 'Problems',
     isSelected: determineIsSelected(getCurrentRoute()),
     href: getHref(getSelectedProjectId()),
   }));
@@ -28,4 +23,4 @@ const DashboardEditorButton = (getProps) => {
   return element;
 };
 
-module.exports = DashboardEditorButton;
+module.exports = ProblemsButton;

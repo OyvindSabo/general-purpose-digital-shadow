@@ -25,7 +25,14 @@ const isDataSourcesUrl = (currentRoute) => {
 };
 
 const isDashboardEditorUrl = (currentRoute) => {
-  return currentRoute === '/projects/<projectId:string>/dashboard-editor';
+  return (
+    currentRoute === '/projects/<projectId:string>/dashboard-editor' ||
+    currentRoute ===
+      '/projects/<projectId:string>/dashboard-editor/widgets-preview' ||
+    currentRoute ===
+      '/projects/<projectId:string>/dashboard-editor/raw-output' ||
+    currentRoute === '/projects/<projectId:string>/dashboard-editor/problems'
+  );
 };
 
 const isDashboardUrl = (currentRoute) => {

@@ -2925,7 +2925,14 @@ modules['src/views/project/projectNavigator/dashboardEditorButton/DashboardEdito
   const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
 
 const determineIsSelected = (currentRoute) => {
-  return currentRoute === '/projects/<projectId:string>/dashboard-editor';
+  return (
+    currentRoute === '/projects/<projectId:string>/dashboard-editor' ||
+    currentRoute ===
+      '/projects/<projectId:string>/dashboard-editor/widgets-preview' ||
+    currentRoute ===
+      '/projects/<projectId:string>/dashboard-editor/raw-output' ||
+    currentRoute === '/projects/<projectId:string>/dashboard-editor/problems'
+  );
 };
 
 const getHref = (selectedProjectId) => {
@@ -3004,6 +3011,131 @@ const ProjectNavigator = (getProps) => {
 };
 
 module.exports = ProjectNavigator;
+
+  return module.exports;
+})();
+
+modules['src/views/dashboardEditor/dashboardEditorNavigator/widgetsPreviewButton/WidgetsPreviewButton.js'] = (() => {
+  const module = { exports: {} };
+  const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
+
+const determineIsSelected = (currentRoute) => {
+  return [
+    '/projects/<projectId:string>/dashboard-editor',
+    '/projects/<projectId:string>/dashboard-editor/widgets-preview',
+  ].includes(currentRoute);
+};
+
+const getHref = (selectedProjectId) => {
+  return `#!/projects/${selectedProjectId}/dashboard-editor/widgets-preview`;
+};
+
+const WidgetsPreviewButton = (getProps) => {
+  const getCurrentRoute = () => getProps().state.currentRoute;
+  const getSelectedProjectId = () => getProps().state.selectedProjectId;
+
+  const element = NavigationButton(() => ({
+    label: 'Widgets preview',
+    isSelected: determineIsSelected(getCurrentRoute()),
+    href: getHref(getSelectedProjectId()),
+  }));
+
+  return element;
+};
+
+module.exports = WidgetsPreviewButton;
+
+  return module.exports;
+})();
+
+modules['src/views/dashboardEditor/dashboardEditorNavigator/rawOutputButton/RawOutputButton.js'] = (() => {
+  const module = { exports: {} };
+  const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
+
+const determineIsSelected = (currentRoute) => {
+  return (
+    currentRoute === '/projects/<projectId:string>/dashboard-editor/raw-output'
+  );
+};
+
+const getHref = (selectedProjectId) => {
+  return `#!/projects/${selectedProjectId}/dashboard-editor/raw-output`;
+};
+
+const RawOutputButton = (getProps) => {
+  const getCurrentRoute = () => getProps().state.currentRoute;
+  const getSelectedProjectId = () => getProps().state.selectedProjectId;
+
+  const element = NavigationButton(() => ({
+    label: 'Raw output',
+    isSelected: determineIsSelected(getCurrentRoute()),
+    href: getHref(getSelectedProjectId()),
+  }));
+
+  return element;
+};
+
+module.exports = RawOutputButton;
+
+  return module.exports;
+})();
+
+modules['src/views/dashboardEditor/dashboardEditorNavigator/problemsButton/ProblemsButton.js'] = (() => {
+  const module = { exports: {} };
+  const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
+
+const determineIsSelected = (currentRoute) => {
+  return (
+    currentRoute === '/projects/<projectId:string>/dashboard-editor/problems'
+  );
+};
+
+const getHref = (selectedProjectId) => {
+  return `#!/projects/${selectedProjectId}/dashboard-editor/problems`;
+};
+
+const ProblemsButton = (getProps) => {
+  const getCurrentRoute = () => getProps().state.currentRoute;
+  const getSelectedProjectId = () => getProps().state.selectedProjectId;
+
+  const element = NavigationButton(() => ({
+    label: 'Problems',
+    isSelected: determineIsSelected(getCurrentRoute()),
+    href: getHref(getSelectedProjectId()),
+  }));
+
+  return element;
+};
+
+module.exports = ProblemsButton;
+
+  return module.exports;
+})();
+
+modules['src/views/dashboardEditor/dashboardEditorNavigator/DashboardEditorNavigator.js'] = (() => {
+  const module = { exports: {} };
+  const WidgetsPreviewButton = include(
+  'src/views/dashboardEditor/dashboardEditorNavigator/widgetsPreviewButton/WidgetsPreviewButton.js'
+);
+const RawOutputButton = include(
+  'src/views/dashboardEditor/dashboardEditorNavigator/rawOutputButton/RawOutputButton.js'
+);
+const ProblemsButton = include(
+  'src/views/dashboardEditor/dashboardEditorNavigator/problemsButton/ProblemsButton.js'
+);
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const DashboardEditorNavigator = (getProps) => {
+  const element = compose('div', { style: 'height: 40px;' }, [
+    WidgetsPreviewButton(getProps),
+    RawOutputButton(getProps),
+    ProblemsButton(getProps),
+  ]);
+
+  return element;
+};
+
+module.exports = DashboardEditorNavigator;
 
   return module.exports;
 })();
@@ -3609,11 +3741,35 @@ modules['src/views/dashboardEditor/DashboardEditor.js'] = (() => {
   const DashboardWidgets = include(
   'src/components/dashboardWidgets/DashboardWidgets.js'
 );
+const DashboardEditorNavigator = include(
+  'src/views/dashboardEditor/dashboardEditorNavigator/DashboardEditorNavigator.js'
+);
 const CodeEditor = include('src/components/codeEditor/CodeEditor.js');
-const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const { compose, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const isWidgetsPreviewUrl = (currentRoute) => {
+  return (
+    currentRoute === '/projects/<projectId:string>/dashboard-editor' ||
+    currentRoute ===
+      '/projects/<projectId:string>/dashboard-editor/widgets-preview'
+  );
+};
+
+const isRawOutputUrl = (currentRoute) => {
+  return (
+    currentRoute === '/projects/<projectId:string>/dashboard-editor/raw-output'
+  );
+};
+
+const isProblemsUrl = (currentRoute) => {
+  return (
+    currentRoute === '/projects/<projectId:string>/dashboard-editor/problems'
+  );
+};
 
 const DashboardEditor = (getProps) => {
   const getViewModel = () => getProps().viewModel;
+  const getCurrentRoute = () => getProps().state.currentRoute;
   const getSelectedProjectId = () => getProps().state.selectedProjectId;
   const getSelectedWidgetsCode = () => getProps().state.selectedWidgetsCode;
 
@@ -3624,7 +3780,19 @@ const DashboardEditor = (getProps) => {
         getViewModel().updateWidgetsCode(getSelectedProjectId(), target.value);
       },
     })),
-    DashboardWidgets(getProps),
+    DashboardEditorNavigator(getProps),
+    If(
+      () => isWidgetsPreviewUrl(getCurrentRoute()),
+      () => [DashboardWidgets(getProps)]
+    ),
+    If(
+      () => isRawOutputUrl(getCurrentRoute()),
+      () => [compose('div', { innerText: 'Raw output' }, [])]
+    ),
+    If(
+      () => isProblemsUrl(getCurrentRoute()),
+      () => [compose('div', { innerText: 'Problems' }, [])]
+    ),
   ]);
 
   return element;
@@ -3664,7 +3832,14 @@ const isDataSourcesUrl = (currentRoute) => {
 };
 
 const isDashboardEditorUrl = (currentRoute) => {
-  return currentRoute === '/projects/<projectId:string>/dashboard-editor';
+  return (
+    currentRoute === '/projects/<projectId:string>/dashboard-editor' ||
+    currentRoute ===
+      '/projects/<projectId:string>/dashboard-editor/widgets-preview' ||
+    currentRoute ===
+      '/projects/<projectId:string>/dashboard-editor/raw-output' ||
+    currentRoute === '/projects/<projectId:string>/dashboard-editor/problems'
+  );
 };
 
 const isDashboardUrl = (currentRoute) => {
@@ -3757,6 +3932,12 @@ const router = isExported
       '/projects/<projectId:string>/values/edit': 'Edit values',
       '/projects/<projectId:string>/dashboard': 'Dashboard',
       '/projects/<projectId:string>/dashboard-editor': 'Edit dashboard',
+      '/projects/<projectId:string>/dashboard-editor/widgets-preview':
+        'Edit dashboard',
+      '/projects/<projectId:string>/dashboard-editor/raw-output':
+        'Edit dashboard',
+      '/projects/<projectId:string>/dashboard-editor/problems':
+        'Edit dashboard',
     });
 
 const { state, setState, addStateChangeListener } = simpleState({
