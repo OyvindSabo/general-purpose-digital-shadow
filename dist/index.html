@@ -1859,7 +1859,7 @@ const Model = ({ router, isExported, state, setState }) => {
       console.warn('Failed to evaluate code: ', e);
       evaluatedCode = [];
     }
-    setState({ widgetsCodeRawOutput: JSON.stringify(evaluatedCode) });
+    setState({ widgetsCodeRawOutput: JSON.stringify(evaluatedCode, null, 2) });
     if (evaluatedCodeIsValid(evaluatedCode)) {
       setState({
         widgets: evaluatedCode,
@@ -2054,6 +2054,29 @@ const CodePreview = (getProps) => {
 };
 
 module.exports = CodePreview;
+
+  return module.exports;
+})();
+
+modules['src/libraries/simpleUI/Constants.js'] = (() => {
+  const module = { exports: {} };
+  const Colors = {
+  TextColor: 'slategray',
+  HighlightedTextColor: 'darkslategray',
+  DisabledTextColor: 'lightgray',
+  HighlightColor: 'deepskyblue',
+};
+
+const Sizes = {
+  FontSize: 15,
+  Padding: 10,
+  Unit: 20,
+};
+
+module.exports = {
+  Colors,
+  Sizes,
+};
 
   return module.exports;
 })();
@@ -2279,6 +2302,198 @@ const TitleBar = (getProps) => {
 };
 
 module.exports = TitleBar;
+
+  return module.exports;
+})();
+
+modules['src/libraries/simpleUI/NavigationButton.js'] = (() => {
+  const module = { exports: {} };
+  const { Colors } = include('src/libraries/simpleUI/Constants.js');
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const getColor = (isHovered, isSelected) => {
+  return isSelected || isHovered
+    ? Colors.HighlightedTextColor
+    : Colors.TextColor;
+};
+
+const getBorderBottom = (isSelected) => {
+  return isSelected ? `2px solid ${Colors.HighlightColor}` : 'none';
+};
+
+const NavigationButton = (getProps) => {
+  let isHovered = false;
+
+  const getIsSelected = () => getProps().isSelected;
+  const getHref = () => getProps().href;
+
+  const element = compose(
+    'span',
+    () => ({
+      style: `display: inline-block;
+              text-align: center;
+              box-sizing: border-box;
+              width: 160px;
+              height: 40px;
+              line-height: 40px;
+              font-size: 15px;
+              border-bottom: ${getBorderBottom(getIsSelected())};`,
+    }),
+    [
+      compose(
+        'a',
+        () => ({
+          href: getHref(),
+          innerText: getProps().label,
+          style: `text-decoration: none;
+                  display: inline-block;
+                  width: 100%;
+                  color: ${getColor(isHovered, getIsSelected())};`,
+          onmouseenter: () => {
+            isHovered = true;
+            element.update();
+          },
+          onmouseleave: () => {
+            isHovered = false;
+            element.update();
+          },
+        }),
+        []
+      ),
+    ]
+  );
+  return element;
+};
+
+module.exports = NavigationButton;
+
+  return module.exports;
+})();
+
+modules['src/views/project/projectNavigator/dataSourcesButton/DataSourcesButton.js'] = (() => {
+  const module = { exports: {} };
+  const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
+
+const determineIsSelected = (currentRoute) => {
+  return [
+    '/projects/<projectId:string>',
+    '/projects/<projectId:string>/data-sources',
+  ].includes(currentRoute);
+};
+
+const getHref = (selectedProjectId) => {
+  return `#!/projects/${selectedProjectId}/data-sources`;
+};
+
+const DataSourcesButton = (getProps) => {
+  const getCurrentRoute = () => getProps().state.currentRoute;
+  const getSelectedProjectId = () => getProps().state.selectedProjectId;
+
+  const element = NavigationButton(() => ({
+    label: 'Data sources',
+    isSelected: determineIsSelected(getCurrentRoute()),
+    href: getHref(getSelectedProjectId()),
+  }));
+
+  return element;
+};
+
+module.exports = DataSourcesButton;
+
+  return module.exports;
+})();
+
+modules['src/views/project/projectNavigator/dashboardEditorButton/DashboardEditorButton.js'] = (() => {
+  const module = { exports: {} };
+  const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
+
+const determineIsSelected = (currentRoute) => {
+  return (
+    currentRoute === '/projects/<projectId:string>/dashboard-editor' ||
+    currentRoute ===
+      '/projects/<projectId:string>/dashboard-editor/widgets-preview' ||
+    currentRoute ===
+      '/projects/<projectId:string>/dashboard-editor/raw-output' ||
+    currentRoute === '/projects/<projectId:string>/dashboard-editor/problems'
+  );
+};
+
+const getHref = (selectedProjectId) => {
+  return `#!/projects/${selectedProjectId}/dashboard-editor`;
+};
+
+const DashboardEditorButton = (getProps) => {
+  const getCurrentRoute = () => getProps().state.currentRoute;
+  const getSelectedProjectId = () => getProps().state.selectedProjectId;
+
+  const element = NavigationButton(() => ({
+    label: 'Dashboard editor',
+    isSelected: determineIsSelected(getCurrentRoute()),
+    href: getHref(getSelectedProjectId()),
+  }));
+
+  return element;
+};
+
+module.exports = DashboardEditorButton;
+
+  return module.exports;
+})();
+
+modules['src/views/project/projectNavigator/dashboardButton/DashboardButton.js'] = (() => {
+  const module = { exports: {} };
+  const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
+
+const determineIsSelected = (currentRoute) => {
+  return currentRoute === '/projects/<projectId:string>/dashboard';
+};
+
+const getHref = (selectedProjectId) => {
+  return `#!/projects/${selectedProjectId}/dashboard`;
+};
+
+const DashboardButton = (getProps) => {
+  const getCurrentRoute = () => getProps().state.currentRoute;
+  const getSelectedProjectId = () => getProps().state.selectedProjectId;
+
+  const element = NavigationButton(() => ({
+    label: 'Dashboard',
+    isSelected: determineIsSelected(getCurrentRoute()),
+    href: getHref(getSelectedProjectId()),
+  }));
+
+  return element;
+};
+
+module.exports = DashboardButton;
+
+  return module.exports;
+})();
+
+modules['src/views/project/projectNavigator/ProjectNavigator.js'] = (() => {
+  const module = { exports: {} };
+  const DataSourcesButton = include(
+  'src/views/project/projectNavigator/dataSourcesButton/DataSourcesButton.js'
+);
+const DashboardEditorButton = include(
+  'src/views/project/projectNavigator/dashboardEditorButton/DashboardEditorButton.js'
+);
+const DashboardButton = include(
+  'src/views/project/projectNavigator/dashboardButton/DashboardButton.js'
+);
+const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
+
+const ProjectNavigator = (getProps) => {
+  const element = compose('div', { style: 'height: 40px;' }, [
+    DataSourcesButton(getProps),
+    DashboardEditorButton(getProps),
+    DashboardButton(getProps),
+  ]);
+
+  return element;
+};
+
+module.exports = ProjectNavigator;
 
   return module.exports;
 })();
@@ -2836,221 +3051,6 @@ const DataSources = (getProps) => {
 };
 
 module.exports = DataSources;
-
-  return module.exports;
-})();
-
-modules['src/libraries/simpleUI/Constants.js'] = (() => {
-  const module = { exports: {} };
-  const Colors = {
-  TextColor: 'slategray',
-  HighlightedTextColor: 'darkslategray',
-  DisabledTextColor: 'lightgray',
-  HighlightColor: 'deepskyblue',
-};
-
-const Sizes = {
-  FontSize: 15,
-  Padding: 10,
-  Unit: 20,
-};
-
-module.exports = {
-  Colors,
-  Sizes,
-};
-
-  return module.exports;
-})();
-
-modules['src/libraries/simpleUI/NavigationButton.js'] = (() => {
-  const module = { exports: {} };
-  const { Colors } = include('src/libraries/simpleUI/Constants.js');
-const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const getColor = (isHovered, isSelected) => {
-  return isSelected || isHovered
-    ? Colors.HighlightedTextColor
-    : Colors.TextColor;
-};
-
-const getBorderBottom = (isSelected) => {
-  return isSelected ? `2px solid ${Colors.HighlightColor}` : 'none';
-};
-
-const NavigationButton = (getProps) => {
-  let isHovered = false;
-
-  const getIsSelected = () => getProps().isSelected;
-  const getHref = () => getProps().href;
-
-  const element = compose(
-    'span',
-    () => ({
-      style: `display: inline-block;
-              text-align: center;
-              box-sizing: border-box;
-              width: 160px;
-              height: 40px;
-              line-height: 40px;
-              font-size: 15px;
-              border-bottom: ${getBorderBottom(getIsSelected())};`,
-    }),
-    [
-      compose(
-        'a',
-        () => ({
-          href: getHref(),
-          innerText: getProps().label,
-          style: `text-decoration: none;
-                  display: inline-block;
-                  width: 100%;
-                  color: ${getColor(isHovered, getIsSelected())};`,
-          onmouseenter: () => {
-            isHovered = true;
-            element.update();
-          },
-          onmouseleave: () => {
-            isHovered = false;
-            element.update();
-          },
-        }),
-        []
-      ),
-    ]
-  );
-  return element;
-};
-
-module.exports = NavigationButton;
-
-  return module.exports;
-})();
-
-modules['src/views/project/projectNavigator/dataSourcesButton/DataSourcesButton.js'] = (() => {
-  const module = { exports: {} };
-  const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
-
-const determineIsSelected = (currentRoute) => {
-  return [
-    '/projects/<projectId:string>',
-    '/projects/<projectId:string>/data-sources',
-  ].includes(currentRoute);
-};
-
-const getHref = (selectedProjectId) => {
-  return `#!/projects/${selectedProjectId}/data-sources`;
-};
-
-const DataSourcesButton = (getProps) => {
-  const getCurrentRoute = () => getProps().state.currentRoute;
-  const getSelectedProjectId = () => getProps().state.selectedProjectId;
-
-  const element = NavigationButton(() => ({
-    label: 'Data sources',
-    isSelected: determineIsSelected(getCurrentRoute()),
-    href: getHref(getSelectedProjectId()),
-  }));
-
-  return element;
-};
-
-module.exports = DataSourcesButton;
-
-  return module.exports;
-})();
-
-modules['src/views/project/projectNavigator/dashboardEditorButton/DashboardEditorButton.js'] = (() => {
-  const module = { exports: {} };
-  const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
-
-const determineIsSelected = (currentRoute) => {
-  return (
-    currentRoute === '/projects/<projectId:string>/dashboard-editor' ||
-    currentRoute ===
-      '/projects/<projectId:string>/dashboard-editor/widgets-preview' ||
-    currentRoute ===
-      '/projects/<projectId:string>/dashboard-editor/raw-output' ||
-    currentRoute === '/projects/<projectId:string>/dashboard-editor/problems'
-  );
-};
-
-const getHref = (selectedProjectId) => {
-  return `#!/projects/${selectedProjectId}/dashboard-editor`;
-};
-
-const DashboardEditorButton = (getProps) => {
-  const getCurrentRoute = () => getProps().state.currentRoute;
-  const getSelectedProjectId = () => getProps().state.selectedProjectId;
-
-  const element = NavigationButton(() => ({
-    label: 'Dashboard editor',
-    isSelected: determineIsSelected(getCurrentRoute()),
-    href: getHref(getSelectedProjectId()),
-  }));
-
-  return element;
-};
-
-module.exports = DashboardEditorButton;
-
-  return module.exports;
-})();
-
-modules['src/views/project/projectNavigator/dashboardButton/DashboardButton.js'] = (() => {
-  const module = { exports: {} };
-  const NavigationButton = include('src/libraries/simpleUI/NavigationButton.js');
-
-const determineIsSelected = (currentRoute) => {
-  return currentRoute === '/projects/<projectId:string>/dashboard';
-};
-
-const getHref = (selectedProjectId) => {
-  return `#!/projects/${selectedProjectId}/dashboard`;
-};
-
-const DashboardButton = (getProps) => {
-  const getCurrentRoute = () => getProps().state.currentRoute;
-  const getSelectedProjectId = () => getProps().state.selectedProjectId;
-
-  const element = NavigationButton(() => ({
-    label: 'Dashboard',
-    isSelected: determineIsSelected(getCurrentRoute()),
-    href: getHref(getSelectedProjectId()),
-  }));
-
-  return element;
-};
-
-module.exports = DashboardButton;
-
-  return module.exports;
-})();
-
-modules['src/views/project/projectNavigator/ProjectNavigator.js'] = (() => {
-  const module = { exports: {} };
-  const DataSourcesButton = include(
-  'src/views/project/projectNavigator/dataSourcesButton/DataSourcesButton.js'
-);
-const DashboardEditorButton = include(
-  'src/views/project/projectNavigator/dashboardEditorButton/DashboardEditorButton.js'
-);
-const DashboardButton = include(
-  'src/views/project/projectNavigator/dashboardButton/DashboardButton.js'
-);
-const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
-
-const ProjectNavigator = (getProps) => {
-  const element = compose('div', { style: 'height: 40px;' }, [
-    DataSourcesButton(getProps),
-    DashboardEditorButton(getProps),
-    DashboardButton(getProps),
-  ]);
-
-  return element;
-};
-
-module.exports = ProjectNavigator;
 
   return module.exports;
 })();
@@ -3787,6 +3787,7 @@ const DashboardEditorNavigator = include(
 const CodeEditor = include('src/components/codeEditor/CodeEditor.js');
 const CodePreview = include('src/components/codePreview/CodePreview.js');
 const { compose, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const { Colors } = include('src/libraries/simpleUI/Constants.js');
 
 const isWidgetsPreviewUrl = (currentRoute) => {
   return (
@@ -3816,6 +3817,20 @@ const DashboardEditor = (getProps) => {
 
   const element = compose('div', {}, [
     compose('div', { style: 'padding: 10px;' }, [
+      compose(
+        'div',
+        {
+          style: `color: ${Colors.TextColor}; padding: 10px;`,
+          innerText:
+            'One unit in the Euclidean space corresponds to 1px in the widget (for 3D widgets the resulting unit size will depend on the camera distance).',
+        },
+        [
+          compose('ul', {}, [
+            compose('li', { innerText: 'Widget width: 480px' }, []),
+            compose('li', { innerText: 'Widget height: 320px' }, []),
+          ]),
+        ]
+      ),
       CodeEditor(() => ({
         value: getSelectedWidgetsCode(),
         oninput: ({ target }) => {

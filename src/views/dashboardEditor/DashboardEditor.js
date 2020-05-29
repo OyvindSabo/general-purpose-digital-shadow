@@ -7,6 +7,7 @@ const DashboardEditorNavigator = include(
 const CodeEditor = include('src/components/codeEditor/CodeEditor.js');
 const CodePreview = include('src/components/codePreview/CodePreview.js');
 const { compose, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const { Colors } = include('src/libraries/simpleUI/Constants.js');
 
 const isWidgetsPreviewUrl = (currentRoute) => {
   return (
@@ -36,6 +37,20 @@ const DashboardEditor = (getProps) => {
 
   const element = compose('div', {}, [
     compose('div', { style: 'padding: 10px;' }, [
+      compose(
+        'div',
+        {
+          style: `color: ${Colors.TextColor}; padding: 10px;`,
+          innerText:
+            'One unit in the Euclidean space corresponds to 1px in the widget (for 3D widgets the resulting unit size will depend on the camera distance).',
+        },
+        [
+          compose('ul', {}, [
+            compose('li', { innerText: 'Widget width: 480px' }, []),
+            compose('li', { innerText: 'Widget height: 320px' }, []),
+          ]),
+        ]
+      ),
       CodeEditor(() => ({
         value: getSelectedWidgetsCode(),
         oninput: ({ target }) => {
