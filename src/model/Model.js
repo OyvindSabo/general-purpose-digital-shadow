@@ -172,6 +172,19 @@ const Model = ({ router, isExported, state, setState }) => {
     return evaluatedCode.every((widget) => typeof widget === 'object');
   };
 
+  const normalizeCenter = (center) => [
+    center[0] || 0,
+    center[1] || 0,
+    center[2] || 0,
+  ];
+
+  const normalizeWidgets = (widgets) =>
+    widgets.map((widget) => ({
+      ...widget,
+      center: widget.center ? normalizeCenter(widget.center) : [0, 0, 0],
+      is3d: widget.is3d ? true : false,
+    }));
+
   const updateValues = () => {
     let evaluatedCode;
     try {
@@ -183,10 +196,13 @@ const Model = ({ router, isExported, state, setState }) => {
       console.warn('Failed to evaluate code: ', e);
       evaluatedCode = [];
     }
-    setState({ widgetsCodeRawOutput: JSON.stringify(evaluatedCode, null, 2) });
+    const normalizedWidgets = normalizeWidgets(evaluatedCode);
+    setState({
+      widgetsCodeRawOutput: JSON.stringify(normalizedWidgets, null, 2),
+    });
     if (evaluatedCodeIsValid(evaluatedCode)) {
       setState({
-        widgets: evaluatedCode,
+        widgets: normalizedWidgets,
       });
     }
   };

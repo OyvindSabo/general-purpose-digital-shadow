@@ -67,7 +67,10 @@ const doRenderVisualization = ({
     ctx.lineCap = 'round';
     ctx.moveTo(startPoint[0], -startPoint[1]);
     ctx.lineTo(endPoint[0], -endPoint[1]);
-    ctx.lineWidth = width;
+    ctx.lineWidth = focalLength
+      ? width *
+        (focalLength / (d + focalLength + (startPoint[2] + endPoint[2]) / 2))
+      : width;
     ctx.strokeStyle = color;
     ctx.stroke();
   });
