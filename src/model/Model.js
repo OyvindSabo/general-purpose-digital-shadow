@@ -172,6 +172,12 @@ const Model = ({ router, isExported, state, setState }) => {
     return evaluatedCode.every((widget) => typeof widget === 'object');
   };
 
+  // This is currently just an identity function, but could be expanded to do something more
+  const normalizeSurfaces = (surfaces) => surfaces;
+
+  // This is currently just an identity function, but could be expanded to do something more
+  const normalizeLines = (lines) => lines;
+
   const normalizeCenter = (center) => [
     center[0] || 0,
     center[1] || 0,
@@ -181,6 +187,8 @@ const Model = ({ router, isExported, state, setState }) => {
   const normalizeWidgets = (widgets) =>
     widgets.map((widget) => ({
       ...widget,
+      surfaces: widget.surfaces ? normalizeSurfaces(widget.surfaces) : [],
+      lines: widget.lines ? normalizeLines(widget.lines) : [],
       center: widget.center ? normalizeCenter(widget.center) : [0, 0, 0],
       is3d: widget.is3d ? true : false,
     }));

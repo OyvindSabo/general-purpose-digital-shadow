@@ -17,7 +17,7 @@ const rotateVertically = include(
 
 const doRenderVisualization = ({
   surfaces,
-  edges,
+  lines,
   ctx,
   center,
   azimuthAngle = 0,
@@ -58,8 +58,8 @@ const doRenderVisualization = ({
     });
   });
 
-  // Render the edges
-  edges.forEach(({ color, points, width }) => {
+  // Render the lines
+  lines.forEach(({ color, points, width }) => {
     const startPoint = transformPoint(points[0]);
     const endPoint = transformPoint(points[1]);
 

@@ -1848,6 +1848,12 @@ const Model = ({ router, isExported, state, setState }) => {
     return evaluatedCode.every((widget) => typeof widget === 'object');
   };
 
+  // This is currently just an identity function, but could be expanded to do something more
+  const normalizeSurfaces = (surfaces) => surfaces;
+
+  // This is currently just an identity function, but could be expanded to do something more
+  const normalizeLines = (lines) => lines;
+
   const normalizeCenter = (center) => [
     center[0] || 0,
     center[1] || 0,
@@ -1857,6 +1863,8 @@ const Model = ({ router, isExported, state, setState }) => {
   const normalizeWidgets = (widgets) =>
     widgets.map((widget) => ({
       ...widget,
+      surfaces: widget.surfaces ? normalizeSurfaces(widget.surfaces) : [],
+      lines: widget.lines ? normalizeLines(widget.lines) : [],
       center: widget.center ? normalizeCenter(widget.center) : [0, 0, 0],
       is3d: widget.is3d ? true : false,
     }));
@@ -3448,7 +3456,7 @@ const rotateVertically = include(
 
 const doRenderVisualization = ({
   surfaces,
-  edges,
+  lines,
   ctx,
   center,
   azimuthAngle = 0,
@@ -3489,8 +3497,8 @@ const doRenderVisualization = ({
     });
   });
 
-  // Render the edges
-  edges.forEach(({ color, points, width }) => {
+  // Render the lines
+  lines.forEach(({ color, points, width }) => {
     const startPoint = transformPoint(points[0]);
     const endPoint = transformPoint(points[1]);
 
@@ -3526,7 +3534,7 @@ const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 // TODO: Shouldn't there be a label here?
 const Canvas3dWidget = (getProps) => {
-  const { surfaces, edges, center } = getProps();
+  const { surfaces, lines, center } = getProps();
   const state = { mouseDown: false };
   const element = compose(
     'canvas',
@@ -3545,11 +3553,11 @@ const Canvas3dWidget = (getProps) => {
   });
   const ctx = element.getContext('2d');
   const rerender = () => {
-    const { surfaces, edges, center } = getProps();
+    const { surfaces, lines, center } = getProps();
     ctx.clearRect(0, 0, element.width, element.height);
     doRenderVisualization({
       surfaces,
-      edges,
+      lines,
       ctx,
       center,
       azimuthAngle: camera.horizontalRotation$.value,
@@ -3584,16 +3592,16 @@ const Canvas3dWidget = (getProps) => {
     rerender(getProps());
   };
   window.addEventListener(camera.horizontalRotation$.id, () => {
-    rerender({ surfaces, edges, center });
+    rerender({ surfaces, lines, center });
   });
   window.addEventListener(camera.verticalRotation$.id, () => {
-    rerender({ surfaces, edges, center });
+    rerender({ surfaces, lines, center });
   });
   window.addEventListener(camera.distance$.id, () => {
-    rerender({ surfaces, edges, center });
+    rerender({ surfaces, lines, center });
   });
   window.addEventListener(camera.focalLength$.id, () => {
-    rerender({ surfaces, edges, center });
+    rerender({ surfaces, lines, center });
   });
   return compose(
     'span',
@@ -3624,7 +3632,7 @@ const WidgetLabel = include('src/components/widgetLabel/WidgetLabel.js');
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 // TODO: Shouldn't there be a label here?
-// getProps::() => { surfaces, edges, id3d, center }
+// getProps::() => { surfaces, lines, id3d, center }
 const Canvas2dWidget = (getProps) => {
   const element = compose(
     'canvas',
@@ -3636,9 +3644,9 @@ const Canvas2dWidget = (getProps) => {
     []
   );
   const ctx = element.getContext('2d');
-  const rerender = ({ surfaces, edges, center }) => {
+  const rerender = ({ surfaces, lines, center }) => {
     ctx.clearRect(0, 0, element.width, element.height);
-    doRenderVisualization({ surfaces, edges, center, ctx });
+    doRenderVisualization({ surfaces, lines, center, ctx });
   };
   rerender(getProps());
   element.update = () => {
@@ -3681,7 +3689,7 @@ const { compose, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
  *   label: string;
  *   value: number;
  *   surfaces: { color: string, points: [number, number, number][] }[];
- *   edges: [[number, number, number][]];
+ *   lines: [[number, number, number][]];
  *   center: [number, number, number];
  *   is3d: boolean;
  * })

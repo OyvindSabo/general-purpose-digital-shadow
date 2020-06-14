@@ -13,7 +13,7 @@ const { compose, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
  *   label: string;
  *   value: number;
  *   surfaces: { color: string, points: [number, number, number][] }[];
- *   edges: [[number, number, number][]];
+ *   lines: [[number, number, number][]];
  *   center: [number, number, number];
  *   is3d: boolean;
  * })

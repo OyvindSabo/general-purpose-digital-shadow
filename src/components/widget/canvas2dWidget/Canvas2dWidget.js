@@ -5,7 +5,7 @@ const WidgetLabel = include('src/components/widgetLabel/WidgetLabel.js');
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 // TODO: Shouldn't there be a label here?
-// getProps::() => { surfaces, edges, id3d, center }
+// getProps::() => { surfaces, lines, id3d, center }
 const Canvas2dWidget = (getProps) => {
   const element = compose(
     'canvas',
@@ -17,9 +17,9 @@ const Canvas2dWidget = (getProps) => {
     []
   );
   const ctx = element.getContext('2d');
-  const rerender = ({ surfaces, edges, center }) => {
+  const rerender = ({ surfaces, lines, center }) => {
     ctx.clearRect(0, 0, element.width, element.height);
-    doRenderVisualization({ surfaces, edges, center, ctx });
+    doRenderVisualization({ surfaces, lines, center, ctx });
   };
   rerender(getProps());
   element.update = () => {

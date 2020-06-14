@@ -10,7 +10,7 @@ const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 // TODO: Shouldn't there be a label here?
 const Canvas3dWidget = (getProps) => {
-  const { surfaces, edges, center } = getProps();
+  const { surfaces, lines, center } = getProps();
   const state = { mouseDown: false };
   const element = compose(
     'canvas',
@@ -29,11 +29,11 @@ const Canvas3dWidget = (getProps) => {
   });
   const ctx = element.getContext('2d');
   const rerender = () => {
-    const { surfaces, edges, center } = getProps();
+    const { surfaces, lines, center } = getProps();
     ctx.clearRect(0, 0, element.width, element.height);
     doRenderVisualization({
       surfaces,
-      edges,
+      lines,
       ctx,
       center,
       azimuthAngle: camera.horizontalRotation$.value,
@@ -68,16 +68,16 @@ const Canvas3dWidget = (getProps) => {
     rerender(getProps());
   };
   window.addEventListener(camera.horizontalRotation$.id, () => {
-    rerender({ surfaces, edges, center });
+    rerender({ surfaces, lines, center });
   });
   window.addEventListener(camera.verticalRotation$.id, () => {
-    rerender({ surfaces, edges, center });
+    rerender({ surfaces, lines, center });
   });
   window.addEventListener(camera.distance$.id, () => {
-    rerender({ surfaces, edges, center });
+    rerender({ surfaces, lines, center });
   });
   window.addEventListener(camera.focalLength$.id, () => {
-    rerender({ surfaces, edges, center });
+    rerender({ surfaces, lines, center });
   });
   return compose(
     'span',
