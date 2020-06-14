@@ -2,7 +2,7 @@
  * Checks if the expression has an opening and closing parenthesis
  * @param {string} expression
  */
-const isExpression = (expression) => {
+const isApplication = (expression) => {
   if (expression.length < 2) return false;
   if (expression.charAt(0) !== '(') return false;
   if (expression.slice(-1) !== ')') return false;
@@ -180,7 +180,7 @@ const getTokens = (expression) => {
 const parseExpression = (expression) => {
   // An expression is either a value, or an expression which has to be parsed
   const trimmedExpression = expression.trim();
-  if (isExpression(trimmedExpression)) {
+  if (isApplication(trimmedExpression)) {
     const tokens = getTokens(trimParentheses(trimmedExpression));
     const [operatorToken, ...argTokens] = tokens;
     return {
