@@ -25,7 +25,7 @@ const Canvas3dWidget = (getProps) => {
     horizontalRotation$: new Observable(0),
     verticalRotation$: new Observable(0),
     distance$: new Observable(100),
-    focalLength$: new Observable(100),
+    focalLength$: new Observable(500),
   });
   const ctx = element.getContext('2d');
   const rerender = () => {

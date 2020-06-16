@@ -491,6 +491,28 @@ const core = {
       };
     },
   },
+  sin: {
+    tokenType: 'function',
+    function: (number) => {
+      // TODO: Add type validation
+      return {
+        tokenType: 'value',
+        dataType: 'number',
+        value: Math.sin(number.value),
+      };
+    },
+  },
+  cos: {
+    tokenType: 'function',
+    function: (number) => {
+      // TODO: Add type validation
+      return {
+        tokenType: 'value',
+        dataType: 'number',
+        value: Math.cos(number.value),
+      };
+    },
+  },
   keys: {
     tokenType: 'function',
     function: (arg) => {
