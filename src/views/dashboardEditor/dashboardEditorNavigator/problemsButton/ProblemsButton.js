@@ -15,7 +15,7 @@ const ProblemsButton = (getProps) => {
   const getSelectedProjectId = () => getProps().state.selectedProjectId;
 
   const element = NavigationButton(() => ({
-    label: 'Problems',
+    label: `Problems (${getProps().state.widgetsCodeErrors.length})`,
     isSelected: determineIsSelected(getCurrentRoute()),
     href: getHref(getSelectedProjectId()),
   }));
