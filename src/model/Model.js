@@ -168,8 +168,22 @@ const Model = ({ router, isExported, state, setState }) => {
       });
   };
 
-  const evaluatedCodeIsValid = (evaluatedCode) => {
-    return evaluatedCode.every((widget) => typeof widget === 'object');
+  const getWidgetsSchemaErrors = (evaluatedCode) => {
+    const widgetsSchemaErrors = [];
+    if (!Array.isArray(evaluatedCode)) {
+      widgetsSchemaErrors.push(
+        `The function you have written should return an array, but instead it returns something of type ${typeof evaluatedCode}`
+      );
+    } else {
+      evaluatedCode.forEach((widget, i) => {
+        if (typeof widget !== 'object') {
+          widgetsSchemaErrors.push(
+            `The widget at index ${i} is not an object, but it should be.`
+          );
+        }
+      });
+    }
+    return widgetsSchemaErrors;
   };
 
   // This is currently just an identity function, but could be expanded to do something more
@@ -185,6 +199,9 @@ const Model = ({ router, isExported, state, setState }) => {
   ];
 
   const normalizeWidgets = (widgets) => {
+    if (!Array.isArray(widgets)) {
+      return [];
+    }
     return widgets.map((widget) => ({
       ...widget,
       surfaces: widget.surfaces ? normalizeSurfaces(widget.surfaces) : [],
@@ -196,6 +213,7 @@ const Model = ({ router, isExported, state, setState }) => {
 
   const updateValues = () => {
     let evaluatedCode;
+    let interpretationErrors = [];
     try {
       evaluatedCode = evaluateCode(
         state.apiResponse,
@@ -204,12 +222,20 @@ const Model = ({ router, isExported, state, setState }) => {
     } catch (e) {
       console.warn('Failed to evaluate code: ', e);
       evaluatedCode = [];
+      interpretationErrors = [e.message];
     }
+    const widgetsSchemaErrors = getWidgetsSchemaErrors(evaluatedCode);
     const normalizedWidgets = normalizeWidgets(evaluatedCode);
+    const widgetsCodeErrors = [...interpretationErrors, ...widgetsSchemaErrors];
     setState({
-      widgetsCodeRawOutput: JSON.stringify(normalizedWidgets, null, 2),
+      widgetsCodeRawOutput: JSON.stringify(evaluatedCode, null, 2),
+      widgetsCodeErrors,
     });
-    if (evaluatedCodeIsValid(evaluatedCode)) {
+    if (widgetsSchemaErrors.length) {
+      setState({
+        widgets: [],
+      });
+    } else {
       setState({
         widgets: normalizedWidgets,
       });

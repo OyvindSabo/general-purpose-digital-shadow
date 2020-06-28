@@ -1,5 +1,5 @@
 const Widget = include('src/components/widget/Widget.js');
-const { compose, Each, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const { compose, Each } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const DashboardWidgets = (getProps) => {
   const element = compose('div', {}, [

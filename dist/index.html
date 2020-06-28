@@ -1866,8 +1866,22 @@ const Model = ({ router, isExported, state, setState }) => {
       });
   };
 
-  const evaluatedCodeIsValid = (evaluatedCode) => {
-    return evaluatedCode.every((widget) => typeof widget === 'object');
+  const getWidgetsSchemaErrors = (evaluatedCode) => {
+    const widgetsSchemaErrors = [];
+    if (!Array.isArray(evaluatedCode)) {
+      widgetsSchemaErrors.push(
+        `The function you have written should return an array, but instead it returns something of type ${typeof evaluatedCode}`
+      );
+    } else {
+      evaluatedCode.forEach((widget, i) => {
+        if (typeof widget !== 'object') {
+          widgetsSchemaErrors.push(
+            `The widget at index ${i} is not an object, but it should be.`
+          );
+        }
+      });
+    }
+    return widgetsSchemaErrors;
   };
 
   // This is currently just an identity function, but could be expanded to do something more
@@ -1883,6 +1897,9 @@ const Model = ({ router, isExported, state, setState }) => {
   ];
 
   const normalizeWidgets = (widgets) => {
+    if (!Array.isArray(widgets)) {
+      return [];
+    }
     return widgets.map((widget) => ({
       ...widget,
       surfaces: widget.surfaces ? normalizeSurfaces(widget.surfaces) : [],
@@ -1894,6 +1911,7 @@ const Model = ({ router, isExported, state, setState }) => {
 
   const updateValues = () => {
     let evaluatedCode;
+    let interpretationErrors = [];
     try {
       evaluatedCode = evaluateCode(
         state.apiResponse,
@@ -1902,12 +1920,20 @@ const Model = ({ router, isExported, state, setState }) => {
     } catch (e) {
       console.warn('Failed to evaluate code: ', e);
       evaluatedCode = [];
+      interpretationErrors = [e.message];
     }
+    const widgetsSchemaErrors = getWidgetsSchemaErrors(evaluatedCode);
     const normalizedWidgets = normalizeWidgets(evaluatedCode);
+    const widgetsCodeErrors = [...interpretationErrors, ...widgetsSchemaErrors];
     setState({
-      widgetsCodeRawOutput: JSON.stringify(normalizedWidgets, null, 2),
+      widgetsCodeRawOutput: JSON.stringify(evaluatedCode, null, 2),
+      widgetsCodeErrors,
     });
-    if (evaluatedCodeIsValid(evaluatedCode)) {
+    if (widgetsSchemaErrors.length) {
+      setState({
+        widgets: [],
+      });
+    } else {
       setState({
         widgets: normalizedWidgets,
       });
@@ -3746,7 +3772,7 @@ module.exports = Widget;
 modules['src/components/dashboardWidgets/DashboardWidgets.js'] = (() => {
   const module = { exports: {} };
   const Widget = include('src/components/widget/Widget.js');
-const { compose, Each, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const { compose, Each } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 const DashboardWidgets = (getProps) => {
   const element = compose('div', {}, [
@@ -3813,7 +3839,7 @@ const DashboardEditorNavigator = include(
 );
 const CodeEditor = include('src/components/codeEditor/CodeEditor.js');
 const CodePreview = include('src/components/codePreview/CodePreview.js');
-const { compose, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const { compose, Each, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
 const { Colors } = include('src/libraries/simpleUI/Constants.js');
 
 const isWidgetsPreviewUrl = (currentRoute) => {
@@ -3885,7 +3911,44 @@ const DashboardEditor = (getProps) => {
       ),
       If(
         () => isProblemsUrl(getCurrentRoute()),
-        () => [compose('div', { innerText: 'Problems' }, [])]
+        () => [
+          If(
+            () => getProps().state.widgetsCodeErrors.length,
+            () => [
+              Each(
+                () => getProps().state.widgetsCodeErrors,
+                (getValue) =>
+                  compose(
+                    'div',
+                    {
+                      innerText: getValue(),
+                      style: `box-shadow: inset rgba(0, 0, 0, 0.5) 0 0 10px -5px;
+                              font-family: "Courier New", Courier, monospace;
+                              background: lightpink;
+                              box-sizing: border-box;
+                              display: inline-block;
+                              white-space: pre-wrap;
+                              border-radius: 5px;
+                              line-height: 40px;
+                              max-height: 300px;
+                              min-height: 40px;
+                              font-size: 15px;
+                              overflow: auto;
+                              outline: none;
+                              padding: 10px;
+                              border: none;
+                              resize: none;
+                              width: 100%;`,
+                    },
+                    []
+                  )
+              ),
+            ],
+            () => [
+              compose('div', { innerText: 'No problems were detected.' }, []),
+            ]
+          ),
+        ]
       ),
     ]),
   ]);
@@ -4050,6 +4113,7 @@ const { state, setState, addStateChangeListener } = simpleState({
   selectedDerivedValuesCode: '',
   selectedWidgetsCode: '',
   widgetsCodeRawOutput: '',
+  widgetsCodeErrors: [],
   widgets: [],
 });
 

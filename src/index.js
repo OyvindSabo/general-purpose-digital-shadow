@@ -49,6 +49,7 @@ const { state, setState, addStateChangeListener } = simpleState({
   selectedDerivedValuesCode: '',
   selectedWidgetsCode: '',
   widgetsCodeRawOutput: '',
+  widgetsCodeErrors: [],
   widgets: [],
 });
 

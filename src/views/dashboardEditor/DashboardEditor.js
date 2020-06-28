@@ -6,7 +6,7 @@ const DashboardEditorNavigator = include(
 );
 const CodeEditor = include('src/components/codeEditor/CodeEditor.js');
 const CodePreview = include('src/components/codePreview/CodePreview.js');
-const { compose, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
+const { compose, Each, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
 const { Colors } = include('src/libraries/simpleUI/Constants.js');
 
 const isWidgetsPreviewUrl = (currentRoute) => {
@@ -78,7 +78,44 @@ const DashboardEditor = (getProps) => {
       ),
       If(
         () => isProblemsUrl(getCurrentRoute()),
-        () => [compose('div', { innerText: 'Problems' }, [])]
+        () => [
+          If(
+            () => getProps().state.widgetsCodeErrors.length,
+            () => [
+              Each(
+                () => getProps().state.widgetsCodeErrors,
+                (getValue) =>
+                  compose(
+                    'div',
+                    {
+                      innerText: getValue(),
+                      style: `box-shadow: inset rgba(0, 0, 0, 0.5) 0 0 10px -5px;
+                              font-family: "Courier New", Courier, monospace;
+                              background: lightpink;
+                              box-sizing: border-box;
+                              display: inline-block;
+                              white-space: pre-wrap;
+                              border-radius: 5px;
+                              line-height: 40px;
+                              max-height: 300px;
+                              min-height: 40px;
+                              font-size: 15px;
+                              overflow: auto;
+                              outline: none;
+                              padding: 10px;
+                              border: none;
+                              resize: none;
+                              width: 100%;`,
+                    },
+                    []
+                  )
+              ),
+            ],
+            () => [
+              compose('div', { innerText: 'No problems were detected.' }, []),
+            ]
+          ),
+        ]
       ),
     ]),
   ]);
