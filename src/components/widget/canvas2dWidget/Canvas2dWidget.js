@@ -18,13 +18,15 @@ const Canvas2dWidget = (getProps) => {
     []
   );
   const ctx = element.getContext('2d');
-  const rerender = ({ surfaces, lines, center }) => {
+  const rerender = () => {
+    console.log('Rerendering 2D widget');
+    const { surfaces, lines, center } = getProps();
     ctx.clearRect(0, 0, element.width, element.height);
     doRenderVisualization({ surfaces, lines, center, ctx });
   };
-  rerender(getProps());
+  rerender();
   element.update = () => {
-    rerender(getProps());
+    rerender();
   };
   return compose(
     'span',

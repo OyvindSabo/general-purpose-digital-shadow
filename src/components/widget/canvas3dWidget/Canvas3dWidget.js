@@ -66,7 +66,7 @@ const Canvas3dWidget = (getProps) => {
     }
   };
   element.update = () => {
-    rerender(getProps());
+    rerender();
   };
   window.addEventListener(camera.horizontalRotation$.id, () => {
     rerender({ surfaces, lines, center });

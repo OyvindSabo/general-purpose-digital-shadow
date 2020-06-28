@@ -137,19 +137,11 @@ const Model = ({ router, isExported, state, setState }) => {
   viewModel.updateApiUrl = (projectId, apiUrl) => {
     updateProjectById(projectId, { apiUrl });
     viewModel.loadAllProjects();
-    setTimeout(() => {
-      fetchDataFromApi();
-      repeatedlyFetchDataFromApi(state.selectedApiInterval);
-    }, 1000);
   };
 
   viewModel.updateApiInterval = (projectId, apiInterval) => {
     updateProjectById(projectId, { apiInterval });
     viewModel.loadAllProjects();
-    setTimeout(() => {
-      fetchDataFromApi();
-      repeatedlyFetchDataFromApi(state.selectedApiInterval);
-    }, 1000);
   };
 
   viewModel.updateWidgetsCode = (projectId, widgetsCode) => {
@@ -253,19 +245,21 @@ const Model = ({ router, isExported, state, setState }) => {
       });
   };
 
-  const repeatedlyFetchDataFromApi = (timeoutInSeconds) =>
+  let fetchProcessId = Math.random();
+  const repeatedlyFetchDataFromApi = (fetchProcessIdAtInitialization) => {
+    const timeoutInSeconds = state.selectedApiInterval;
+    if (!timeoutInSeconds) return;
+    const timeOutInMilliSeconds = timeoutInSeconds * 1000;
     setTimeout(() => {
-      console.log('repeatedly fetch data from api');
-      if (state.selectedApiInterval !== 0) {
+      if (fetchProcessIdAtInitialization === fetchProcessId) {
         fetchDataFromApi();
+        repeatedlyFetchDataFromApi(fetchProcessIdAtInitialization);
       }
-      if (timeoutInSeconds === state.selectedApiInterval) {
-        repeatedlyFetchDataFromApi(timeoutInSeconds);
-      }
-    }, timeoutInSeconds * 1000);
-  repeatedlyFetchDataFromApi();
+    }, timeOutInMilliSeconds);
+  };
 
   const syncSelectedProjectWithRouter = ({ params, currentRoute }) => {
+    fetchProcessId = Math.random();
     if (currentRoute.indexOf('/projects/<projectId:string>') === 0) {
       const selectedProject = dataModel.projects.find(
         ({ id }) => id === params.projectId
@@ -296,6 +290,8 @@ const Model = ({ router, isExported, state, setState }) => {
           params,
           lastVisitedProjectView: 'dashboard-editor',
         });
+        fetchDataFromApi();
+        repeatedlyFetchDataFromApi(fetchProcessId);
       }
       if (currentRoute === '/projects/<projectId:string>/dashboard') {
         setState({
@@ -303,6 +299,8 @@ const Model = ({ router, isExported, state, setState }) => {
           params,
           lastVisitedProjectView: 'dashboard',
         });
+        fetchDataFromApi();
+        repeatedlyFetchDataFromApi(fetchProcessId);
       }
     } else {
       setState({ currentRoute, params });
