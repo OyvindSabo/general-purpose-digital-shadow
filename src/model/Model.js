@@ -4,7 +4,7 @@ const {
   createProject,
   updateProjectById,
   deleteProjectById,
-} = include('src/data/Data.js');
+} = include('src/data/data.js');
 
 const LanguageParser = include(
   'src/libraries/languageParser/LanguageParser.js'
@@ -184,14 +184,15 @@ const Model = ({ router, isExported, state, setState }) => {
     center[2] || 0,
   ];
 
-  const normalizeWidgets = (widgets) =>
-    widgets.map((widget) => ({
+  const normalizeWidgets = (widgets) => {
+    return widgets.map((widget) => ({
       ...widget,
       surfaces: widget.surfaces ? normalizeSurfaces(widget.surfaces) : [],
       lines: widget.lines ? normalizeLines(widget.lines) : [],
       center: widget.center ? normalizeCenter(widget.center) : [0, 0, 0],
       is3d: widget.is3d ? true : false,
     }));
+  };
 
   const updateValues = () => {
     let evaluatedCode;

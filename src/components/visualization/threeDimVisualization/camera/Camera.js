@@ -1,6 +1,6 @@
 const Observable = include('src/libraries/observable/Observable.js');
 
-const Camera = function({
+const Camera = function ({
   target = new Observable([0, 0, 0]),
   horizontalRotation$ = new Observable(0),
   verticalRotation$ = new Observable(0),
@@ -16,10 +16,10 @@ const Camera = function({
     Math.max(distance$.value, -focalLength$.value / 2)
   );
   this.focalLength$ = focalLength$;
-  this.setDistance = distance => {
+  this.setDistance = (distance) => {
     this.distance$.value = Math.max(distance, -focalLength$.value / 2);
   };
-  this.setVerticalRotation = verticalRotation => {
+  this.setVerticalRotation = (verticalRotation) => {
     this.verticalRotation$.value = Math.max(
       Math.min(verticalRotation, Math.PI / 2),
       -Math.PI / 2

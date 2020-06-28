@@ -6,6 +6,7 @@ const doRenderVisualization = include(
   'src/components/widget/doRenderVisualization/doRenderVisualization.js'
 );
 const WidgetLabel = include('src/components/widgetLabel/WidgetLabel.js');
+const WidgetValue = include('src/components/widgetValue/WidgetValue.js');
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 // TODO: Shouldn't there be a label here?
@@ -90,7 +91,11 @@ const Canvas3dWidget = (getProps) => {
               width: 480px;
               height: 320px;`,
     }),
-    [WidgetLabel(() => ({ label: getProps().label })), element]
+    [
+      WidgetLabel(() => ({ label: getProps().label })),
+      WidgetValue(() => ({ value: getProps().value })),
+      element,
+    ]
   );
 };
 

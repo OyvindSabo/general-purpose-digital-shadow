@@ -4,7 +4,6 @@ const Canvas3dWidget = include(
 const Canvas2dWidget = include(
   'src/components/widget/canvas2dWidget/Canvas2dWidget.js'
 );
-const ValueWidget = include('src/components/widget/valueWidget/ValueWidget.js');
 const { compose, If } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
 /**
@@ -41,18 +40,9 @@ const Widget = (getProps) => {
         },
         [
           If(
-            () => getProps().type === 'canvas-widget',
-            () => [
-              If(
-                () => getProps().is3d,
-                () => [Canvas3dWidget(getProps)],
-                () => [Canvas2dWidget(getProps)]
-              ),
-            ]
-          ),
-          If(
-            () => getProps().type === 'value-widget',
-            () => [ValueWidget(getProps)]
+            () => getProps().is3d,
+            () => [Canvas3dWidget(getProps)],
+            () => [Canvas2dWidget(getProps)]
           ),
         ]
       ),
