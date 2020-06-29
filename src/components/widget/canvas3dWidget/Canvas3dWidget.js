@@ -9,7 +9,6 @@ const WidgetLabel = include('src/components/widgetLabel/WidgetLabel.js');
 const WidgetValue = include('src/components/widgetValue/WidgetValue.js');
 const { compose } = include('src/libraries/simpleHTML/SimpleHTML.js');
 
-// TODO: Shouldn't there be a label here?
 const Canvas3dWidget = (getProps) => {
   const { surfaces, lines, center } = getProps();
   const state = { mouseDown: false };
