@@ -278,6 +278,10 @@ const Model = ({ router, isExported, state, setState }) => {
 
   const syncSelectedProjectWithRouter = ({ params, currentRoute }) => {
     fetchProcessId = Math.random();
+    if (state.isExported) {
+      fetchDataFromApi();
+      repeatedlyFetchDataFromApi(fetchProcessId);
+    }
     if (currentRoute.indexOf('/projects/<projectId:string>') === 0) {
       const selectedProject = dataModel.projects.find(
         ({ id }) => id === params.projectId
