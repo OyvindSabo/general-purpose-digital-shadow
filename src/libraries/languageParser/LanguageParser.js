@@ -905,8 +905,7 @@ const evaluateSyntaxTree = (
         'Script ran for too long. Aborted to prevent denial of service.'
       );
     } else {
-      evaluationState.numberOfApplications =
-        evaluationState.numberOfApplications + 1;
+      evaluationState.numberOfApplications++;
     }
     const { operator, args } = syntaxTree;
     if (
