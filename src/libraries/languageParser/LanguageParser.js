@@ -265,7 +265,7 @@ const parseExpression = (expression) => {
 const specialForms = {
   define: {
     tokenType: 'function',
-    function: (args, scope) => {
+    function: (args, scope, maximumNumberOfApplications, evaluationState) => {
       if (args.length !== 2) {
         throw SyntaxError(
           `${args.length} arguments passed to define. Expected 2`
@@ -276,7 +276,12 @@ const specialForms = {
           `An argument of type ${args[0].tokenType} was passed to define. Expected a word.`
         );
       }
-      const value = evaluateSyntaxTree(args[1], scope);
+      const value = evaluateSyntaxTree(
+        args[1],
+        scope,
+        maximumNumberOfApplications,
+        evaluationState
+      );
       const word = args[0].word;
       scope[word] = value;
       return value;
@@ -284,17 +289,22 @@ const specialForms = {
   },
   do: {
     tokenType: 'function',
-    function: (args, scope) => {
+    function: (args, scope, maximumNumberOfApplications, evaluationState) => {
       let value = false;
       for (let arg of args) {
-        value = evaluateSyntaxTree(arg, scope);
+        value = evaluateSyntaxTree(
+          arg,
+          scope,
+          maximumNumberOfApplications,
+          evaluationState
+        );
       }
       return value;
     },
   },
   fun: {
     tokenType: 'function',
-    function: (args, scope) => {
+    function: (args, scope, maximumNumberOfApplications, evaluationState) => {
       if (!args.length) {
         throw SyntaxError(
           'No arguments were passed to fun. Expected at least a one.'
@@ -321,25 +331,45 @@ const specialForms = {
           arguments.forEach((argument, i) => {
             localScope[params[i]] = argument;
           });
-          return evaluateSyntaxTree(body, localScope);
+          return evaluateSyntaxTree(
+            body,
+            localScope,
+            maximumNumberOfApplications,
+            evaluationState
+          );
         },
       };
     },
   },
   if: {
     tokenType: 'function',
-    function: (args, scope) => {
+    function: (args, scope, maximumNumberOfApplications, evaluationState) => {
       if (args.length !== 3) {
         throw SyntaxError(
           `${args.length} arguments were passed to if. Expected 3.`
         );
       }
-      const condition = evaluateSyntaxTree(args[0], scope);
+      const condition = evaluateSyntaxTree(
+        args[0],
+        scope,
+        maximumNumberOfApplications,
+        evaluationState
+      );
       if (condition.value === true) {
-        return evaluateSyntaxTree(args[1], scope);
+        return evaluateSyntaxTree(
+          args[1],
+          scope,
+          maximumNumberOfApplications,
+          evaluationState
+        );
       }
       if (condition.value === false) {
-        return evaluateSyntaxTree(args[2], scope);
+        return evaluateSyntaxTree(
+          args[2],
+          scope,
+          maximumNumberOfApplications,
+          evaluationState
+        );
       }
       throw TypeError(
         `The first argument of if should be a boolean (true or false). Received ${condition.value}, which is of type ${condition.type}.`
@@ -801,7 +831,13 @@ const core = {
     },
   },
 };
-const evaluateSyntaxTree = (syntaxTree, scope) => {
+
+const evaluateSyntaxTree = (
+  syntaxTree,
+  scope,
+  maximumNumberOfApplications = 200000,
+  evaluationState = { numberOfApplications: 0 }
+) => {
   if (syntaxTree.tokenType === 'value') {
     return syntaxTree;
   }
@@ -811,12 +847,24 @@ const evaluateSyntaxTree = (syntaxTree, scope) => {
   if (syntaxTree.tokenType === 'array') {
     return {
       tokenType: 'array',
-      values: syntaxTree.values.map((arg) => evaluateSyntaxTree(arg, scope)),
+      values: syntaxTree.values.map((arg) =>
+        evaluateSyntaxTree(
+          arg,
+          scope,
+          maximumNumberOfApplications,
+          evaluationState
+        )
+      ),
     };
   }
   if (syntaxTree.tokenType === 'object') {
     const keywords = syntaxTree.keywords.map((keywordSyntaxTree) =>
-      evaluateSyntaxTree(keywordSyntaxTree, scope)
+      evaluateSyntaxTree(
+        keywordSyntaxTree,
+        scope,
+        maximumNumberOfApplications,
+        evaluationState
+      )
     );
     const malformedKeywords = keywords.filter(
       (keyword) => keyword.tokenType !== 'keyword'
@@ -829,7 +877,12 @@ const evaluateSyntaxTree = (syntaxTree, scope) => {
       );
     }
     const values = syntaxTree.values.map((valueSyntaxTree) =>
-      evaluateSyntaxTree(valueSyntaxTree, scope)
+      evaluateSyntaxTree(
+        valueSyntaxTree,
+        scope,
+        maximumNumberOfApplications,
+        evaluationState
+      )
     );
     return {
       tokenType: 'object',
@@ -847,17 +900,42 @@ const evaluateSyntaxTree = (syntaxTree, scope) => {
     throw ReferenceError(`${syntaxTree.word} is not defined.`);
   }
   if (syntaxTree.tokenType === 'apply') {
+    if (evaluationState.numberOfApplications >= maximumNumberOfApplications) {
+      throw Error(
+        'Script ran for too long. Aborted to prevent denial of service.'
+      );
+    } else {
+      evaluationState.numberOfApplications =
+        evaluationState.numberOfApplications + 1;
+    }
     const { operator, args } = syntaxTree;
     if (
       operator.tokenType === 'word' &&
       specialForms.hasOwnProperty(operator.word)
     ) {
-      return specialForms[operator.word].function(args, scope);
+      return specialForms[operator.word].function(
+        args,
+        scope,
+        maximumNumberOfApplications,
+        evaluationState
+      );
     }
-    const evaluatedOperator = evaluateSyntaxTree(operator, scope);
+    const evaluatedOperator = evaluateSyntaxTree(
+      operator,
+      scope,
+      maximumNumberOfApplications,
+      evaluationState
+    );
     if (evaluatedOperator.tokenType === 'function') {
       return evaluatedOperator.function(
-        ...args.map((arg) => evaluateSyntaxTree(arg, scope))
+        ...args.map((arg) =>
+          evaluateSyntaxTree(
+            arg,
+            scope,
+            maximumNumberOfApplications,
+            evaluationState
+          )
+        )
       );
     }
     throw TypeError('Cannot apply a non-function.');
