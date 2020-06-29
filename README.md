@@ -1,4 +1,4 @@
-# General-Purpose Digital Shadow
+# General-Purpose Digital Shadow Application
 
 ![Screenshot from 2020-06-29 10-58-00](https://user-images.githubusercontent.com/25663729/85994004-74735e80-b9f7-11ea-9813-d3da65818266.png)
 
