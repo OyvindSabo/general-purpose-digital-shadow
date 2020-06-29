@@ -151,6 +151,12 @@ const Model = ({ router, isExported, state, setState }) => {
   };
 
   viewModel.testApiUrlInput = () => {
+    if (!state.selectedApiUrl) {
+      setState({
+        selectedApiUrlTestPreview: '{}',
+      });
+      return;
+    }
     fetch(state.selectedApiUrl)
       .then((response) => response.json())
       .then((jsonResponse) => {
@@ -235,6 +241,13 @@ const Model = ({ router, isExported, state, setState }) => {
   };
 
   const fetchDataFromApi = () => {
+    if (!state.selectedApiUrl) {
+      setState({
+        apiResponse: '{}',
+      });
+      updateValues();
+      return;
+    }
     fetch(state.selectedApiUrl)
       .then((response) => response.json())
       .then((jsonResponse) => {
