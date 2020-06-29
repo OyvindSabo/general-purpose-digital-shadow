@@ -1,8 +1,8 @@
 # General-Purpose Digital Shadow
 
-This is a prototype application created as part of my master thesis
+![Screenshot from 2020-06-29 10-58-00](https://user-images.githubusercontent.com/25663729/85994004-74735e80-b9f7-11ea-9813-d3da65818266.png)
 
-## Client-Side Computing in General-Purpose Digital Shadow Applications
+This is a prototype application created as part of my master thesis _Client-side Computing in General-Purpose Digital Shadow Applications_, exploring the possibility of creating general-purpose digital shadows with little or no back-end requirements. This is accomplished by giving users access to a code interface where they can write functions in a domain-specific Lisp-like programming which can safely be evaluated directly in the browser. The user-submitted functions are used to map data from periodic API calls to an array of widget data structures which define lines and surfaces in 2D or 3D space. A widget can also display text or numerical values. Widget objects are automatically translated to nice-looking widgets in a dashboard. If a user wants to share a dashboard, the application is capable of exporting a read-only subset of itself, making it possible to share dashboards which continuously mirror the entity they are modeling.
 
 ### Running the application
 
@@ -20,7 +20,7 @@ Clicking _New project_ will create a new project called _Untitled project_. To e
 After clicking _Edit_, a new project name can be entered.
 
 ![Screenshot from 2020-06-29 02-52-59](https://user-images.githubusercontent.com/25663729/85963249-05751600-b9b5-11ea-90ea-e35640cd1431.png)
-The aplication enables us to visualize anything we can think of as 2D and 3D visualization widgets, but in this example, we will create a dashboard with the salary of some imaginary employees. Therefore, we rename the project to _Employee salaries_ and click save.
+The aplication enables us to visualize anything we can think of as 2D and 3D visualization widgets, and makes it easy to display numbers and text. In this example, we will create a dashboard with the salary of some imaginary employees. Therefore, we rename the project to _Employee salaries_ and click save.
 
 ![Screenshot from 2020-06-29 02-53-05](https://user-images.githubusercontent.com/25663729/85963253-0a39ca00-b9b5-11ea-97b1-d4e5cd13f0d8.png)
 The project now has a new name. To open the project, we click the white box representing the project.
