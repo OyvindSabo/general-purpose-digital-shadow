@@ -1969,6 +1969,11 @@ const Model = ({ router, isExported, state, setState }) => {
     }, timeOutInMilliSeconds);
   };
 
+  if (state.isExported) {
+    fetchDataFromApi();
+    repeatedlyFetchDataFromApi(fetchProcessId);
+  }
+
   const syncSelectedProjectWithRouter = ({ params, currentRoute }) => {
     fetchProcessId = Math.random();
     if (currentRoute.indexOf('/projects/<projectId:string>') === 0) {
@@ -2078,7 +2083,7 @@ const CodeEditor = (getProps) => {
       'textarea',
       () => ({
         oninput: getProps().oninput,
-        style: `height: 600px;
+        style: `height: 480px;
                 border-radius: 5px;
                 font-family: "Courier New", Courier, monospace;
                 background: rgba(0, 0, 0, 0.05);

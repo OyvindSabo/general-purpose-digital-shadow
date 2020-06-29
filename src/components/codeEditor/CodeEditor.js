@@ -6,7 +6,7 @@ const CodeEditor = (getProps) => {
       'textarea',
       () => ({
         oninput: getProps().oninput,
-        style: `height: 600px;
+        style: `height: 480px;
                 border-radius: 5px;
                 font-family: "Courier New", Courier, monospace;
                 background: rgba(0, 0, 0, 0.05);

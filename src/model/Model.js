@@ -271,6 +271,11 @@ const Model = ({ router, isExported, state, setState }) => {
     }, timeOutInMilliSeconds);
   };
 
+  if (state.isExported) {
+    fetchDataFromApi();
+    repeatedlyFetchDataFromApi(fetchProcessId);
+  }
+
   const syncSelectedProjectWithRouter = ({ params, currentRoute }) => {
     fetchProcessId = Math.random();
     if (currentRoute.indexOf('/projects/<projectId:string>') === 0) {
