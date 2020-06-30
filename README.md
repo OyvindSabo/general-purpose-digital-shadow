@@ -60,7 +60,7 @@ There is also a tab called _Problems_ where runtime errors will be displayed so 
 Once we are satisfied with editing the dashboard widgets code, we can navigate to the _Dashboard_ view. Here, only the dashboard widgets will be displayed, being re-rendered with updated values at the selected fetch intervals, except in our case where we left it at 0.
 
 ![Screenshot from 2020-06-29 02-56-36](https://user-images.githubusercontent.com/25663729/85963317-4d943880-b9b5-11ea-86eb-335eeaa54a83.png)
-In the top rigt corner of the screen there is an Export button. Clicking it exports a subset of the application, resembling the current Dashboard view to a single HTML file.
+In the top right corner of the screen there is an Export button. Clicking it exports a subset of the application, resembling the current Dashboard view to a single HTML file.
 
 ![Screenshot from 2020-06-29 03-00-54](https://user-images.githubusercontent.com/25663729/85963324-52f18300-b9b5-11ea-8a96-abbecdf70361.png)
 Opening the exported HTML file in the browser reveals a read-only version of the dashboard we just created. Just like the unexported dashboard, the exported dashboard will continue to fetch data at the specified interval, thus enabling easy sharing of continuously updated documentation.
